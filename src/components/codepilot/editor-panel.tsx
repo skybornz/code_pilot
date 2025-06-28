@@ -1,7 +1,7 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles, GitCommit } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles, GitCommit, MoreVertical } from 'lucide-react';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { diffLines, type Change } from 'diff';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -109,8 +111,8 @@ const DiffView = ({ original, modified, language }: { original: string, modified
         return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedLineClasses };
     }, [original, modified]);
 
-    const originalExtensions = [...langExtension, lineHighlighter(originalLineClasses)];
-    const modifiedExtensions = [...langExtension, lineHighlighter(modifiedLineClasses)];
+    const originalExtensions = [lineHighlighter(originalLineClasses), ...langExtension];
+    const modifiedExtensions = [lineHighlighter(modifiedLineClasses), ...langExtension];
 
     const commonEditorProps = {
         height: "100%",
@@ -220,9 +222,9 @@ export function EditorPanel({
         <div className="flex-1 min-w-0">
           <CardTitle className="text-lg truncate" title={file.name}>{file.name}</CardTitle>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {hasCommits && (
-            <div className="w-56">
+            <div className="w-40 sm:w-56">
                 <Select
                     value={file.activeCommitHash}
                     onValueChange={(newHash) => {
@@ -254,65 +256,98 @@ export function EditorPanel({
             </div>
           )}
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')}
-                  disabled={!hasChanges}
-                  data-active={viewMode === 'diff'}
-                  className="data-[active=true]:bg-accent"
-                  aria-label="View Changes"
-                >
-                  <GitCompare className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{hasChanges ? 'View Changes' : 'No changes to display'}</p>
-              </TooltipContent>
-            </Tooltip>
-            {viewMode === 'diff' && (
+          {/* Wide screen actions */}
+          <div className="hidden md:flex items-center gap-1">
+            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onAiAction('analyze-diff', code, file.language, file.originalContent)}
-                    disabled={isLoading}
-                    aria-label="Analyze Changes"
+                    onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')}
+                    disabled={!hasChanges}
+                    data-active={viewMode === 'diff'}
+                    className="data-[active=true]:bg-accent"
+                    aria-label="View Changes"
                   >
-                    <Sparkles className="h-5 w-5 text-accent" />
+                    <GitCompare className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Analyze Changes</p>
+                  <p>{hasChanges ? 'View Changes' : 'No changes to display'}</p>
                 </TooltipContent>
               </Tooltip>
-            )}
+              {viewMode === 'diff' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onAiAction('analyze-diff', code, file.language, file.originalContent)}
+                      disabled={isLoading}
+                      aria-label="Analyze Changes"
+                    >
+                      <Sparkles className="h-5 w-5 text-accent" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Analyze Changes</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
-            <div className="w-[1px] h-6 bg-border mx-1"></div>
+              <div className="w-[1px] h-6 bg-border mx-1"></div>
 
-            {actions.map((action) => (
-              <Tooltip key={action.id}>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onAiAction(action.id, code, file.language)}
-                    disabled={isLoading}
-                    aria-label={action.label}
-                  >
-                    <action.icon className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{action.label}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </TooltipProvider>
+              {actions.map((action) => (
+                <Tooltip key={action.id}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onAiAction(action.id, code, file.language)}
+                      disabled={isLoading}
+                      aria-label={action.label}
+                    >
+                      <action.icon className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{action.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </TooltipProvider>
+          </div>
+
+          {/* Narrow screen actions */}
+          <div className="flex md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')} disabled={!hasChanges}>
+                  <GitCompare className="mr-2 h-4 w-4" />
+                  <span>{viewMode === 'edit' ? 'View Changes' : 'Back to Editor'}</span>
+                </DropdownMenuItem>
+                {viewMode === 'diff' && (
+                  <DropdownMenuItem onClick={() => onAiAction('analyze-diff', code, file.language, file.originalContent)} disabled={isLoading}>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    <span>Analyze Changes</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                {actions.map((action) => (
+                  <DropdownMenuItem key={action.id} onClick={() => onAiAction(action.id, code, file.language)} disabled={isLoading}>
+                    <action.icon className="mr-2 h-4 w-4" />
+                    <span>{action.label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
