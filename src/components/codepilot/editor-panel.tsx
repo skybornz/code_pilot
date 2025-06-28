@@ -36,20 +36,20 @@ const getLanguageExtension = (language: string) => {
     case 'typescript':
     case 'tsx':
     case 'jsx':
-      return [javascript({ jsx: true, typescript: true })];
+      return javascript({ jsx: true, typescript: true });
     case 'css':
-      return [css()];
+      return css();
     case 'python':
-      return [python()];
+      return python();
     default:
       // Fallback for languages like json, html, etc.
-      return [javascript({ jsx: true, typescript: true })];
+      return javascript({ jsx: true, typescript: true });
   }
 };
 
 // Creates a CodeMirror extension that highlights lines based on a provided class list.
 function lineHighlighter(lineClasses: { line: number; class: string }[]) {
-  return ViewPlugin.fromClass(
+  const plugin = ViewPlugin.fromClass(
     class {
       decorations: RangeSet<Decoration>;
 
@@ -58,7 +58,7 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
       }
 
       update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged) {
+        if (update.docChanged || update.viewportChanged || update.geometryChanged) {
           this.decorations = this.buildDecorations(update.view);
         }
       }
@@ -75,6 +75,7 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
       }
     }
   );
+  return plugin;
 }
 
 
@@ -109,8 +110,8 @@ const DiffView = ({ original, modified, language }: { original: string, modified
         return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
     }, [original, modified]);
 
-    const originalExtensions = [...langExtension, lineHighlighter(originalLineClasses)];
-    const modifiedExtensions = [...langExtension, lineHighlighter(modifiedLineClasses)];
+    const originalExtensions = [langExtension, lineHighlighter(originalLineClasses)];
+    const modifiedExtensions = [langExtension, lineHighlighter(modifiedLineClasses)];
 
     const commonEditorProps = {
         height: "100%",
@@ -130,10 +131,10 @@ const DiffView = ({ original, modified, language }: { original: string, modified
     };
 
     return (
-        <div className="flex-1 flex flex-col gap-2 p-2 min-h-0 h-full">
-            <div className="flex-1 flex flex-col">
-                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Original (from main branch)</h3>
-                <div className="flex-1 rounded-md overflow-hidden border">
+        <div className="flex flex-col h-full gap-2 p-2">
+            <div className="flex-1 flex flex-col min-h-0">
+                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">Original (from main branch)</h3>
+                <div className="flex-1 rounded-md border overflow-hidden">
                     <CodeMirror
                         value={original}
                         extensions={originalExtensions}
@@ -141,9 +142,9 @@ const DiffView = ({ original, modified, language }: { original: string, modified
                     />
                 </div>
             </div>
-            <div className="flex-1 flex flex-col">
-                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Modified</h3>
-                <div className="flex-1 rounded-md overflow-hidden border">
+            <div className="flex-1 flex flex-col min-h-0">
+                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">Modified</h3>
+                <div className="flex-1 rounded-md border overflow-hidden">
                     <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
@@ -316,7 +317,7 @@ export function EditorPanel({
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <div className="relative flex-1 overflow-y-auto" onKeyDown={handleKeyDown}>
+        <div className="relative flex-1 min-h-0" onKeyDown={handleKeyDown}>
           {viewMode === 'edit' ? (
             <CodeMirror
               value={code}
