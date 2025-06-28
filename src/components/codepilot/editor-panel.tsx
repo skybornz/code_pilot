@@ -51,7 +51,7 @@ const getLanguageExtension = (language: string) => {
 
 // Creates a CodeMirror extension that highlights lines based on a provided class list.
 function lineHighlighter(lineClasses: { line: number; class: string }[]) {
-  return ViewPlugin.fromClass(
+  const plugin = ViewPlugin.fromClass(
     class {
       decorations: RangeSet<Decoration>;
 
@@ -77,12 +77,11 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
       }
     }
   );
+  return plugin;
 }
 
 
 const DiffView = ({ original, modified, language }: { original: string, modified: string, language: string }) => {
-    const langExtension = useMemo(() => getLanguageExtension(language), [language]);
-
     const { originalLineClasses, modifiedLineClasses } = useMemo(() => {
         const diff = diffLines(original, modified);
         const originalClasses: { line: number; class: string }[] = [];
@@ -108,7 +107,7 @@ const DiffView = ({ original, modified, language }: { original: string, modified
             }
         });
 
-        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedLineClasses };
+        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
     }, [original, modified]);
 
     const originalExtensions = useMemo(() => [lineHighlighter(originalLineClasses), ...getLanguageExtension(language)], [originalLineClasses, language]);
