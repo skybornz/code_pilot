@@ -111,8 +111,9 @@ const DiffView = ({ original, modified, language }: { original: string, modified
         return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedLineClasses };
     }, [original, modified]);
 
-    const originalExtensions = [lineHighlighter(originalLineClasses), ...langExtension];
-    const modifiedExtensions = [lineHighlighter(modifiedLineClasses), ...langExtension];
+    const originalExtensions = useMemo(() => [lineHighlighter(originalLineClasses), ...getLanguageExtension(language)], [originalLineClasses, language]);
+    const modifiedExtensions = useMemo(() => [lineHighlighter(modifiedLineClasses), ...getLanguageExtension(language)], [modifiedLineClasses, language]);
+
 
     const commonEditorProps = {
         height: "100%",
@@ -206,14 +207,16 @@ export function EditorPanel({
   const hasChanges = file.content !== file.originalContent;
   const hasCommits = file.commits && file.commits.length > 0;
 
-
-  const actions: { id: ActionType; label: string; icon: React.ElementType }[] = [
+  const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
     { id: 'refactor', label: 'Refactor Code', icon: Wand2 },
-    { id: 'bugs', label: 'Find Bugs', icon: Bug },
-    { id: 'test', label: 'Generate Unit Test', icon: TestTube2 },
-    { id: 'docs', label: 'Generate Docs', icon: NotebookText },
-    { id: 'sdd', label: 'Generate SDD', icon: FileText },
+  ];
+
+  const secondaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
+      { id: 'bugs', label: 'Find Bugs', icon: Bug },
+      { id: 'test', label: 'Generate Unit Test', icon: TestTube2 },
+      { id: 'docs', label: 'Generate Docs', icon: NotebookText },
+      { id: 'sdd', label: 'Generate SDD', icon: FileText },
   ];
 
   return (
@@ -256,98 +259,85 @@ export function EditorPanel({
             </div>
           )}
 
-          {/* Wide screen actions */}
-          <div className="hidden md:flex items-center gap-1">
-            <TooltipProvider>
-              <Tooltip>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')}
+                  disabled={!hasChanges}
+                  data-active={viewMode === 'diff'}
+                  className="data-[active=true]:bg-accent"
+                  aria-label="View Changes"
+                >
+                  <GitCompare className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{hasChanges ? 'View Changes' : 'No changes to display'}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <div className="w-[1px] h-6 bg-border mx-1"></div>
+
+            {primaryActions.map((action) => (
+              <Tooltip key={action.id}>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')}
-                    disabled={!hasChanges}
-                    data-active={viewMode === 'diff'}
-                    className="data-[active=true]:bg-accent"
-                    aria-label="View Changes"
+                    onClick={() => onAiAction(action.id, code, file.language)}
+                    disabled={isLoading}
+                    aria-label={action.label}
                   >
-                    <GitCompare className="h-5 w-5" />
+                    <action.icon className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{hasChanges ? 'View Changes' : 'No changes to display'}</p>
+                  <p>{action.label}</p>
                 </TooltipContent>
               </Tooltip>
-              {viewMode === 'diff' && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onAiAction('analyze-diff', code, file.language, file.originalContent)}
-                      disabled={isLoading}
-                      aria-label="Analyze Changes"
-                    >
-                      <Sparkles className="h-5 w-5 text-accent" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Analyze Changes</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+            ))}
 
-              <div className="w-[1px] h-6 bg-border mx-1"></div>
-
-              {actions.map((action) => (
-                <Tooltip key={action.id}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onAiAction(action.id, code, file.language)}
-                      disabled={isLoading}
-                      aria-label={action.label}
-                    >
-                      <action.icon className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{action.label}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </TooltipProvider>
-          </div>
-
-          {/* Narrow screen actions */}
-          <div className="flex md:hidden">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={isLoading}
+                      aria-label="More actions"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>More Actions</p>
+                </TooltipContent>
+              </Tooltip>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')} disabled={!hasChanges}>
-                  <GitCompare className="mr-2 h-4 w-4" />
-                  <span>{viewMode === 'edit' ? 'View Changes' : 'Back to Editor'}</span>
-                </DropdownMenuItem>
                 {viewMode === 'diff' && (
-                  <DropdownMenuItem onClick={() => onAiAction('analyze-diff', code, file.language, file.originalContent)} disabled={isLoading}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    <span>Analyze Changes</span>
-                  </DropdownMenuItem>
+                    <>
+                        <DropdownMenuItem onClick={() => onAiAction('analyze-diff', code, file.language, file.originalContent)} disabled={isLoading}>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            <span>Analyze Changes</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                    </>
                 )}
-                <DropdownMenuSeparator />
-                {actions.map((action) => (
-                  <DropdownMenuItem key={action.id} onClick={() => onAiAction(action.id, code, file.language)} disabled={isLoading}>
-                    <action.icon className="mr-2 h-4 w-4" />
-                    <span>{action.label}</span>
-                  </DropdownMenuItem>
+                {secondaryActions.map((action) => (
+                    <DropdownMenuItem key={action.id} onClick={() => onAiAction(action.id, code, file.language)} disabled={isLoading}>
+                        <action.icon className="mr-2 h-4 w-4" />
+                        <span>{action.label}</span>
+                    </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+
+          </TooltipProvider>
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
