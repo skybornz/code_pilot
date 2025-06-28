@@ -14,6 +14,9 @@ import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
+import { diffLines, type Change } from 'diff';
+import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -43,6 +46,115 @@ const getLanguageExtension = (language: string) => {
       return [javascript({ jsx: true, typescript: true })];
   }
 };
+
+// Creates a CodeMirror extension that highlights lines based on a provided class list.
+function lineHighlighter(lineClasses: { line: number; class: string }[]) {
+  return ViewPlugin.fromClass(
+    class {
+      decorations: RangeSet<Decoration>;
+
+      constructor(view: EditorView) {
+        this.decorations = this.buildDecorations(view);
+      }
+
+      update(update: ViewUpdate) {
+        if (update.docChanged || update.viewportChanged) {
+          this.decorations = this.buildDecorations(update.view);
+        }
+      }
+
+      buildDecorations(view: EditorView): RangeSet<Decoration> {
+        const builder = new RangeSetBuilder<Decoration>();
+        for (const { line, class: className } of lineClasses) {
+          if (line <= view.state.doc.lines) {
+            const lineInfo = view.state.doc.line(line);
+            builder.add(lineInfo.from, lineInfo.from, Decoration.line({ class: className }));
+          }
+        }
+        return builder.finish();
+      }
+    }
+  ).decorations;
+}
+
+
+const DiffView = ({ original, modified, language }: { original: string, modified: string, language: string }) => {
+    const langExtension = useMemo(() => getLanguageExtension(language), [language]);
+
+    const { originalLineClasses, modifiedLineClasses } = useMemo(() => {
+        const diff = diffLines(original, modified);
+        const originalClasses: { line: number; class: string }[] = [];
+        const modifiedClasses: { line: number; class: string }[] = [];
+        let originalLineNum = 1;
+        let modifiedLineNum = 1;
+
+        diff.forEach((part: Change) => {
+            const lineCount = part.count || 0;
+            if (part.added) {
+                for (let i = 0; i < lineCount; i++) {
+                    modifiedClasses.push({ line: modifiedLineNum + i, class: 'bg-green-500/20' });
+                }
+                modifiedLineNum += lineCount;
+            } else if (part.removed) {
+                for (let i = 0; i < lineCount; i++) {
+                    originalClasses.push({ line: originalLineNum + i, class: 'bg-red-500/20' });
+                }
+                originalLineNum += lineCount;
+            } else {
+                originalLineNum += lineCount;
+                modifiedLineNum += lineCount;
+            }
+        });
+
+        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
+    }, [original, modified]);
+
+    const originalExtensions = [langExtension, lineHighlighter(originalLineClasses)];
+    const modifiedExtensions = [langExtension, lineHighlighter(modifiedLineClasses)];
+
+    const commonEditorProps = {
+        height: "100%",
+        theme: vscodeDark,
+        readOnly: true,
+        basicSetup: {
+            lineNumbers: true,
+            foldGutter: true,
+            autocompletion: false,
+            editable: false,
+        },
+        style: {
+            fontSize: '0.875rem',
+            fontFamily: 'var(--font-code)',
+        },
+        className: "h-full"
+    };
+
+    return (
+        <div className="flex-1 flex flex-col gap-2 p-2 min-h-0 h-full">
+            <div className="flex-1 flex flex-col">
+                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Original (from main branch)</h3>
+                <div className="flex-1 rounded-md overflow-hidden border">
+                    <CodeMirror
+                        value={original}
+                        extensions={originalExtensions}
+                        {...commonEditorProps}
+                    />
+                </div>
+            </div>
+            <div className="flex-1 flex flex-col">
+                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Modified</h3>
+                <div className="flex-1 rounded-md overflow-hidden border">
+                    <CodeMirror
+                        value={modified}
+                        extensions={modifiedExtensions}
+                        {...commonEditorProps}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 export function EditorPanel({
   file,
@@ -122,7 +234,9 @@ export function EditorPanel({
                 >
                     <SelectTrigger className="h-9">
                         <GitCommit className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
-                        <SelectValue placeholder="Select a commit" />
+                        <span className="truncate font-mono text-xs">
+                          {file.activeCommitHash ? file.activeCommitHash.substring(0, 7) : 'Latest'}
+                        </span>
                     </SelectTrigger>
                     <SelectContent>
                         {file.commits?.map(commit => (
@@ -222,54 +336,7 @@ export function EditorPanel({
               }}
             />
           ) : (
-            <div className="flex-1 flex flex-row gap-2 p-2 min-h-0 h-full">
-                <div className="flex-1 flex flex-col">
-                    <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Original (from main branch)</h3>
-                    <div className="flex-1 rounded-md overflow-hidden border">
-                        <CodeMirror
-                            value={file.originalContent}
-                            height="100%"
-                            theme={vscodeDark}
-                            extensions={langExtension}
-                            readOnly={true}
-                            basicSetup={{
-                                lineNumbers: true,
-                                foldGutter: true,
-                                autocompletion: false,
-                                editable: false,
-                            }}
-                            className="h-full"
-                             style={{
-                                fontSize: '0.875rem',
-                                fontFamily: 'var(--font-code)',
-                            }}
-                        />
-                    </div>
-                </div>
-                <div className="flex-1 flex flex-col">
-                    <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Modified</h3>
-                    <div className="flex-1 rounded-md overflow-hidden border">
-                        <CodeMirror
-                            value={code}
-                            height="100%"
-                            theme={vscodeDark}
-                            extensions={langExtension}
-                            readOnly={true}
-                            basicSetup={{
-                                lineNumbers: true,
-                                foldGutter: true,
-                                autocompletion: false,
-                                editable: false,
-                            }}
-                            className="h-full"
-                             style={{
-                                fontSize: '0.875rem',
-                                fontFamily: 'var(--font-code)',
-                            }}
-                        />
-                    </div>
-                </div>
-            </div>
+             <DiffView original={file.originalContent} modified={code} language={file.language} />
           )}
         </div>
         {completion && viewMode === 'edit' && (
