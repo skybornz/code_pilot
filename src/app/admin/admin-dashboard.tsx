@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { columns } from './columns';
 import { DataTable } from './data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,23 +11,35 @@ import type { User } from '@/lib/schemas';
 import { getUsers } from '@/lib/auth';
 import { Loader2, PlusCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 export function AdminDashboard() {
   const [users, setUsers] = useState<Omit<User, 'password'>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Omit<User, 'password'> | null>(null);
+  const { toast } = useToast();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
-    const fetchedUsers = await getUsers();
-    setUsers(fetchedUsers);
-    setIsLoading(false);
-  };
+    try {
+      const fetchedUsers = await getUsers();
+      setUsers(fetchedUsers);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not fetch user data. Please try again later.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
   
   const memoizedColumns = useMemo(() => columns({ onEdit: (user) => {
     setSelectedUser(user);
