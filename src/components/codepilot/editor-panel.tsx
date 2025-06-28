@@ -1,6 +1,6 @@
 'use client';
 
-import type { CodeFile } from '@/lib/dummy-data';
+import type { CodeFile } from '@/components/codepilot/types';
 import { BookText, Bug, TestTube2, Wand2 } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';

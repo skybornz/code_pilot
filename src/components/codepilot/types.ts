@@ -11,3 +11,10 @@ export type AIOutput = {
     data: AIOutputData;
     title: string;
 };
+
+export type CodeFile = {
+  id: string;
+  name: string;
+  language: string;
+  content: string;
+};

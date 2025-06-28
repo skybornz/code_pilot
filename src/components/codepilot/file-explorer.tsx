@@ -1,27 +1,45 @@
 'use client';
 
-import type { CodeFile } from '@/lib/dummy-data';
-import { FileCode, Folder } from 'lucide-react';
+import type { CodeFile } from '@/components/codepilot/types';
+import { FileCode, Folder, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Logo } from './logo';
+import { Button } from '../ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface FileExplorerProps {
   files: CodeFile[];
-  activeFileId: string;
+  activeFileId: string | null;
   onFileSelect: (fileId: string) => void;
+  onUploadClick: () => void;
 }
 
-export function FileExplorer({ files, activeFileId, onFileSelect }: FileExplorerProps) {
+export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick }: FileExplorerProps) {
   return (
     <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
       <div className="p-4 border-b border-sidebar-border">
         <Logo />
       </div>
       <div className="flex-1 overflow-y-auto p-4">
-        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-          <Folder className="w-5 h-5" />
-          <span>Project Files</span>
-        </h2>
+        <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Folder className="w-5 h-5" />
+                <span>Project Files</span>
+            </h2>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={onUploadClick} aria-label="Load another project">
+                            <Upload className="w-4 h-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Load another project</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        </div>
+        
         <ul className="space-y-1">
           {files.map((file) => (
             <li key={file.id}>
@@ -34,7 +52,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect }: FileExplorer
                 }`}
               >
                 <FileCode className="w-4 h-4" />
-                <span>{file.name}</span>
+                <span className="truncate" title={file.name}>{file.name}</span>
               </button>
             </li>
           ))}

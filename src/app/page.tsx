@@ -1,6 +1,6 @@
 'use client';
 
-import type { AIOutput, ActionType } from '@/components/codepilot/types';
+import type { AIOutput, ActionType, CodeFile } from '@/components/codepilot/types';
 import { AIOutputPanel } from '@/components/codepilot/ai-output-panel';
 import { EditorPanel } from '@/components/codepilot/editor-panel';
 import { FileExplorer } from '@/components/codepilot/file-explorer';
@@ -14,20 +14,29 @@ import { explainCode } from '@/ai/flows/explain-code';
 import { findBugs } from '@/ai/flows/find-bugs';
 import { generateUnitTest } from '@/ai/flows/generate-unit-test';
 import { refactorCode } from '@/ai/flows/refactor-code';
-import type { CodeFile } from '@/lib/dummy-data';
-import { dummyFiles } from '@/lib/dummy-data';
 import { Menu } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
+import { ProjectLoader } from '@/components/codepilot/project-loader';
+import { Card } from '@/components/ui/card';
 
 export default function CodePilotPage() {
-  const [files, setFiles] = useState<CodeFile[]>(dummyFiles);
-  const [activeFileId, setActiveFileId] = useState<string>(dummyFiles[0].id);
+  const [files, setFiles] = useState<CodeFile[]>([]);
+  const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const activeFile = files.find((f) => f.id === activeFileId)!;
+  const handleFilesLoaded = useCallback((loadedFiles: CodeFile[]) => {
+    setFiles(loadedFiles);
+    if (loadedFiles.length > 0) {
+      setActiveFileId(loadedFiles[0].id);
+    } else {
+      setActiveFileId(null);
+    }
+  }, []);
+
+  const activeFile = files.find((f) => f.id === activeFileId);
 
   const handleFileSelect = (fileId: string) => {
     setActiveFileId(fileId);
@@ -96,7 +105,17 @@ export default function CodePilotPage() {
     }
   }, []);
 
-  const editor = (
+  const handleUploadClick = () => {
+    setFiles([]);
+    setActiveFileId(null);
+    setAiOutput(null);
+  };
+
+  if (files.length === 0) {
+    return <ProjectLoader onFilesLoaded={handleFilesLoaded} />;
+  }
+
+  const editor = activeFile ? (
     <EditorPanel
       key={activeFile.id}
       file={activeFile}
@@ -106,11 +125,17 @@ export default function CodePilotPage() {
       isLoading={isLoading}
       completion={aiOutput?.type === 'completion' ? aiOutput.data : null}
       onAcceptCompletion={(completion) => {
-        handleCodeChange(activeFile.id, activeFile.content + completion);
+        if (activeFile) {
+          handleCodeChange(activeFile.id, activeFile.content + completion);
+        }
         setAiOutput(null);
       }}
       onDismissCompletion={() => setAiOutput(null)}
     />
+  ) : (
+    <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
+        <p className="text-muted-foreground">Select a file from the explorer to view its content.</p>
+    </Card>
   );
 
   const outputPanel = (
@@ -133,7 +158,7 @@ export default function CodePilotPage() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-0">
-               <FileExplorer files={files} activeFileId={activeFileId} onFileSelect={handleFileSelect} />
+               <FileExplorer files={files} activeFileId={activeFileId} onFileSelect={handleFileSelect} onUploadClick={handleUploadClick} />
             </SheetContent>
           </Sheet>
         </header>
@@ -149,7 +174,7 @@ export default function CodePilotPage() {
 
   return (
     <div className="h-screen bg-background text-foreground flex">
-      <FileExplorer files={files} activeFileId={activeFileId} onFileSelect={handleFileSelect} />
+      <FileExplorer files={files} activeFileId={activeFileId} onFileSelect={handleFileSelect} onUploadClick={handleUploadClick} />
       <main className="flex-1 grid grid-cols-2 gap-4 p-4 overflow-hidden">
         <div className="col-span-1 flex flex-col h-full">
           {editor}
