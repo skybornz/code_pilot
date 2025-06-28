@@ -36,6 +36,7 @@ export function CodePilotWorkspace() {
     } else {
       setActiveFileId(null);
     }
+    setAiOutput(null);
   }, []);
 
   const activeFile = files.find((f) => f.id === activeFileId);
@@ -119,10 +120,6 @@ export function CodePilotWorkspace() {
     setAiOutput(null);
   };
 
-  if (files.length === 0) {
-    return <ProjectLoader onFilesLoaded={handleFilesLoaded} />;
-  }
-
   const editor = activeFile ? (
     <EditorPanel
       key={activeFile.id}
@@ -171,12 +168,20 @@ export function CodePilotWorkspace() {
           </Sheet>
         </header>
         <main className="flex-1 overflow-y-auto p-4">
-          <div className="h-[50vh]">
-            {editor}
-          </div>
-          <div className="mt-4 h-[calc(50vh-6rem)]">
-            {outputPanel}
-          </div>
+          {files.length > 0 ? (
+            <>
+              <div className="h-[50vh]">
+                {editor}
+              </div>
+              <div className="mt-4 h-[calc(50vh-6rem)]">
+                {outputPanel}
+              </div>
+            </>
+           ) : (
+            <div className="h-full flex items-center justify-center">
+              <ProjectLoader onFilesLoaded={handleFilesLoaded} />
+            </div>
+           )}
         </main>
       </div>
     )
@@ -186,12 +191,20 @@ export function CodePilotWorkspace() {
     <div className="h-screen bg-background text-foreground flex">
       <FileExplorer files={files} activeFileId={activeFileId} onFileSelect={handleFileSelect} onUploadClick={handleUploadClick} />
       <main className="flex-1 flex gap-4 p-4 overflow-hidden">
-        <div className="flex-1 flex flex-col min-w-0">
-          {editor}
-        </div>
-        <div className="flex-1 flex flex-col min-w-0">
-          {outputPanel}
-        </div>
+        {files.length > 0 ? (
+          <>
+            <div className="flex-1 flex flex-col min-w-0">
+              {editor}
+            </div>
+            <div className="flex-1 flex flex-col min-w-0">
+              {outputPanel}
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+             <ProjectLoader onFilesLoaded={handleFilesLoaded} />
+          </div>
+        )}
       </main>
     </div>
   );

@@ -5,19 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, AtSign, Lock } from 'lucide-react';
+import { Loader2, AtSign, Lock, ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/codepilot/logo';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
@@ -28,15 +28,12 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
+    setError(null);
     const result = await login(email, password);
     if (result.success) {
       router.push('/');
     } else {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: result.message,
-      });
+      setError(result.message || 'An unexpected error occurred.');
       setIsLoggingIn(false);
     }
   };
@@ -61,6 +58,15 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            {error && (
+                <Alert variant="destructive">
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle>Login Failed</AlertTitle>
+                    <AlertDescription>
+                        {error}
+                    </AlertDescription>
+                </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">

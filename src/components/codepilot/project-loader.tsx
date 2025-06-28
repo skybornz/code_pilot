@@ -8,7 +8,6 @@ import type { CodeFile } from './types';
 import { Github, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { importFromGithub } from '@/actions/github';
-import { Logo } from './logo';
 
 interface ProjectLoaderProps {
   onFilesLoaded: (files: CodeFile[]) => void;
@@ -57,13 +56,10 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      <div className="mb-8">
-        <Logo />
-      </div>
-      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm">
+    <div className="flex flex-col items-center justify-center h-full w-full">
+      <Card className="w-full max-w-lg shadow-2xl bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl">Load Your Project</CardTitle>
+          <CardTitle className="text-2xl">Load Your Project</CardTitle>
           <CardDescription>
             Import a public GitHub repository to start coding with your AI partner.
           </CardDescription>
