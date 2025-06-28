@@ -3,13 +3,13 @@
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, LogOut } from 'lucide-react';
 import { AdminDashboard } from './admin-dashboard';
 import { Logo } from '@/components/codepilot/logo';
 import { Button } from '@/components/ui/button';
 
 export default function AdminPage() {
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading, logout } = useAuth();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
 
@@ -39,9 +39,9 @@ export default function AdminPage() {
     <div className="h-screen bg-background text-foreground flex flex-col">
        <header className="flex items-center justify-between p-4 border-b shrink-0">
           <Logo />
-          <Button variant="outline" onClick={() => router.push('/')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to CodePilot
+          <Button variant="outline" onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
           </Button>
        </header>
        <main className="flex-1 overflow-y-auto p-4 md:p-8">

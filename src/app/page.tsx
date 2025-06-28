@@ -7,16 +7,20 @@ import { Loader2 } from 'lucide-react';
 import { CodePilotWorkspace } from '@/components/codepilot/codepilot-workspace';
 
 export default function ProtectedCodePilotPage() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/login');
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.replace('/login');
+      } else if (isAdmin) {
+        router.replace('/admin');
+      }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, isAdmin]);
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || !isAuthenticated || isAdmin) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />

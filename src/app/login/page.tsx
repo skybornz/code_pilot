@@ -16,22 +16,30 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { login, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
-      router.replace('/');
+      if (isAdmin) {
+        router.replace('/admin');
+      } else {
+        router.replace('/');
+      }
     }
-  }, [isAuthenticated, isAuthLoading, router]);
+  }, [isAuthenticated, isAuthLoading, router, isAdmin]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
     setError(null);
     const result = await login(email, password);
-    if (result.success) {
-      router.push('/');
+    if (result.success && result.user) {
+      if (result.user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     } else {
       setError(result.message || 'An unexpected error occurred.');
       setIsLoggingIn(false);

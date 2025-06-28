@@ -13,7 +13,7 @@ interface AuthContextType {
   user: Omit<User, 'password'> | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string, user?: Omit<User, 'password'> }>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (result.success && result.user) {
       setUser(result.user);
       localStorage.setItem(FAKE_SESSION_KEY, JSON.stringify(result.user));
-      return { success: true };
+      return { success: true, user: result.user };
     }
     return { success: false, message: result.message };
   };
