@@ -29,7 +29,7 @@ const prompt = ai.definePrompt({
   name: 'generateCodeDocsPrompt',
   input: {schema: GenerateCodeDocsInputSchema},
   output: {schema: GenerateCodeDocsOutputSchema},
-  prompt: `You are an expert software developer. Generate code comments for the following code block. The comments should explain the code's functionality, parameters, and return values, suitable for in-line documentation or docblocks.\n\n{{code}}`,
+  prompt: `You are an expert software developer. Generate code comments for the following code block. The comments should explain the code's functionality, parameters, and return values, suitable for in-line documentation or docblocks. IMPORTANT: Only output the generated comments, do not wrap them in markdown code fences or any other formatting.\n\n{{code}}`,
 });
 
 const generateCodeDocsFlow = ai.defineFlow(
