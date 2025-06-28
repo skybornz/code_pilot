@@ -12,7 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { codeCompletion } from '@/ai/flows/code-completion';
 import { explainCode } from '@/ai/flows/explain-code';
 import { findBugs } from '@/ai/flows/find-bugs';
-import { generateCodeDocs } from '@/ai/flows/generate-code-docs';
+import { generateUnitTest } from '@/ai/flows/generate-unit-test';
 import { refactorCode } from '@/ai/flows/refactor-code';
 import type { CodeFile } from '@/lib/dummy-data';
 import { dummyFiles } from '@/lib/dummy-data';
@@ -64,9 +64,9 @@ export default function CodePilotPage() {
       } else if (action === 'bugs') {
         const bugReport = await findBugs({ code });
         result = { type: 'bugs', data: bugReport, title: 'Bug Report' };
-      } else if (action === 'docs') {
-        const { documentation } = await generateCodeDocs({ code });
-        result = { type: 'docs', data: documentation, title: 'Generated Documentation' };
+      } else if (action === 'test') {
+        const unitTest = await generateUnitTest({ code, language });
+        result = { type: 'test', data: unitTest, title: 'Generated Unit Test' };
       } else if (action === 'refactor') {
         const refactored = await refactorCode({ code, language });
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion' };

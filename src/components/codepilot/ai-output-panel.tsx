@@ -7,6 +7,7 @@ import { Wand2 } from 'lucide-react';
 import type { AIOutput, AIOutputData } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
+import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -48,6 +49,22 @@ const renderOutput = (data: AIOutputData, type: AIOutput['type'], onApplyChanges
         <div>
           <h4 className="font-semibold mb-2">Explanation:</h4>
           <p className="text-muted-foreground whitespace-pre-wrap">{refactorData.explanation}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'test') {
+    const testData = data as GenerateUnitTestOutput;
+    return (
+      <div className="space-y-4">
+        <div>
+          <h4 className="font-semibold mb-2">Generated Unit Test:</h4>
+          <pre className="bg-muted p-3 rounded-md text-sm font-code whitespace-pre-wrap">{testData.unitTest}</pre>
+        </div>
+        <div>
+          <h4 className="font-semibold mb-2">Explanation:</h4>
+          <p className="text-muted-foreground whitespace-pre-wrap">{testData.explanation}</p>
         </div>
       </div>
     );

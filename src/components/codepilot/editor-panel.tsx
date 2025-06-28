@@ -1,7 +1,7 @@
 'use client';
 
 import type { CodeFile } from '@/lib/dummy-data';
-import { BookText, Bug, FileText, Send, Wand2 } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2 } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +67,7 @@ export function EditorPanel({
     { id: 'explain', label: 'Explain Code', icon: BookText },
     { id: 'refactor', label: 'Refactor Code', icon: Wand2 },
     { id: 'bugs', label: 'Find Bugs', icon: Bug },
-    { id: 'docs', label: 'Generate Docs', icon: FileText },
+    { id: 'test', label: 'Generate Unit Test', icon: TestTube2 },
   ];
 
   return (
