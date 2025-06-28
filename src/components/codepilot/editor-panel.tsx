@@ -1,7 +1,7 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles } from 'lucide-react';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 interface EditorPanelProps {
   file: CodeFile;
   onCodeChange: (fileId: string, newContent: string) => void;
-  onAiAction: (action: ActionType, code: string, language: string) => void;
+  onAiAction: (action: ActionType, code: string, language: string, originalCode?: string) => void;
   onCompletion: (code: string, language: string) => void;
   isLoading: boolean;
   completion: string | null;
@@ -52,9 +52,11 @@ export function EditorPanel({
   onDismissCompletion
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content);
+  const [viewMode, setViewMode] = useState<'edit' | 'diff'>('edit');
 
   useEffect(() => {
     setCode(file.content);
+    setViewMode('edit'); // Reset to edit mode when file changes
   }, [file]);
   
   const handleCodeMirrorChange = (value: string) => {
@@ -83,6 +85,8 @@ export function EditorPanel({
   };
 
   const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
+  const hasChanges = file.originalContent !== undefined && file.content !== file.originalContent;
+
 
   const actions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
@@ -97,8 +101,47 @@ export function EditorPanel({
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-row items-center justify-between border-b p-4">
         <CardTitle className="text-lg">{file.name}</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')}
+                  disabled={!hasChanges}
+                  data-active={viewMode === 'diff'}
+                  className="data-[active=true]:bg-accent"
+                  aria-label="View Changes"
+                >
+                  <GitCompare className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View Changes</p>
+              </TooltipContent>
+            </Tooltip>
+            {viewMode === 'diff' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onAiAction('analyze-diff', code, file.language, file.originalContent)}
+                    disabled={isLoading}
+                    aria-label="Analyze Changes"
+                  >
+                    <Sparkles className="h-5 w-5 text-accent" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Analyze Changes</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            <div className="w-[1px] h-6 bg-border mx-1"></div>
+
             {actions.map((action) => (
               <Tooltip key={action.id}>
                 <TooltipTrigger asChild>
@@ -121,26 +164,77 @@ export function EditorPanel({
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <div className="relative flex-1" onKeyDown={handleKeyDown}>
-          <CodeMirror
-            value={code}
-            height="100%"
-            theme={vscodeDark}
-            extensions={langExtension}
-            onChange={handleCodeMirrorChange}
-            basicSetup={{
-              lineNumbers: true,
-              foldGutter: true,
-              autocompletion: false,
-            }}
-            className="h-full"
-            style={{
-              fontSize: '0.875rem', // equiv to text-sm
-              fontFamily: 'var(--font-code)',
-            }}
-          />
+        <div className="relative flex-1 overflow-y-auto" onKeyDown={handleKeyDown}>
+          {viewMode === 'edit' ? (
+            <CodeMirror
+              value={code}
+              height="100%"
+              theme={vscodeDark}
+              extensions={langExtension}
+              onChange={handleCodeMirrorChange}
+              basicSetup={{
+                lineNumbers: true,
+                foldGutter: true,
+                autocompletion: false,
+              }}
+              className="h-full"
+              style={{
+                fontSize: '0.875rem', // equiv to text-sm
+                fontFamily: 'var(--font-code)',
+              }}
+            />
+          ) : (
+            <div className="flex-1 flex flex-row gap-2 p-2 min-h-0 h-full">
+                <div className="flex-1 flex flex-col">
+                    <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Original</h3>
+                    <div className="flex-1 rounded-md overflow-hidden border">
+                        <CodeMirror
+                            value={file.originalContent || ''}
+                            height="100%"
+                            theme={vscodeDark}
+                            extensions={langExtension}
+                            readOnly={true}
+                            basicSetup={{
+                                lineNumbers: true,
+                                foldGutter: true,
+                                autocompletion: false,
+                                editable: false,
+                            }}
+                            className="h-full"
+                             style={{
+                                fontSize: '0.875rem',
+                                fontFamily: 'var(--font-code)',
+                            }}
+                        />
+                    </div>
+                </div>
+                <div className="flex-1 flex flex-col">
+                    <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Modified</h3>
+                    <div className="flex-1 rounded-md overflow-hidden border">
+                        <CodeMirror
+                            value={code}
+                            height="100%"
+                            theme={vscodeDark}
+                            extensions={langExtension}
+                            readOnly={true}
+                            basicSetup={{
+                                lineNumbers: true,
+                                foldGutter: true,
+                                autocompletion: false,
+                                editable: false,
+                            }}
+                            className="h-full"
+                             style={{
+                                fontSize: '0.875rem',
+                                fontFamily: 'var(--font-code)',
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+          )}
         </div>
-        {completion && (
+        {completion && viewMode === 'edit' && (
           <div className="p-4 border-t bg-background/50">
             <h3 className="text-sm font-semibold mb-2">AI Suggestion (Press Tab to accept)</h3>
             <pre className="bg-muted p-3 rounded-md text-sm font-code whitespace-pre-wrap">{completion}</pre>

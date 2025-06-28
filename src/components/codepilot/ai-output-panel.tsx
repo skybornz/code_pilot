@@ -10,6 +10,7 @@ import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
 import type { GenerateCodeDocsOutput } from '@/ai/flows/generate-code-docs';
 import type { GenerateSddOutput } from '@/ai/flows/generate-sdd';
 import { CodeBlock } from './code-block';
+import type { AnalyzeDiffOutput } from './types';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -18,6 +19,26 @@ interface AIOutputPanelProps {
 
 const renderOutput = (output: AIOutput) => {
   const { data, type, language } = output;
+
+  if (type === 'analyze-diff') {
+    const analysis = data as AnalyzeDiffOutput;
+    return (
+      <div className="space-y-4">
+        <div>
+          <h4 className="font-semibold mb-2">Summary of Changes:</h4>
+          <p className="text-muted-foreground whitespace-pre-wrap">{analysis.summary}</p>
+        </div>
+        <div>
+          <h4 className="font-semibold mb-2">Detailed Analysis:</h4>
+          {analysis.detailedAnalysis.length > 0 ? (
+              <ul className="list-disc list-inside space-y-2 bg-muted/50 p-4 rounded-md">
+                  {analysis.detailedAnalysis.map((point, index) => <li key={index}>{point}</li>)}
+              </ul>
+          ) : <p className="text-muted-foreground">No specific issues found.</p>}
+        </div>
+      </div>
+    );
+  }
 
   if (type === 'bugs') {
     const bugReport = data as FindBugsOutput;

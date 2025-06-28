@@ -135,8 +135,11 @@ async function getBitbucketFilesRecursively(
             const data = await pageResponse.json();
             const parsedData = BitbucketSrcResponseSchema.parse(data);
 
-            for (const item of parsedData.values) {
-                const nestedFiles = await getBitbucketFilesRecursively(workspace, repo, branch, item.path);
+            const promises = parsedData.values.map(item => 
+                getBitbucketFilesRecursively(workspace, repo, branch, item.path)
+            );
+            const nestedFilesArray = await Promise.all(promises);
+            for (const nestedFiles of nestedFilesArray) {
                 files.push(...nestedFiles);
             }
 
@@ -150,7 +153,7 @@ async function getBitbucketFilesRecursively(
         if (!content.includes('\uFFFD')) { // Binary check
             const name = path.split('/').pop() || '';
             const language = name.split('.').pop() || 'text';
-            return [{ id: path, name, language, content }];
+            return [{ id: path, name, language, content, originalContent: content }];
         }
     }
     

@@ -16,6 +16,7 @@ import { generateUnitTest } from '@/ai/flows/generate-unit-test';
 import { refactorCode } from '@/ai/flows/refactor-code';
 import { generateCodeDocs } from '@/ai/flows/generate-code-docs';
 import { generateSdd } from '@/ai/flows/generate-sdd';
+import { analyzeDiff } from '@/ai/flows/analyze-diff';
 import { Menu } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
@@ -57,12 +58,18 @@ export function SemCoPilotWorkspace() {
     );
   };
 
-  const handleAiAction = useCallback(async (action: ActionType, code: string, language: string) => {
+  const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string) => {
     setIsLoading(true);
     setAiOutput(null);
     try {
       let result: AIOutput | null = null;
-      if (action === 'explain') {
+      if (action === 'analyze-diff') {
+        if (!originalCode) {
+          throw new Error('Original code is required for diff analysis.');
+        }
+        const analysis = await analyzeDiff({ oldCode: originalCode, newCode: code, language });
+        result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
+      } else if (action === 'explain') {
         const { explanation } = await explainCode({ code });
         result = { type: 'explain', data: explanation, title: 'Code Explanation' };
       } else if (action === 'bugs') {
