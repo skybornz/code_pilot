@@ -33,6 +33,12 @@ export function AdminSidebar() {
                 <Logo />
             </SidebarHeader>
             <SidebarContent>
+                <div className="flex justify-between items-center mb-2 px-2">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <Settings className="w-5 h-5" />
+                        <span>Admin Menu</span>
+                    </h2>
+                </div>
                 <SidebarMenu>
                     {menuItems.map((item) => (
                         <SidebarMenuItem key={item.href}>

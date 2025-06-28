@@ -7,7 +7,7 @@ import { loginUser } from '@/actions/users';
 
 // For prototype purposes, we'll store the user in localStorage.
 // In a real app, you'd use secure, httpOnly cookies with a session token.
-const FAKE_SESSION_KEY = 'codepilot_session';
+const FAKE_SESSION_KEY = 'semco_pilot_session';
 
 interface AuthContextType {
   user: Omit<User, 'password'> | null;

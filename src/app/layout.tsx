@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/context/auth-context';
 
 export const metadata: Metadata = {
-  title: 'CodePilot',
+  title: 'SemCo-Pilot',
   description: 'AI-powered code assistant',
 };
 

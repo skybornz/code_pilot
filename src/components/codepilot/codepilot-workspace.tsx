@@ -21,7 +21,7 @@ import React, { useState, useCallback } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
 
-export function CodePilotWorkspace() {
+export function SemCoPilotWorkspace() {
   const [files, setFiles] = useState<CodeFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);

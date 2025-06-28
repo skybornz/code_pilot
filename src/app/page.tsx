@@ -4,9 +4,9 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { CodePilotWorkspace } from '@/components/codepilot/codepilot-workspace';
+import { SemCoPilotWorkspace } from '@/components/codepilot/codepilot-workspace';
 
-export default function ProtectedCodePilotPage() {
+export default function SemCoPilotPage() {
   const { isAuthenticated, isLoading, isAdmin } = useAuth();
   const router = useRouter();
 
@@ -28,5 +28,5 @@ export default function ProtectedCodePilotPage() {
     );
   }
 
-  return <CodePilotWorkspace />;
+  return <SemCoPilotWorkspace />;
 }
