@@ -12,6 +12,10 @@ export function dbGetUsers(): Omit<User, 'password'>[] {
   return users.map(({ password, ...user }) => user);
 }
 
+export function dbGetUserByEmail(email: string): User | undefined {
+  return users.find((u) => u.email === email);
+}
+
 export function dbGetUserById(id: string): Omit<User, 'password'> | undefined {
     const user = users.find((u) => u.id === id);
     if (user) {

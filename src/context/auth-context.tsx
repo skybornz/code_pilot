@@ -3,6 +3,7 @@
 import type { User } from '@/lib/schemas';
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { loginUser } from '@/actions/users';
 
 // For prototype purposes, we'll store the user in localStorage.
 // In a real app, you'd use secure, httpOnly cookies with a session token.
@@ -24,17 +25,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Mock server-side users list for login check
-  const mockLoginCheck = (email: string, password_input: string): Omit<User, 'password'> | null => {
-    if (email === 'admin@example.com' && password_input === 'password') {
-        return { id: '1', email: 'admin@example.com', role: 'admin' };
-    }
-    if (email === 'user@example.com' && password_input === 'password') {
-        return { id: '2', email: 'user@example.com', role: 'user' };
-    }
-    return null;
-  };
-
   useEffect(() => {
     try {
       const session = localStorage.getItem(FAKE_SESSION_KEY);
@@ -49,14 +39,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const foundUser = mockLoginCheck(email, password);
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem(FAKE_SESSION_KEY, JSON.stringify(foundUser));
+  const login = async (email: string, password_input: string) => {
+    const result = await loginUser({ email, password: password_input });
+    if (result.success && result.user) {
+      setUser(result.user);
+      localStorage.setItem(FAKE_SESSION_KEY, JSON.stringify(result.user));
       return { success: true };
     }
-    return { success: false, message: 'Invalid email or password' };
+    return { success: false, message: result.message };
   };
 
   const logout = useCallback(() => {
