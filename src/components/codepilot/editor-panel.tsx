@@ -106,7 +106,7 @@ export function EditorPanel({
             value={code}
             onChange={handleCodeChange}
             onKeyDown={handleKeyDown}
-            className="w-full h-full p-4 resize-none border-0 rounded-none bg-transparent font-code text-base focus-visible:ring-0"
+            className="w-full h-full p-4 resize-none border-0 rounded-none bg-background font-code text-base focus-visible:ring-0 leading-relaxed"
             placeholder="Enter your code here..."
             aria-label={`Code editor for ${file.name}`}
           />
