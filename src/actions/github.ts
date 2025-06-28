@@ -101,10 +101,31 @@ export async function fetchBitbucketBranches(url: string): Promise<{ success: bo
     }
 }
 
+async function getBitbucketFileContent(workspace: string, repo: string, branchOrCommit: string, path: string): Promise<string | null> {
+    const url = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/src/${branchOrCommit}/${path}`;
+    const response = await fetch(url, { cache: 'no-store' });
+
+    if (!response.ok) {
+        return null;
+    }
+
+    const contentType = response.headers.get('content-type');
+    // It's a file if it's not JSON (which represents a directory listing)
+    if (contentType && !contentType.includes('application/json')) {
+        const content = await response.text();
+        if (!content.includes('\uFFFD')) { // Basic binary file check
+            return content;
+        }
+    }
+    return null; // Is a directory or a binary file
+}
+
+
 async function getBitbucketFilesRecursively(
     workspace: string,
     repo: string,
     branch: string,
+    mainBranch: string,
     path: string = ''
 ): Promise<CodeFile[]> {
     if (shouldIgnore(path)) {
@@ -136,7 +157,7 @@ async function getBitbucketFilesRecursively(
             const parsedData = BitbucketSrcResponseSchema.parse(data);
 
             const promises = parsedData.values.map(item => 
-                getBitbucketFilesRecursively(workspace, repo, branch, item.path)
+                getBitbucketFilesRecursively(workspace, repo, branch, mainBranch, item.path)
             );
             const nestedFilesArray = await Promise.all(promises);
             for (const nestedFiles of nestedFilesArray) {
@@ -153,7 +174,13 @@ async function getBitbucketFilesRecursively(
         if (!content.includes('\uFFFD')) { // Binary check
             const name = path.split('/').pop() || '';
             const language = name.split('.').pop() || 'text';
-            return [{ id: path, name, language, content, originalContent: content }];
+            
+            let originalContent = content;
+            if (branch !== mainBranch) {
+                originalContent = await getBitbucketFileContent(workspace, repo, mainBranch, path) ?? '';
+            }
+
+            return [{ id: path, name, language, content, originalContent }];
         }
     }
     
@@ -168,7 +195,21 @@ export async function loadBitbucketFiles(url: string, branch: string): Promise<{
     const { workspace, repo } = bitbucketInfo;
 
     try {
-        const files = await getBitbucketFilesRecursively(workspace, repo, branch);
+        // 1. Get main branch name
+        const repoDetailsUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}`;
+        const repoDetailsResponse = await fetch(repoDetailsUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        if (!repoDetailsResponse.ok) {
+            return { success: false, error: 'Could not fetch repository details to determine the main branch.' };
+        }
+        const repoData = await repoDetailsResponse.json();
+        const mainBranch = repoData?.mainbranch?.name;
+
+        if (!mainBranch) {
+            return { success: false, error: 'Could not determine the main branch for this repository.' };
+        }
+
+
+        const files = await getBitbucketFilesRecursively(workspace, repo, branch, mainBranch);
         if (files.length === 0) {
             return {
                 success: false,
