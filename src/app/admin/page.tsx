@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, Menu } from 'lucide-react';
 import { AdminDashboard } from './admin-dashboard';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -15,6 +15,11 @@ export default function AdminPage() {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const router = useRouter();
   const isMobile = useIsMobile();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (!isLoading) {
@@ -26,7 +31,7 @@ export default function AdminPage() {
     }
   }, [isAuthenticated, isAdmin, isLoading, router]);
 
-  if (isLoading || !isAuthenticated || !isAdmin) {
+  if (isLoading || !isAuthenticated || !isAdmin || !isClient) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
