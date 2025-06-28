@@ -207,7 +207,7 @@ export function SemCoPilotWorkspace() {
             </div>
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full">
              <ProjectLoader onFilesLoaded={handleFilesLoaded} />
           </div>
         )}

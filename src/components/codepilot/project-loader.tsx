@@ -45,11 +45,11 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full max-w-4xl mx-auto p-4">
+    <div className="flex flex-col justify-center h-full w-full p-4">
       <Card className="w-full shadow-2xl bg-card/80 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-2xl">Your Projects</CardTitle>
+            <CardTitle className="text-2xl">My Projects</CardTitle>
             <CardDescription>Select a project to load or add a new one.</CardDescription>
           </div>
           <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
