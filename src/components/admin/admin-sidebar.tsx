@@ -9,6 +9,7 @@ import {
     SidebarMenu, 
     SidebarMenuItem, 
     SidebarMenuButton,
+    SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Users, Settings, Link as LinkIcon, LogOut, UserCircle } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -32,13 +33,8 @@ export function AdminSidebar() {
             <SidebarHeader>
                 <Logo />
             </SidebarHeader>
+            <SidebarSeparator />
             <SidebarContent>
-                <div className="flex justify-between items-center mb-2 px-2">
-                    <h2 className="text-lg font-semibold flex items-center gap-2">
-                        <Settings className="w-5 h-5" />
-                        <span>Admin Menu</span>
-                    </h2>
-                </div>
                 <SidebarMenu>
                     {menuItems.map((item) => (
                         <SidebarMenuItem key={item.href}>
@@ -52,6 +48,7 @@ export function AdminSidebar() {
                     ))}
                 </SidebarMenu>
             </SidebarContent>
+            <SidebarSeparator />
             <SidebarFooter>
               {user && (
                   <Card className="bg-card/50">

@@ -3,6 +3,32 @@
 import type { CodeFile } from '@/components/codepilot/types';
 import { z } from 'zod';
 
+// A list of common files/directories to ignore
+const IGNORE_LIST = [
+    'package-lock.json',
+    'yarn.lock',
+    '.DS_Store',
+    'node_modules',
+    '.git',
+    '.vscode',
+    '.idea',
+    'dist',
+    'build',
+];
+const IGNORE_EXTENSIONS = [
+    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', // images
+    '.mp4', '.mov', '.avi', '.webm', // videos
+    '.mp3', '.wav', '.ogg', // audio
+    '.zip', '.tar', '.gz', // archives
+    '.pdf', '.doc', '.docx' // documents
+];
+
+function shouldIgnore(path: string): boolean {
+    const name = path.split('/').pop() || '';
+    return IGNORE_LIST.includes(name) || IGNORE_EXTENSIONS.some(ext => name.endsWith(ext));
+}
+
+// ====== GitHub Specific ======
 const GITHUB_API_BASE = 'https://api.github.com';
 
 const GithubFileSchema = z.object({
@@ -14,7 +40,7 @@ const GithubFileSchema = z.object({
 
 const GithubRepoContentsSchema = z.array(GithubFileSchema);
 
-function parseRepoUrl(url: string): { owner: string; repo: string } | null {
+function parseGithubUrl(url: string): { owner: string; repo: string } | null {
   try {
     const urlObj = new URL(url);
     if (urlObj.hostname !== 'github.com') {
@@ -31,7 +57,7 @@ function parseRepoUrl(url: string): { owner: string; repo: string } | null {
   }
 }
 
-async function fetchRepoContents(
+async function fetchGithubRepoContents(
   owner: string,
   repo: string,
   path: string = ''
@@ -57,47 +83,26 @@ async function fetchRepoContents(
   return GithubRepoContentsSchema.parse(contents);
 }
 
-// A list of common files/directories to ignore
-const IGNORE_LIST = [
-    'package-lock.json',
-    'yarn.lock',
-    '.DS_Store',
-    'node_modules',
-    '.git',
-    '.vscode',
-    '.idea',
-    'dist',
-    'build',
-];
-const IGNORE_EXTENSIONS = [
-    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', // images
-    '.mp4', '.mov', '.avi', '.webm', // videos
-    '.mp3', '.wav', '.ogg', // audio
-    '.zip', '.tar', '.gz', // archives
-    '.pdf', '.doc', '.docx' // documents
-]
-
-async function getFilesRecursively(
+async function getGithubFilesRecursively(
   owner: string,
   repo: string,
   path: string = ''
 ): Promise<CodeFile[]> {
-  if (IGNORE_LIST.includes(path.split('/').pop() || '')) {
+  if (shouldIgnore(path)) {
     return [];
   }
 
-  const contents = await fetchRepoContents(owner, repo, path);
+  const contents = await fetchGithubRepoContents(owner, repo, path);
   let files: CodeFile[] = [];
 
   for (const item of contents) {
     if (item.type === 'dir') {
-      const nestedFiles = await getFilesRecursively(owner, repo, item.path);
+      const nestedFiles = await getGithubFilesRecursively(owner, repo, item.path);
       files = files.concat(nestedFiles);
     } else if (item.type === 'file' && item.download_url) {
-      const shouldIgnore = IGNORE_LIST.includes(item.name) || IGNORE_EXTENSIONS.some(ext => item.name.endsWith(ext));
-      if (shouldIgnore) {
-          continue;
-      }
+        if (shouldIgnore(item.path)) {
+            continue;
+        }
       
       try {
         const fileResponse = await fetch(item.download_url, { cache: 'no-store' });
@@ -120,26 +125,112 @@ async function getFilesRecursively(
           content: content,
         });
       } catch (error) {
-        console.error(`Error processing file ${item.path}:`, error);
+        console.error(`Error processing GitHub file ${item.path}:`, error);
       }
     }
   }
   return files;
 }
 
+// ====== Bitbucket Specific ======
+const BITBUCKET_API_BASE = 'https://api.bitbucket.org/2.0';
+
+const BitbucketEntrySchema = z.object({
+    type: z.enum(['commit_file', 'commit_directory']),
+    path: z.string(),
+});
+const BitbucketSrcResponseSchema = z.object({
+    values: z.array(BitbucketEntrySchema),
+    next: z.string().optional(),
+});
+
+
+function parseBitbucketUrl(url: string): { workspace: string; repo: string } | null {
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname !== 'bitbucket.org') {
+            return null;
+        }
+        const parts = urlObj.pathname.split('/').filter(Boolean);
+        if (parts.length < 2) {
+            return null;
+        }
+        const [workspace, repo] = parts;
+        return { workspace, repo: repo.replace(/\.git$/, '') };
+    } catch (error) {
+        return null;
+    }
+}
+
+async function getBitbucketFilesRecursively(
+    workspace: string,
+    repo: string,
+    path: string = ''
+): Promise<CodeFile[]> {
+    if (shouldIgnore(path)) {
+        return [];
+    }
+
+    const files: CodeFile[] = [];
+    const url = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/src/master/${path}`;
+
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) {
+        console.warn(`Could not fetch Bitbucket path: ${url}`);
+        return [];
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+        // It's a directory
+        let currentResponse = response;
+        let hasNextPage = true;
+
+        while (hasNextPage) {
+            const data = await currentResponse.json();
+            const parsedData = BitbucketSrcResponseSchema.parse(data);
+
+            for (const item of parsedData.values) {
+                const nestedFiles = await getBitbucketFilesRecursively(workspace, repo, item.path);
+                files.push(...nestedFiles);
+            }
+
+            if (parsedData.next) {
+                currentResponse = await fetch(parsedData.next, { cache: 'no-store' });
+            } else {
+                hasNextPage = false;
+            }
+        }
+    } else {
+        // It's a file
+        const content = await response.text();
+        if (!content.includes('\uFFFD')) { // Binary check
+            const name = path.split('/').pop() || '';
+            const language = name.split('.').pop() || 'text';
+            return [{ id: path, name, language, content }];
+        }
+    }
+    
+    return files;
+}
+
+// ====== Main Exported Function ======
 export async function importFromGithub(
   url: string
 ): Promise<{ success: boolean; files?: CodeFile[]; error?: string }> {
-  const repoInfo = parseRepoUrl(url);
-
-  if (!repoInfo) {
-    return { success: false, error: 'Invalid GitHub repository URL.' };
-  }
-
-  const { owner, repo } = repoInfo;
+  const githubInfo = parseGithubUrl(url);
+  const bitbucketInfo = parseBitbucketUrl(url);
 
   try {
-    const files = await getFilesRecursively(owner, repo);
+    let files: CodeFile[] = [];
+    if (githubInfo) {
+      files = await getGithubFilesRecursively(githubInfo.owner, githubInfo.repo);
+    } else if (bitbucketInfo) {
+      files = await getBitbucketFilesRecursively(bitbucketInfo.workspace, bitbucketInfo.repo);
+    } else {
+      return { success: false, error: 'Invalid GitHub or Bitbucket repository URL.' };
+    }
+
     if (files.length === 0) {
       return {
         success: false,
@@ -148,7 +239,7 @@ export async function importFromGithub(
     }
     return { success: true, files: files };
   } catch (error) {
-    console.error('Failed to import from GitHub:', error);
+    console.error('Failed to import from repository:', error);
     if (error instanceof Error) {
       return {
         success: false,
