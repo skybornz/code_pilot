@@ -1,13 +1,15 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { FileCode, Folder, Upload, ChevronRight } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings } from 'lucide-react';
+import { Card, CardHeader } from '@/components/ui/card';
 import { Logo } from './logo';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { useMemo } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useAuth } from '@/context/auth-context';
+import Link from 'next/link';
 
 interface FileExplorerProps {
   files: CodeFile[];
@@ -113,6 +115,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeV
 
 export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick }: FileExplorerProps) {
     const fileTree = useMemo(() => buildFileTree(files), [files]);
+    const { user, isAdmin, logout } = useAuth();
   
     return (
     <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
@@ -141,16 +144,47 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick 
         
         <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} />
       </div>
-      <div className="p-4 border-t border-sidebar-border">
-          <Card className="bg-card/50">
-            <CardHeader className="p-3">
-              <p className="text-xs text-muted-foreground">Local Ollama Model</p>
+      <div className="p-2 border-t border-sidebar-border">
+        {user && (
+            <Card className="bg-card/50">
+                <CardHeader className="p-3 flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                        <UserCircle className="w-6 h-6 flex-shrink-0" />
+                        <div className="text-sm overflow-hidden">
+                            <p className="font-semibold truncate">{user.email}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        {isAdmin && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                            <Link href="/admin">
+                                                <Settings className="w-4 h-4" />
+                                            </Link>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Admin Settings</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout}>
+                                        <LogOut className="w-4 h-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Logout</p></TooltipContent>
+                            </Tooltip>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
             </CardHeader>
-            <CardContent className="p-3 pt-0">
-               <p className="text-sm font-medium">gemini-2.0-flash</p>
-               <p className="text-xs text-muted-foreground mt-1">Connected</p>
-            </CardContent>
-          </Card>
+        </Card>
+        )}
       </div>
     </aside>
   );
