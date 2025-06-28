@@ -138,24 +138,24 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
         <div className="flex flex-col h-full gap-2 p-2">
             <div className="flex-1 flex flex-col min-h-0">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
-                    Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
-                </h3>
-                <div className="flex-1 rounded-md border overflow-hidden">
-                    <CodeMirror
-                        value={original}
-                        extensions={originalExtensions}
-                        {...commonEditorProps}
-                    />
-                </div>
-            </div>
-            <div className="flex-1 flex flex-col min-h-0">
-                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
                 <div className="flex-1 rounded-md border overflow-hidden">
                     <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
+                        {...commonEditorProps}
+                    />
+                </div>
+            </div>
+            <div className="flex-1 flex flex-col min-h-0">
+                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
+                    Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
+                </h3>
+                <div className="flex-1 rounded-md border overflow-hidden">
+                    <CodeMirror
+                        value={original}
+                        extensions={originalExtensions}
                         {...commonEditorProps}
                     />
                 </div>
@@ -210,13 +210,14 @@ export function EditorPanel({
   };
 
   const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
-  const hasChanges = file.previousContent !== undefined && file.content !== file.previousContent;
-  const hasCommits = file.commits && file.commits.length > 0;
+  const hasChanges = file.previousContent !== undefined;
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
   const previousCommit = (activeCommitIndex > -1 && file.commits && activeCommitIndex < file.commits.length - 1)
       ? file.commits[activeCommitIndex + 1]
       : null;
+
+  const analyzeDisabled = isLoading || !hasChanges || viewMode === 'edit';
 
   const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
@@ -237,7 +238,7 @@ export function EditorPanel({
           <CardTitle className="text-lg truncate" title={file.name}>{file.name}</CardTitle>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 w-full md:w-auto justify-end">
-          {hasCommits && (
+          {file.commits && file.commits.length > 0 && (
             <div className="w-40 sm:w-56">
                 <Select
                     value={file.activeCommitHash}
@@ -286,7 +287,7 @@ export function EditorPanel({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{hasChanges ? 'View Changes' : 'No changes from previous version'}</p>
+                <p>{hasChanges ? (viewMode === 'edit' ? 'View Changes' : 'Back to Editor') : 'No previous version to compare'}</p>
               </TooltipContent>
             </Tooltip>
             
@@ -296,14 +297,20 @@ export function EditorPanel({
                         variant="ghost"
                         size="icon"
                         onClick={() => onAiAction('analyze-diff', code, file.language, file.previousContent)}
-                        disabled={isLoading || !hasChanges}
+                        disabled={analyzeDisabled}
                         aria-label="Analyze Changes"
                     >
                         <Sparkles className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>{hasChanges ? 'Analyze Changes' : 'No changes to analyze'}</p>
+                    <p>
+                      {!hasChanges
+                        ? 'No previous version to compare'
+                        : viewMode === 'edit'
+                        ? 'Click "View Changes" to enable analysis'
+                        : 'Analyze Changes'}
+                    </p>
                 </TooltipContent>
             </Tooltip>
 
