@@ -82,10 +82,7 @@ const renderOutput = (output: AIOutput) => {
     const testData = data as GenerateUnitTestOutput;
     return (
       <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold mb-2">Generated Unit Test:</h4>
-          <CodeBlock code={testData.unitTest} language={language} />
-        </div>
+        <CodeBlock code={testData.unitTest} language={language} />
         <div>
           <h4 className="font-semibold mb-2">Explanation:</h4>
           <p className="text-muted-foreground whitespace-pre-wrap">{testData.explanation}</p>
@@ -96,26 +93,12 @@ const renderOutput = (output: AIOutput) => {
 
   if (type === 'docs') {
     const docsData = data as GenerateCodeDocsOutput;
-    return (
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold mb-2">Generated Comments:</h4>
-          <CodeBlock code={docsData.documentation} language={language} />
-        </div>
-      </div>
-    );
+    return <CodeBlock code={docsData.documentation} language={language} />;
   }
   
   if (type === 'sdd') {
     const sddData = data as GenerateSddOutput;
-    return (
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold mb-2">Software Design Document:</h4>
-          <CodeBlock code={sddData.sdd} language={language} />
-        </div>
-      </div>
-    );
+    return <CodeBlock code={sddData.sdd} language={language} />;
   }
 
   return <p className="whitespace-pre-wrap">{String(data)}</p>;
