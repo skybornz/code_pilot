@@ -1,6 +1,6 @@
 'use server';
 
-import type { CodeFile } from '@/components/codepilot/types';
+import type { CodeFile, Commit } from '@/components/codepilot/types';
 import { z } from 'zod';
 
 // A list of common files/directories to ignore
@@ -176,6 +176,7 @@ async function getBitbucketFilesRecursively(
             const language = name.split('.').pop() || 'text';
             
             let originalContent = content;
+            // Only fetch from main branch if the selected branch is different
             if (branch !== mainBranch) {
                 originalContent = await getBitbucketFileContent(workspace, repo, mainBranch, path) ?? '';
             }
@@ -230,4 +231,62 @@ export async function loadBitbucketFiles(url: string, branch: string): Promise<{
             error: 'An unknown error occurred while fetching the repository files.',
         };
     }
+}
+
+const BitbucketCommitSchema = z.object({
+  hash: z.string(),
+  message: z.string(),
+  date: z.string(),
+});
+const BitbucketCommitsResponseSchema = z.object({
+  values: z.array(BitbucketCommitSchema),
+  next: z.string().optional(),
+});
+
+export async function fetchBitbucketFileCommits(url: string, branch: string, path: string): Promise<{ success: boolean; commits?: Commit[]; error?: string }> {
+    const bitbucketInfo = parseBitbucketUrl(url);
+    if (!bitbucketInfo) {
+        return { success: false, error: 'Invalid Bitbucket repository URL.' };
+    }
+    const { workspace, repo } = bitbucketInfo;
+    
+    const commitsUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/commits/${branch}?path=${encodeURIComponent(path)}&fields=values.hash,values.message,values.date`;
+    try {
+        const commits: Commit[] = [];
+        let currentUrl: string | undefined = commitsUrl;
+
+        while (currentUrl) {
+            const response = await fetch(currentUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+            if (!response.ok) {
+                const errorData = await response.json();
+                const errorMessage = errorData?.error?.message || response.statusText;
+                return { success: false, error: `Failed to fetch commits: ${errorMessage}` };
+            }
+            const data = await response.json();
+            const parsedData = BitbucketCommitsResponseSchema.parse(data);
+            commits.push(...parsedData.values.map(c => ({...c, message: c.message.split('\n')[0] }))); // take only first line of commit message
+            currentUrl = parsedData.next;
+        }
+        
+        return { success: true, commits };
+    } catch (error) {
+        console.error('Error fetching Bitbucket commits:', error);
+        if (error instanceof Error) {
+            return { success: false, error: `An unexpected error occurred: ${error.message}` };
+        }
+        return { success: false, error: 'An unknown error occurred while fetching commits.' };
+    }
+}
+
+export async function getBitbucketFileContentForCommit(url: string, commitHash: string, path: string): Promise<{ success: boolean; content?: string; error?: string }> {
+    const bitbucketInfo = parseBitbucketUrl(url);
+    if (!bitbucketInfo) {
+        return { success: false, error: 'Invalid Bitbucket repository URL.' };
+    }
+    const { workspace, repo } = bitbucketInfo;
+    const content = await getBitbucketFileContent(workspace, repo, commitHash, path);
+    if (content !== null) {
+        return { success: true, content };
+    }
+    return { success: false, error: 'Could not fetch file content for the specified commit.' };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import type { AIOutput, ActionType, CodeFile } from '@/components/codepilot/types';
+import type { AIOutput, ActionType, CodeFile, Commit } from '@/components/codepilot/types';
 import { AIOutputPanel } from '@/components/codepilot/ai-output-panel';
 import { EditorPanel } from '@/components/codepilot/editor-panel';
 import { FileExplorer } from '@/components/codepilot/file-explorer';
@@ -22,6 +22,7 @@ import React, { useState, useCallback } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
 import type { Project } from '@/lib/project-database';
+import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit } from '@/actions/github';
 
 export function SemCoPilotWorkspace() {
   const [files, setFiles] = useState<CodeFile[]>([]);
@@ -43,10 +44,56 @@ export function SemCoPilotWorkspace() {
     setAiOutput(null);
   }, []);
 
-  const handleFileSelect = useCallback((fileId: string) => {
+  const handleFileSelect = useCallback(async (fileId: string) => {
     setActiveFileId(fileId);
     setAiOutput(null);
-  }, []);
+
+    const file = files.find(f => f.id === fileId);
+    // Fetch commits only if they haven't been fetched before for this file
+    if (file && !file.commits && loadedProjectInfo) {
+        setIsLoading(true);
+        const result = await fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, file.id);
+        setIsLoading(false);
+
+        if (result.success && result.commits) {
+            setFiles(prevFiles => prevFiles.map(f => 
+                f.id === fileId 
+                    ? { ...f, commits: result.commits, activeCommitHash: result.commits?.[0]?.hash } 
+                    : f
+            ));
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Error fetching commits',
+                description: result.error || 'Could not load commit history for this file.',
+            });
+        }
+    }
+  }, [files, loadedProjectInfo, toast]);
+
+  const handleCommitChange = useCallback(async (fileId: string, commitHash: string) => {
+    const file = files.find(f => f.id === fileId);
+    if (!file || !loadedProjectInfo) return;
+
+    setIsLoading(true);
+    const result = await getBitbucketFileContentForCommit(loadedProjectInfo.project.url, commitHash, file.id);
+    setIsLoading(false);
+
+    if (result.success && typeof result.content === 'string') {
+        setFiles(prevFiles => prevFiles.map(f => 
+            f.id === fileId 
+                ? { ...f, content: result.content, activeCommitHash: commitHash } 
+                : f
+        ));
+        setAiOutput(null); // Clear AI output when content changes
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Error loading file content',
+            description: result.error || 'Could not load file content for this commit.',
+        });
+    }
+  }, [files, loadedProjectInfo, toast]);
 
   const activeFile = files.find((f) => f.id === activeFileId);
 
@@ -119,11 +166,12 @@ export function SemCoPilotWorkspace() {
 
   const editor = activeFile ? (
     <EditorPanel
-      key={activeFile.id}
+      key={`${activeFile.id}-${activeFile.activeCommitHash || 'latest'}`}
       file={activeFile}
       onCodeChange={handleCodeChange}
       onAiAction={handleAiAction}
       onCompletion={handleCompletion}
+      onCommitChange={handleCommitChange}
       isLoading={isLoading}
       completion={aiOutput?.type === 'completion' ? aiOutput.data : null}
       onAcceptCompletion={(completion) => {

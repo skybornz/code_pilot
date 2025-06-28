@@ -1,7 +1,7 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles, GitCommit } from 'lucide-react';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { javascript } from '@codemirror/lang-javascript';
 import { css } from '@codemirror/lang-css';
 import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatDistanceToNow } from 'date-fns';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -22,6 +24,7 @@ interface EditorPanelProps {
   completion: string | null;
   onAcceptCompletion: (completion: string) => void;
   onDismissCompletion: () => void;
+  onCommitChange: (fileId: string, commitHash: string) => void;
 }
 
 const getLanguageExtension = (language: string) => {
@@ -49,7 +52,8 @@ export function EditorPanel({
   isLoading,
   completion,
   onAcceptCompletion,
-  onDismissCompletion
+  onDismissCompletion,
+  onCommitChange,
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content);
   const [viewMode, setViewMode] = useState<'edit' | 'diff'>('edit');
@@ -86,6 +90,7 @@ export function EditorPanel({
 
   const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
   const hasChanges = file.content !== file.originalContent;
+  const hasCommits = file.commits && file.commits.length > 0;
 
 
   const actions: { id: ActionType; label: string; icon: React.ElementType }[] = [
@@ -99,9 +104,42 @@ export function EditorPanel({
 
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
-      <CardHeader className="flex-row items-center justify-between border-b p-4">
-        <CardTitle className="text-lg">{file.name}</CardTitle>
-        <div className="flex items-center gap-1">
+      <CardHeader className="flex-row items-center justify-between border-b p-4 space-x-4">
+        <div className="flex-1 min-w-0">
+          <CardTitle className="text-lg truncate" title={file.name}>{file.name}</CardTitle>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {hasCommits && (
+            <div className="w-56">
+                <Select
+                    value={file.activeCommitHash}
+                    onValueChange={(newHash) => {
+                        if (newHash) {
+                            onCommitChange(file.id, newHash);
+                        }
+                    }}
+                    disabled={isLoading}
+                >
+                    <SelectTrigger className="h-9">
+                        <GitCommit className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                        <SelectValue placeholder="Select a commit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {file.commits?.map(commit => (
+                            <SelectItem key={commit.hash} value={commit.hash}>
+                                <div className="flex flex-col text-left">
+                                    <span className="font-medium truncate" title={commit.message}>{commit.message}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {commit.hash.substring(0, 7)} &bull; {formatDistanceToNow(new Date(commit.date), { addSuffix: true })}
+                                    </span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+          )}
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -186,7 +224,7 @@ export function EditorPanel({
           ) : (
             <div className="flex-1 flex flex-row gap-2 p-2 min-h-0 h-full">
                 <div className="flex-1 flex flex-col">
-                    <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Original</h3>
+                    <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Original (from main branch)</h3>
                     <div className="flex-1 rounded-md overflow-hidden border">
                         <CodeMirror
                             value={file.originalContent}

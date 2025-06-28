@@ -20,10 +20,18 @@ export type AIOutput = {
     language?: string;
 };
 
+export type Commit = {
+  hash: string;
+  message: string;
+  date: string;
+};
+
 export type CodeFile = {
   id: string;
   name: string;
   language: string;
   content: string;
   originalContent: string;
+  commits?: Commit[];
+  activeCommitHash?: string;
 };
