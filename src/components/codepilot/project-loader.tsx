@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { CodeFile } from './types';
-import { Link as LinkIcon, Loader2 } from 'lucide-react';
+import { Github, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { importFromGithub } from '@/actions/github';
+import { Logo } from './logo';
 
 interface ProjectLoaderProps {
   onFilesLoaded: (files: CodeFile[]) => void;
@@ -56,18 +57,21 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Load Your Project</CardTitle>
-          <CardDescription>Import from a public GitHub repository to get started.</CardDescription>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+      <div className="mb-8">
+        <Logo />
+      </div>
+      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl">Load Your Project</CardTitle>
+          <CardDescription>
+            Import a public GitHub repository to start coding with your AI partner.
+          </CardDescription>
         </CardHeader>
         <CardContent>
             <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <LinkIcon className="h-4 w-4" />
-                    <p className="font-medium text-sm">Import from URL</p>
-                </div>
+              <div className="relative">
+                <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
                     type="text" 
                     placeholder="https://github.com/user/repo"
@@ -75,11 +79,13 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
                     onChange={(e) => setRepoUrl(e.target.value)}
                     disabled={isImporting}
                     onKeyDown={(e) => { if(e.key === 'Enter') handleUrlImport() }}
+                    className="pl-10"
                 />
-                <Button onClick={handleUrlImport} className="w-full" disabled={isImporting}>
-                    {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isImporting ? 'Importing...' : 'Import from Repository'}
-                </Button>
+              </div>
+              <Button onClick={handleUrlImport} className="w-full" disabled={isImporting}>
+                  {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isImporting ? 'Importing...' : 'Import Repository'}
+              </Button>
             </div>
         </CardContent>
       </Card>
