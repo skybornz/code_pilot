@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { CodeFile } from './types';
-import { Github, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { importFromGithub } from '@/actions/github';
+import { fetchBitbucketBranches, loadBitbucketFiles } from '@/actions/github';
 
 const BitbucketIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -21,45 +22,55 @@ interface ProjectLoaderProps {
 
 export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   const [repoUrl, setRepoUrl] = useState('');
-  const [isImporting, setIsImporting] = useState(false);
+  const [branches, setBranches] = useState<string[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  
   const { toast } = useToast();
 
-  const handleUrlImport = async () => {
+  const handleFetchBranches = async () => {
     if (!repoUrl.trim()) {
-      toast({
-        variant: 'destructive',
-        title: 'URL Required',
-        description: 'Please enter a public GitHub or Bitbucket repository URL.',
-      });
+      toast({ variant: 'destructive', title: 'URL Required', description: 'Please enter a public Bitbucket repository URL.' });
       return;
     }
     
-    setIsImporting(true);
-    const { id, update } = toast({
-      title: 'Importing Repository...',
-      description: 'Please wait while we fetch the project files.',
-    });
+    setIsLoadingBranches(true);
+    setBranches([]);
+    setSelectedBranch(null);
+    const result = await fetchBitbucketBranches(repoUrl);
+    setIsLoadingBranches(false);
 
-    const result = await importFromGithub(repoUrl);
-
-    setIsImporting(false);
-
-    if (result.success && result.files) {
-      update({
-        id,
-        title: 'Import Successful',
-        description: `Loaded ${result.files.length} files from the repository.`,
-      });
-      onFilesLoaded(result.files);
+    if (result.success && result.branches) {
+      setBranches(result.branches);
+      toast({ title: 'Branches Loaded', description: 'Please select a branch to continue.' });
     } else {
-      update({
-        id,
-        variant: 'destructive',
-        title: 'Import Failed',
-        description: result.error,
-      });
+      toast({ variant: 'destructive', title: 'Failed to Fetch Branches', description: result.error });
     }
   };
+
+  const handleLoadProject = async () => {
+    if (!repoUrl || !selectedBranch) {
+        toast({ variant: 'destructive', title: 'Branch Required', description: 'Please select a branch first.' });
+        return;
+    }
+
+    setIsLoadingFiles(true);
+    const { id, update } = toast({ title: 'Importing Repository...', description: 'Please wait while we fetch the project files.' });
+    
+    const result = await loadBitbucketFiles(repoUrl, selectedBranch);
+    setIsLoadingFiles(false);
+
+    if (result.success && result.files) {
+      update({ id, title: 'Import Successful', description: `Loaded ${result.files.length} files from the repository.` });
+      onFilesLoaded(result.files);
+    } else {
+      update({ id, variant: 'destructive', title: 'Import Failed', description: result.error });
+    }
+  };
+  
+  const isLoading = isLoadingBranches || isLoadingFiles;
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full">
@@ -67,28 +78,49 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Load Your Project</CardTitle>
           <CardDescription>
-            Import a public GitHub or Bitbucket repository to start coding with your AI partner.
+            Import a public Bitbucket repository to start coding with your AI partner.
           </CardDescription>
         </CardHeader>
         <CardContent>
             <div className="space-y-4">
-              <div className="relative">
-                <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <BitbucketIcon className="absolute left-10 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                    type="text" 
-                    placeholder="https://github.com/user/repo or bitbucket.org/..."
-                    value={repoUrl}
-                    onChange={(e) => setRepoUrl(e.target.value)}
-                    disabled={isImporting}
-                    onKeyDown={(e) => { if(e.key === 'Enter') handleUrlImport() }}
-                    className="pl-20"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-grow">
+                    <BitbucketIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input 
+                        type="text" 
+                        placeholder="https://bitbucket.org/workspace/repo"
+                        value={repoUrl}
+                        onChange={(e) => setRepoUrl(e.target.value)}
+                        disabled={isLoading || branches.length > 0}
+                        onKeyDown={(e) => { if(e.key === 'Enter') handleFetchBranches() }}
+                        className="pl-10"
+                    />
+                </div>
+                <Button onClick={handleFetchBranches} disabled={isLoading || !repoUrl.trim()}>
+                  {isLoadingBranches && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Fetch Branches
+                </Button>
               </div>
-              <Button onClick={handleUrlImport} className="w-full" disabled={isImporting}>
-                  {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isImporting ? 'Importing...' : 'Import Repository'}
-              </Button>
+
+              {branches.length > 0 && (
+                <div className="space-y-4">
+                    <Select onValueChange={setSelectedBranch} disabled={isLoading}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a branch" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {branches.map(branch => (
+                                <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Button onClick={handleLoadProject} className="w-full" disabled={isLoading || !selectedBranch}>
+                      {isLoadingFiles && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Load Project Files
+                    </Button>
+                </div>
+              )}
             </div>
         </CardContent>
       </Card>
