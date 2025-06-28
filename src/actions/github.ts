@@ -123,31 +123,24 @@ async function getBitbucketFilesRecursively(
     if (contentType && contentType.includes('application/json')) {
         // It's a directory
         const files: CodeFile[] = [];
-        let currentResponse = response;
-        let hasNextPage = true;
+        let currentUrl: string | undefined = url;
 
-        while (hasNextPage) {
-            const data = await currentResponse.json();
+        while (currentUrl) {
+            const pageResponse = await fetch(currentUrl, { cache: 'no-store' });
+            if (!pageResponse.ok) {
+                console.warn(`Could not fetch Bitbucket page: ${currentUrl}`);
+                break;
+            }
+
+            const data = await pageResponse.json();
             const parsedData = BitbucketSrcResponseSchema.parse(data);
 
-            const promises = parsedData.values.map(item =>
-                getBitbucketFilesRecursively(workspace, repo, branch, item.path)
-            );
-            
-            const nestedFilesArray = await Promise.all(promises);
-            for (const nestedFiles of nestedFilesArray) {
+            for (const item of parsedData.values) {
+                const nestedFiles = await getBitbucketFilesRecursively(workspace, repo, branch, item.path);
                 files.push(...nestedFiles);
             }
 
-            if (parsedData.next) {
-                currentResponse = await fetch(parsedData.next, { cache: 'no-store' });
-                 if (!currentResponse.ok) {
-                    console.warn(`Could not fetch Bitbucket page: ${parsedData.next}`);
-                    hasNextPage = false; // Stop if paginated fetch fails
-                }
-            } else {
-                hasNextPage = false;
-            }
+            currentUrl = parsedData.next;
         }
         return files;
 
