@@ -45,11 +45,6 @@ export function SemCoPilotWorkspace() {
 
   const activeFile = files.find((f) => f.id === activeFileId);
 
-  const handleFileSelect = (fileId: string) => {
-    setActiveFileId(fileId);
-    setAiOutput(null);
-  };
-
   const handleCodeChange = (fileId: string, newContent: string) => {
     setFiles((prevFiles) =>
       prevFiles.map((file) =>
@@ -64,10 +59,7 @@ export function SemCoPilotWorkspace() {
     try {
       let result: AIOutput | null = null;
       if (action === 'analyze-diff') {
-        if (!originalCode) {
-          throw new Error('Original code is required for diff analysis.');
-        }
-        const analysis = await analyzeDiff({ oldCode: originalCode, newCode: code, language });
+        const analysis = await analyzeDiff({ oldCode: originalCode!, newCode: code, language });
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
       } else if (action === 'explain') {
         const { explanation } = await explainCode({ code });

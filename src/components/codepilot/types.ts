@@ -1,3 +1,5 @@
+'use client';
+
 import type { FindBugsOutput } from "@/ai/flows/find-bugs";
 import type { RefactorCodeOutput } from "@/ai/flows/refactor-code";
 import type { GenerateUnitTestOutput } from "@/ai/flows/generate-unit-test";
@@ -23,5 +25,5 @@ export type CodeFile = {
   name: string;
   language: string;
   content: string;
-  originalContent?: string;
+  originalContent: string;
 };

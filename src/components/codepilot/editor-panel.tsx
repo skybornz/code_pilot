@@ -85,7 +85,7 @@ export function EditorPanel({
   };
 
   const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
-  const hasChanges = file.originalContent !== undefined && file.content !== file.originalContent;
+  const hasChanges = file.content !== file.originalContent;
 
 
   const actions: { id: ActionType; label: string; icon: React.ElementType }[] = [
@@ -118,7 +118,7 @@ export function EditorPanel({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>View Changes</p>
+                <p>{hasChanges ? 'View Changes' : 'No changes to display'}</p>
               </TooltipContent>
             </Tooltip>
             {viewMode === 'diff' && (
@@ -189,7 +189,7 @@ export function EditorPanel({
                     <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground">Original</h3>
                     <div className="flex-1 rounded-md overflow-hidden border">
                         <CodeMirror
-                            value={file.originalContent || ''}
+                            value={file.originalContent}
                             height="100%"
                             theme={vscodeDark}
                             extensions={langExtension}

@@ -1,16 +1,6 @@
-export type CodeFile = {
-  id: string;
-  name: string;
-  language: string;
-  content: string;
-};
+import type { CodeFile } from '@/components/codepilot/types';
 
-export const dummyFiles: CodeFile[] = [
-  {
-    id: '1',
-    name: 'button.tsx',
-    language: 'typescript',
-    content: `import React from 'react';
+const buttonContent = `import React from 'react';
 
 type ButtonProps = {
   text: string;
@@ -27,13 +17,9 @@ const Button = ({ text, onClick }: ButtonProps) => {
 };
 
 export default Button;
-`
-  },
-  {
-    id: '2',
-    name: 'utils.js',
-    language: 'javascript',
-    content: `// Utility function to add two numbers
+`;
+
+const utilsContent = `// Utility function to add two numbers
 function add(a, b) {
   return a + b;
 }
@@ -49,13 +35,9 @@ function fibonacci(n) {
     }
     return b;
 }
-`
-  },
-  {
-    id: '3',
-    name: 'styles.css',
-    language: 'css',
-    content: `.container {
+`;
+
+const stylesContent = `.container {
   display: flex;
   flex-direction: column;
   align-itemss: center; /* Typo here */
@@ -67,13 +49,9 @@ function fibonacci(n) {
   font-size: 24px;
   color: #333;
 }
-`
-  },
-  {
-    id: '4',
-    name: 'server.py',
-    language: 'python',
-    content: `from flask import Flask
+`;
+
+const serverContent = `from flask import Flask
 app = Flask(__name__)
 
 @app.route('/')
@@ -82,6 +60,35 @@ def hello_world():
 
 def unused_function():
     pass
-`
+`;
+
+export const dummyFiles: CodeFile[] = [
+  {
+    id: '1',
+    name: 'button.tsx',
+    language: 'typescript',
+    content: buttonContent,
+    originalContent: buttonContent,
+  },
+  {
+    id: '2',
+    name: 'utils.js',
+    language: 'javascript',
+    content: utilsContent,
+    originalContent: utilsContent,
+  },
+  {
+    id: '3',
+    name: 'styles.css',
+    language: 'css',
+    content: stylesContent,
+    originalContent: stylesContent,
+  },
+  {
+    id: '4',
+    name: 'server.py',
+    language: 'python',
+    content: serverContent,
+    originalContent: serverContent,
   }
 ];
