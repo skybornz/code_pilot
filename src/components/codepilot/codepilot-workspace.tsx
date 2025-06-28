@@ -54,17 +54,6 @@ export function SemCoPilotWorkspace() {
     );
   };
 
-  const handleApplyChanges = (newCode: string) => {
-    if (activeFile) {
-      handleCodeChange(activeFile.id, newCode);
-      setAiOutput(null);
-      toast({
-        title: 'Changes Applied',
-        description: `${activeFile.name} has been updated with the refactored code.`,
-      });
-    }
-  };
-
   const handleAiAction = useCallback(async (action: ActionType, code: string, language: string) => {
     setIsLoading(true);
     setAiOutput(null);
@@ -147,7 +136,6 @@ export function SemCoPilotWorkspace() {
     <AIOutputPanel
       output={aiOutput}
       isLoading={isLoading}
-      onApplyChanges={handleApplyChanges}
     />
   );
   

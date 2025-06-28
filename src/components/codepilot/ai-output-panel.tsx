@@ -1,10 +1,9 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wand2 } from 'lucide-react';
-import type { AIOutput, AIOutputData } from './types';
+import type { AIOutput } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
 import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
@@ -15,10 +14,9 @@ import { CodeBlock } from './code-block';
 interface AIOutputPanelProps {
   output: AIOutput | null;
   isLoading: boolean;
-  onApplyChanges: (newCode: string) => void;
 }
 
-const renderOutput = (output: AIOutput, onApplyChanges: (newCode: string) => void) => {
+const renderOutput = (output: AIOutput) => {
   const { data, type, language } = output;
 
   if (type === 'bugs') {
@@ -102,7 +100,7 @@ const renderOutput = (output: AIOutput, onApplyChanges: (newCode: string) => voi
   return <p className="whitespace-pre-wrap">{String(data)}</p>;
 };
 
-export function AIOutputPanel({ output, isLoading, onApplyChanges }: AIOutputPanelProps) {
+export function AIOutputPanel({ output, isLoading }: AIOutputPanelProps) {
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="border-b p-4">
@@ -129,17 +127,10 @@ export function AIOutputPanel({ output, isLoading, onApplyChanges }: AIOutputPan
         {!isLoading && output && output.type !== 'completion' && (
           <div>
             <h3 className="font-bold text-xl mb-4">{output.title}</h3>
-            {renderOutput(output, onApplyChanges)}
+            {renderOutput(output)}
           </div>
         )}
       </CardContent>
-      {!isLoading && output?.type === 'refactor' && (
-        <CardFooter className="p-4 border-t">
-          <Button onClick={() => onApplyChanges((output.data as RefactorCodeOutput).refactoredCode)}>
-            Apply Changes
-          </Button>
-        </CardFooter>
-      )}
     </Card>
   );
 }
