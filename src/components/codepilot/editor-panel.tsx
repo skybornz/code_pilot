@@ -97,7 +97,7 @@ export function EditorPanel({
           </TooltipProvider>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 p-0 flex flex-col">
+      <CardContent className="flex-1 p-0 flex flex-col min-h-0">
         <div className="relative flex-1">
           <Textarea
             ref={textareaRef}

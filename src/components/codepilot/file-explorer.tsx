@@ -119,7 +119,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick 
       <div className="p-4 border-b border-sidebar-border">
         <Logo />
       </div>
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 min-h-0">
         <div className="flex justify-between items-center mb-2 px-2">
             <h2 className="text-lg font-semibold flex items-center gap-2">
                 <Folder className="w-5 h-5" />

@@ -82,7 +82,7 @@ export function AIOutputPanel({ output, isLoading, onApplyChanges }: AIOutputPan
           <span>AI Assistant</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 p-4 overflow-y-auto">
+      <CardContent className="flex-1 p-4 overflow-y-auto min-h-0">
         {isLoading && (
           <div className="space-y-4">
             <Skeleton className="h-4 w-1/4" />
