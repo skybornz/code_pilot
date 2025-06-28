@@ -43,6 +43,11 @@ export function SemCoPilotWorkspace() {
     setAiOutput(null);
   }, []);
 
+  const handleFileSelect = useCallback((fileId: string) => {
+    setActiveFileId(fileId);
+    setAiOutput(null);
+  }, []);
+
   const activeFile = files.find((f) => f.id === activeFileId);
 
   const handleCodeChange = (fileId: string, newContent: string) => {
