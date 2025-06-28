@@ -45,8 +45,8 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   }
 
   return (
-    <div className="flex flex-col justify-center h-full w-full p-4">
-      <Card className="w-full shadow-2xl bg-card/80 backdrop-blur-sm">
+    <div className="h-full w-full p-4">
+      <Card className="w-full h-full flex flex-col shadow-2xl bg-card/80 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-2xl">My Projects</CardTitle>
@@ -70,7 +70,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
             </DialogContent>
           </Dialog>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 overflow-y-auto">
           {projects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects.map(project => (
@@ -83,10 +83,12 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 text-muted-foreground">
-              <FolderGit2 className="mx-auto h-12 w-12 mb-4" />
-              <p>No projects yet.</p>
-              <p>Click "Add Project" to get started.</p>
+            <div className="flex h-full items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <FolderGit2 className="mx-auto h-12 w-12 mb-4" />
+                  <p>No projects yet.</p>
+                  <p>Click "Add Project" to get started.</p>
+                </div>
             </div>
           )}
         </CardContent>
