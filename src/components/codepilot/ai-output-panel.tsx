@@ -8,6 +8,7 @@ import type { AIOutput, AIOutputData } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
 import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
+import type { GenerateCodeDocsOutput } from '@/ai/flows/generate-code-docs';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -65,6 +66,18 @@ const renderOutput = (data: AIOutputData, type: AIOutput['type'], onApplyChanges
         <div>
           <h4 className="font-semibold mb-2">Explanation:</h4>
           <p className="text-muted-foreground whitespace-pre-wrap">{testData.explanation}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'docs') {
+    const docsData = data as GenerateCodeDocsOutput;
+    return (
+      <div className="space-y-4">
+        <div>
+          <h4 className="font-semibold mb-2">Documentation:</h4>
+          <pre className="bg-muted p-3 rounded-md text-sm font-code whitespace-pre-wrap">{docsData.documentation}</pre>
         </div>
       </div>
     );

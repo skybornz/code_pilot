@@ -1,7 +1,7 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { BookText, Bug, TestTube2, Wand2 } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2, NotebookText } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,6 +68,7 @@ export function EditorPanel({
     { id: 'refactor', label: 'Refactor Code', icon: Wand2 },
     { id: 'bugs', label: 'Find Bugs', icon: Bug },
     { id: 'test', label: 'Generate Unit Test', icon: TestTube2 },
+    { id: 'docs', label: 'Generate Docs', icon: NotebookText },
   ];
 
   return (

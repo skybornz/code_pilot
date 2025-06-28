@@ -14,6 +14,7 @@ import { explainCode } from '@/ai/flows/explain-code';
 import { findBugs } from '@/ai/flows/find-bugs';
 import { generateUnitTest } from '@/ai/flows/generate-unit-test';
 import { refactorCode } from '@/ai/flows/refactor-code';
+import { generateCodeDocs } from '@/ai/flows/generate-code-docs';
 import { Menu } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
@@ -79,6 +80,9 @@ export default function CodePilotPage() {
       } else if (action === 'refactor') {
         const refactored = await refactorCode({ code, language });
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion' };
+      } else if (action === 'docs') {
+        const docs = await generateCodeDocs({ code });
+        result = { type: 'docs', data: docs, title: 'Generated Documentation' };
       }
       setAiOutput(result);
     } catch (error) {
