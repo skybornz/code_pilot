@@ -109,8 +109,8 @@ const DiffView = ({ original, modified, language }: { original: string, modified
         return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
     }, [original, modified]);
 
-    const originalExtensions = [langExtension, lineHighlighter(originalLineClasses)];
-    const modifiedExtensions = [langExtension, lineHighlighter(modifiedLineClasses)];
+    const originalExtensions = [...langExtension, lineHighlighter(originalLineClasses)];
+    const modifiedExtensions = [...langExtension, lineHighlighter(modifiedLineClasses)];
 
     const commonEditorProps = {
         height: "100%",
