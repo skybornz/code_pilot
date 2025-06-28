@@ -10,6 +10,7 @@ import { useMemo } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface FileExplorerProps {
   files: CodeFile[];
@@ -116,6 +117,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeV
 export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick }: FileExplorerProps) {
     const fileTree = useMemo(() => buildFileTree(files), [files]);
     const { user, isAdmin, logout } = useAuth();
+    const pathname = usePathname();
   
     return (
     <TooltipProvider>
@@ -155,7 +157,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick 
                           </div>
                       </div>
                       <div className="flex items-center gap-1">
-                          {isAdmin && (
+                          {isAdmin && pathname !== '/admin' && (
                               <Tooltip>
                                   <TooltipTrigger asChild>
                                       <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
