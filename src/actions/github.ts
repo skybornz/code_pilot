@@ -162,9 +162,26 @@ function parseBitbucketUrl(url: string): { workspace: string; repo: string } | n
     }
 }
 
+async function getBitbucketDefaultBranch(workspace: string, repo: string): Promise<string | null> {
+    try {
+        const url = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}`;
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        if (!response.ok) {
+            console.error(`Failed to fetch Bitbucket repo info: ${response.statusText}`);
+            return 'master'; // Fallback
+        }
+        const data = await response.json();
+        return data?.mainbranch?.name || 'master';
+    } catch (error) {
+        console.error('Error fetching default branch:', error);
+        return 'master'; // Fallback in case of error
+    }
+}
+
 async function getBitbucketFilesRecursively(
     workspace: string,
     repo: string,
+    branch: string,
     path: string = ''
 ): Promise<CodeFile[]> {
     if (shouldIgnore(path)) {
@@ -172,7 +189,7 @@ async function getBitbucketFilesRecursively(
     }
 
     const files: CodeFile[] = [];
-    const url = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/src/master/${path}`;
+    const url = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/src/${branch}/${path}`;
 
     const response = await fetch(url, { cache: 'no-store' });
     if (!response.ok) {
@@ -191,7 +208,7 @@ async function getBitbucketFilesRecursively(
             const parsedData = BitbucketSrcResponseSchema.parse(data);
 
             for (const item of parsedData.values) {
-                const nestedFiles = await getBitbucketFilesRecursively(workspace, repo, item.path);
+                const nestedFiles = await getBitbucketFilesRecursively(workspace, repo, branch, item.path);
                 files.push(...nestedFiles);
             }
 
@@ -226,7 +243,11 @@ export async function importFromGithub(
     if (githubInfo) {
       files = await getGithubFilesRecursively(githubInfo.owner, githubInfo.repo);
     } else if (bitbucketInfo) {
-      files = await getBitbucketFilesRecursively(bitbucketInfo.workspace, bitbucketInfo.repo);
+      const branch = await getBitbucketDefaultBranch(bitbucketInfo.workspace, bitbucketInfo.repo);
+      if (!branch) {
+          return { success: false, error: 'Could not find the default branch for the repository. The repository might be private or empty.' };
+      }
+      files = await getBitbucketFilesRecursively(bitbucketInfo.workspace, bitbucketInfo.repo, branch);
     } else {
       return { success: false, error: 'Invalid GitHub or Bitbucket repository URL.' };
     }
