@@ -75,13 +75,16 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
         }
         return builder.finish();
       }
+    },
+    {
+      decorations: v => v.decorations,
     }
   );
   return plugin;
 }
 
 
-const DiffView = ({ original, modified, language }: { original: string, modified: string, language: string }) => {
+const DiffView = ({ original, modified, language, originalCommitHash, modifiedCommitHash }: { original: string, modified: string, language: string, originalCommitHash?: string, modifiedCommitHash?: string }) => {
     const { originalLineClasses, modifiedLineClasses } = useMemo(() => {
         const diff = diffLines(original, modified);
         const originalClasses: { line: number; class: string }[] = [];
@@ -134,7 +137,9 @@ const DiffView = ({ original, modified, language }: { original: string, modified
     return (
         <div className="flex flex-col h-full gap-2 p-2">
             <div className="flex-1 flex flex-col min-h-0">
-                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">Original (from main branch)</h3>
+                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
+                    Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
+                </h3>
                 <div className="flex-1 rounded-md border overflow-hidden">
                     <CodeMirror
                         value={original}
@@ -144,7 +149,9 @@ const DiffView = ({ original, modified, language }: { original: string, modified
                 </div>
             </div>
             <div className="flex-1 flex flex-col min-h-0">
-                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">Modified</h3>
+                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
+                    Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
+                </h3>
                 <div className="flex-1 rounded-md border overflow-hidden">
                     <CodeMirror
                         value={modified}
@@ -203,8 +210,13 @@ export function EditorPanel({
   };
 
   const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
-  const hasChanges = file.content !== file.originalContent;
+  const hasChanges = file.previousContent !== undefined && file.content !== file.previousContent;
   const hasCommits = file.commits && file.commits.length > 0;
+  
+  const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
+  const previousCommit = (activeCommitIndex > -1 && file.commits && activeCommitIndex < file.commits.length - 1)
+      ? file.commits[activeCommitIndex + 1]
+      : null;
 
   const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
@@ -220,11 +232,11 @@ export function EditorPanel({
 
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
-      <CardHeader className="flex-shrink-0 flex-row items-center justify-between border-b p-4 space-x-4">
-        <div className="flex-1 min-w-0">
+      <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-4 space-y-2 md:space-y-0 md:space-x-4">
+        <div className="flex-1 min-w-0 w-full">
           <CardTitle className="text-lg truncate" title={file.name}>{file.name}</CardTitle>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 w-full md:w-auto justify-end">
           {hasCommits && (
             <div className="w-40 sm:w-56">
                 <Select
@@ -274,8 +286,25 @@ export function EditorPanel({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{hasChanges ? 'View Changes' : 'No changes to display'}</p>
+                <p>{hasChanges ? 'View Changes' : 'No changes from previous version'}</p>
               </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onAiAction('analyze-diff', code, file.language, file.previousContent)}
+                        disabled={isLoading || !hasChanges}
+                        aria-label="Analyze Changes"
+                    >
+                        <Sparkles className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{hasChanges ? 'Analyze Changes' : 'No changes to analyze'}</p>
+                </TooltipContent>
             </Tooltip>
 
             <div className="w-[1px] h-6 bg-border mx-1"></div>
@@ -318,15 +347,6 @@ export function EditorPanel({
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end">
-                {viewMode === 'diff' && (
-                    <>
-                        <DropdownMenuItem onClick={() => onAiAction('analyze-diff', code, file.language, file.originalContent)} disabled={isLoading}>
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            <span>Analyze Changes</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                    </>
-                )}
                 {secondaryActions.map((action) => (
                     <DropdownMenuItem key={action.id} onClick={() => onAiAction(action.id, code, file.language)} disabled={isLoading}>
                         <action.icon className="mr-2 h-4 w-4" />
@@ -360,7 +380,13 @@ export function EditorPanel({
               }}
             />
           ) : (
-             <DiffView original={file.originalContent} modified={code} language={file.language} />
+             <DiffView 
+                original={file.previousContent ?? ''} 
+                modified={code} 
+                language={file.language} 
+                originalCommitHash={previousCommit?.hash}
+                modifiedCommitHash={file.activeCommitHash}
+             />
           )}
         </div>
         {completion && viewMode === 'edit' && (

@@ -49,48 +49,92 @@ export function SemCoPilotWorkspace() {
     setAiOutput(null);
 
     const file = files.find(f => f.id === fileId);
-    // Fetch commits only if they haven't been fetched before for this file
     if (file && !file.commits && loadedProjectInfo) {
         setIsLoading(true);
         const result = await fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, file.id);
-        setIsLoading(false);
+        
+        if (result.success && result.commits && result.commits.length > 0) {
+            const latestCommitHash = result.commits[0].hash;
+            const previousCommitHash = result.commits.length > 1 ? result.commits[1].hash : null;
 
-        if (result.success && result.commits) {
-            setFiles(prevFiles => prevFiles.map(f => 
-                f.id === fileId 
-                    ? { ...f, commits: result.commits, activeCommitHash: result.commits?.[0]?.hash } 
-                    : f
-            ));
+            const [latestContentResult, previousContentResult] = await Promise.all([
+                getBitbucketFileContentForCommit(loadedProjectInfo.project.url, latestCommitHash, file.id),
+                previousCommitHash 
+                    ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id) 
+                    : Promise.resolve({ success: false })
+            ]);
+
+            setIsLoading(false);
+
+            if (latestContentResult.success) {
+                setFiles(prevFiles => prevFiles.map(f => 
+                    f.id === fileId 
+                        ? { 
+                            ...f, 
+                            content: latestContentResult.content ?? f.content,
+                            previousContent: previousContentResult.success ? (previousContentResult.content ?? '') : undefined,
+                            commits: result.commits, 
+                            activeCommitHash: latestCommitHash,
+                          } 
+                        : f
+                ));
+            } else {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Error loading file content',
+                    description: latestContentResult.error || 'Could not load file content for this commit.',
+                });
+            }
         } else {
-            toast({
-                variant: 'destructive',
-                title: 'Error fetching commits',
-                description: result.error || 'Could not load commit history for this file.',
-            });
+            setIsLoading(false);
+            if (result.error) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Error fetching commits',
+                    description: result.error || 'Could not load commit history for this file.',
+                });
+            }
+            // If no commits, just keep the file as is. It might have been loaded from main branch.
+            setFiles(prevFiles => prevFiles.map(f => f.id === fileId ? { ...f, commits: [] } : f));
         }
     }
   }, [files, loadedProjectInfo, toast]);
 
   const handleCommitChange = useCallback(async (fileId: string, commitHash: string) => {
     const file = files.find(f => f.id === fileId);
-    if (!file || !loadedProjectInfo) return;
+    if (!file || !file.commits || !loadedProjectInfo) return;
+
+    const commitIndex = file.commits.findIndex(c => c.hash === commitHash);
+    if (commitIndex === -1) return;
+
+    const previousCommitHash = commitIndex < file.commits.length - 1 ? file.commits[commitIndex + 1].hash : null;
 
     setIsLoading(true);
-    const result = await getBitbucketFileContentForCommit(loadedProjectInfo.project.url, commitHash, file.id);
+    const [currentContentResult, previousContentResult] = await Promise.all([
+        getBitbucketFileContentForCommit(loadedProjectInfo.project.url, commitHash, file.id),
+        previousCommitHash
+            ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id)
+            : Promise.resolve({ success: false })
+    ]);
     setIsLoading(false);
 
-    if (result.success && typeof result.content === 'string') {
+    if (currentContentResult.success) {
         setFiles(prevFiles => prevFiles.map(f => 
             f.id === fileId 
-                ? { ...f, content: result.content, activeCommitHash: commitHash } 
+                ? { 
+                    ...f, 
+                    content: currentContentResult.content ?? f.content, 
+                    previousContent: previousContentResult.success ? (previousContentResult.content ?? '') : undefined,
+                    activeCommitHash: commitHash 
+                  } 
                 : f
         ));
-        setAiOutput(null); // Clear AI output when content changes
+        setAiOutput(null);
     } else {
         toast({
             variant: 'destructive',
             title: 'Error loading file content',
-            description: result.error || 'Could not load file content for this commit.',
+            description: currentContentResult.error || 'Could not load file content for this commit.',
         });
     }
   }, [files, loadedProjectInfo, toast]);
@@ -110,8 +154,8 @@ export function SemCoPilotWorkspace() {
     setAiOutput(null);
     try {
       let result: AIOutput | null = null;
-      if (action === 'analyze-diff') {
-        const analysis = await analyzeDiff({ oldCode: originalCode!, newCode: code, language });
+      if (action === 'analyze-diff' && originalCode !== undefined) {
+        const analysis = await analyzeDiff({ oldCode: originalCode, newCode: code, language });
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
       } else if (action === 'explain') {
         const { explanation } = await explainCode({ code });

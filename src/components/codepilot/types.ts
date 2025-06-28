@@ -32,6 +32,7 @@ export type CodeFile = {
   language: string;
   content: string;
   originalContent: string;
+  previousContent?: string;
   commits?: Commit[];
   activeCommitHash?: string;
 };
