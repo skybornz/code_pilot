@@ -10,6 +10,7 @@ import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
 import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
 import type { GenerateCodeDocsOutput } from '@/ai/flows/generate-code-docs';
 import type { GenerateSddOutput } from '@/ai/flows/generate-sdd';
+import { CodeBlock } from './code-block';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -17,7 +18,9 @@ interface AIOutputPanelProps {
   onApplyChanges: (newCode: string) => void;
 }
 
-const renderOutput = (data: AIOutputData, type: AIOutput['type'], onApplyChanges: (newCode: string) => void) => {
+const renderOutput = (output: AIOutput, onApplyChanges: (newCode: string) => void) => {
+  const { data, type, language } = output;
+
   if (type === 'bugs') {
     const bugReport = data as FindBugsOutput;
     return (
@@ -46,7 +49,7 @@ const renderOutput = (data: AIOutputData, type: AIOutput['type'], onApplyChanges
       <div className="space-y-4">
         <div>
           <h4 className="font-semibold mb-2">Refactored Code:</h4>
-          <pre className="bg-muted p-3 rounded-md text-sm font-code whitespace-pre-wrap">{refactorData.refactoredCode}</pre>
+          <CodeBlock code={refactorData.refactoredCode} language={language} />
         </div>
         <div>
           <h4 className="font-semibold mb-2">Explanation:</h4>
@@ -62,7 +65,7 @@ const renderOutput = (data: AIOutputData, type: AIOutput['type'], onApplyChanges
       <div className="space-y-4">
         <div>
           <h4 className="font-semibold mb-2">Generated Unit Test:</h4>
-          <pre className="bg-muted p-3 rounded-md text-sm font-code whitespace-pre-wrap">{testData.unitTest}</pre>
+          <CodeBlock code={testData.unitTest} language={language} />
         </div>
         <div>
           <h4 className="font-semibold mb-2">Explanation:</h4>
@@ -78,7 +81,7 @@ const renderOutput = (data: AIOutputData, type: AIOutput['type'], onApplyChanges
       <div className="space-y-4">
         <div>
           <h4 className="font-semibold mb-2">Documentation:</h4>
-          <pre className="bg-muted p-3 rounded-md text-sm font-code whitespace-pre-wrap">{docsData.documentation}</pre>
+          <CodeBlock code={docsData.documentation} language={language} />
         </div>
       </div>
     );
@@ -90,7 +93,7 @@ const renderOutput = (data: AIOutputData, type: AIOutput['type'], onApplyChanges
       <div className="space-y-4">
         <div>
           <h4 className="font-semibold mb-2">Software Design Document:</h4>
-          <pre className="bg-muted p-3 rounded-md text-sm font-code whitespace-pre-wrap">{sddData.sdd}</pre>
+          <CodeBlock code={sddData.sdd} language={language} />
         </div>
       </div>
     );
@@ -126,7 +129,7 @@ export function AIOutputPanel({ output, isLoading, onApplyChanges }: AIOutputPan
         {!isLoading && output && output.type !== 'completion' && (
           <div>
             <h3 className="font-bold text-xl mb-4">{output.title}</h3>
-            {renderOutput(output.data, output.type, onApplyChanges)}
+            {renderOutput(output, onApplyChanges)}
           </div>
         )}
       </CardContent>

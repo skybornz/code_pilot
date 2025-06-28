@@ -78,16 +78,16 @@ export function SemCoPilotWorkspace() {
         result = { type: 'bugs', data: bugReport, title: 'Bug Report' };
       } else if (action === 'test') {
         const unitTest = await generateUnitTest({ code, language });
-        result = { type: 'test', data: unitTest, title: 'Generated Unit Test' };
+        result = { type: 'test', data: unitTest, title: 'Generated Unit Test', language };
       } else if (action === 'refactor') {
         const refactored = await refactorCode({ code, language });
-        result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion' };
+        result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'docs') {
         const docs = await generateCodeDocs({ code });
-        result = { type: 'docs', data: docs, title: 'Generated Documentation' };
+        result = { type: 'docs', data: docs, title: 'Generated Documentation', language };
       } else if (action === 'sdd') {
         const sdd = await generateSdd({ code });
-        result = { type: 'sdd', data: sdd, title: 'Software Design Document' };
+        result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
       }
       setAiOutput(result);
     } catch (error) {

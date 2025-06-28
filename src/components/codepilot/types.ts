@@ -12,6 +12,7 @@ export type AIOutput = {
     type: ActionType;
     data: AIOutputData;
     title: string;
+    language?: string;
 };
 
 export type CodeFile = {
