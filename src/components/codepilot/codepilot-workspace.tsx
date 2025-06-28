@@ -171,7 +171,7 @@ export function SemCoPilotWorkspace() {
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'docs') {
         const docs = await generateCodeDocs({ code });
-        result = { type: 'docs', data: docs, title: 'Generated Documentation', language };
+        result = { type: 'docs', data: docs, title: 'Generated Comments', language };
       } else if (action === 'sdd') {
         const sdd = await generateSdd({ code });
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };

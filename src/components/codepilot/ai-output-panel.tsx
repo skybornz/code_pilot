@@ -99,7 +99,7 @@ const renderOutput = (output: AIOutput) => {
     return (
       <div className="space-y-4">
         <div>
-          <h4 className="font-semibold mb-2">Documentation:</h4>
+          <h4 className="font-semibold mb-2">Generated Comments:</h4>
           <CodeBlock code={docsData.documentation} language={language} />
         </div>
       </div>

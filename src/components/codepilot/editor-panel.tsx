@@ -51,7 +51,7 @@ const getLanguageExtension = (language: string) => {
 
 // Creates a CodeMirror extension that highlights lines based on a provided class list.
 function lineHighlighter(lineClasses: { line: number; class: string }[]) {
-  const plugin = ViewPlugin.fromClass(
+  return ViewPlugin.fromClass(
     class {
       decorations: RangeSet<Decoration>;
 
@@ -80,7 +80,6 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
       decorations: v => v.decorations,
     }
   );
-  return plugin;
 }
 
 
@@ -227,7 +226,7 @@ export function EditorPanel({
   const secondaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
       { id: 'bugs', label: 'Find Bugs', icon: Bug },
       { id: 'test', label: 'Generate Unit Test', icon: TestTube2 },
-      { id: 'docs', label: 'Generate Docs', icon: NotebookText },
+      { id: 'docs', label: 'Generate Comments', icon: NotebookText },
       { id: 'sdd', label: 'Generate SDD', icon: FileText },
   ];
 

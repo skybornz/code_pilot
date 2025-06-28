@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview Generates documentation for a given code block.
+ * @fileOverview Generates code comments for a given code block.
  *
- * - generateCodeDocs - A function that generates documentation for a given code block.
+ * - generateCodeDocs - A function that generates code comments for a given code block.
  * - GenerateCodeDocsInput - The input type for the generateCodeDocs function.
  * - GenerateCodeDocsOutput - The return type for the generateCodeDocs function.
  */
@@ -12,12 +12,12 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateCodeDocsInputSchema = z.object({
-  code: z.string().describe('The code block to generate documentation for.'),
+  code: z.string().describe('The code block to generate comments for.'),
 });
 export type GenerateCodeDocsInput = z.infer<typeof GenerateCodeDocsInputSchema>;
 
 const GenerateCodeDocsOutputSchema = z.object({
-  documentation: z.string().describe('The generated documentation for the code block.'),
+  documentation: z.string().describe('The generated comments for the code block.'),
 });
 export type GenerateCodeDocsOutput = z.infer<typeof GenerateCodeDocsOutputSchema>;
 
@@ -29,7 +29,7 @@ const prompt = ai.definePrompt({
   name: 'generateCodeDocsPrompt',
   input: {schema: GenerateCodeDocsInputSchema},
   output: {schema: GenerateCodeDocsOutputSchema},
-  prompt: `You are a documentation expert. Generate documentation for the following code block:\n\n{{code}}`,
+  prompt: `You are an expert software developer. Generate code comments for the following code block. The comments should explain the code's functionality, parameters, and return values, suitable for in-line documentation or docblocks.\n\n{{code}}`,
 });
 
 const generateCodeDocsFlow = ai.defineFlow(
