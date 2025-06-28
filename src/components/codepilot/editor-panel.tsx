@@ -2,12 +2,16 @@
 
 import type { CodeFile } from '@/components/codepilot/types';
 import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText } from 'lucide-react';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ActionType } from './types';
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { css } from '@codemirror/lang-css';
+import { python } from '@codemirror/lang-python';
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -20,6 +24,23 @@ interface EditorPanelProps {
   onDismissCompletion: () => void;
 }
 
+const getLanguageExtension = (language: string) => {
+  switch (language.toLowerCase()) {
+    case 'javascript':
+    case 'typescript':
+    case 'tsx':
+    case 'jsx':
+      return [javascript({ jsx: true, typescript: true })];
+    case 'css':
+      return [css()];
+    case 'python':
+      return [python()];
+    default:
+      // Fallback for languages like json, html, etc.
+      return [javascript({ jsx: true, typescript: true })];
+  }
+};
+
 export function EditorPanel({
   file,
   onCodeChange,
@@ -31,16 +52,14 @@ export function EditorPanel({
   onDismissCompletion
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setCode(file.content);
   }, [file]);
   
-  const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newCode = e.target.value;
-    setCode(newCode);
-    onCodeChange(file.id, newCode);
+  const handleCodeMirrorChange = (value: string) => {
+    setCode(value);
+    onCodeChange(file.id, value);
   };
   
   const debouncedCompletion = useCallback(
@@ -56,12 +75,14 @@ export function EditorPanel({
     }
   }, [code, file.language, debouncedCompletion, file.content]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Tab' && completion) {
       e.preventDefault();
       onAcceptCompletion(completion);
     }
   };
+
+  const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
 
   const actions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
@@ -100,15 +121,23 @@ export function EditorPanel({
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <div className="relative flex-1">
-          <Textarea
-            ref={textareaRef}
+        <div className="relative flex-1" onKeyDown={handleKeyDown}>
+          <CodeMirror
             value={code}
-            onChange={handleCodeChange}
-            onKeyDown={handleKeyDown}
-            className="w-full h-full p-4 resize-none border-0 rounded-none bg-background font-code text-base focus-visible:ring-0 leading-relaxed"
-            placeholder="Enter your code here..."
-            aria-label={`Code editor for ${file.name}`}
+            height="100%"
+            theme={vscodeDark}
+            extensions={langExtension}
+            onChange={handleCodeMirrorChange}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: true,
+              autocompletion: false,
+            }}
+            className="h-full"
+            style={{
+              fontSize: '0.875rem', // equiv to text-sm
+              fontFamily: 'var(--font-code)',
+            }}
           />
         </div>
         {completion && (
