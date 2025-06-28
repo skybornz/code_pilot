@@ -72,15 +72,21 @@ export async function fetchBitbucketBranches(url: string): Promise<{ success: bo
 
     const branchesUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/refs/branches`;
     try {
-        const response = await fetch(branchesUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
-        if (!response.ok) {
-            const errorData = await response.json();
-            const errorMessage = errorData?.error?.message || response.statusText;
-            return { success: false, error: `Failed to fetch branches: ${errorMessage}` };
+        let currentUrl: string | undefined = branchesUrl;
+        const branches: string[] = [];
+
+        while (currentUrl) {
+            const response = await fetch(currentUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+            if (!response.ok) {
+                const errorData = await response.json();
+                const errorMessage = errorData?.error?.message || response.statusText;
+                return { success: false, error: `Failed to fetch branches: ${errorMessage}` };
+            }
+            const data = await response.json();
+            const parsedData = BitbucketBranchesResponseSchema.parse(data);
+            branches.push(...parsedData.values.map(b => b.name));
+            currentUrl = parsedData.next;
         }
-        const data = await response.json();
-        const parsedData = BitbucketBranchesResponseSchema.parse(data);
-        const branches = parsedData.values.map(b => b.name);
         
         if (branches.length === 0) {
             return { success: false, error: 'No branches found. The repository might be private or empty.' };
@@ -105,7 +111,6 @@ async function getBitbucketFilesRecursively(
         return [];
     }
 
-    const files: CodeFile[] = [];
     const url = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/src/${branch}/${path}`;
 
     const response = await fetch(url, { cache: 'no-store' });
@@ -117,6 +122,7 @@ async function getBitbucketFilesRecursively(
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
         // It's a directory
+        const files: CodeFile[] = [];
         let currentResponse = response;
         let hasNextPage = true;
 
@@ -124,17 +130,27 @@ async function getBitbucketFilesRecursively(
             const data = await currentResponse.json();
             const parsedData = BitbucketSrcResponseSchema.parse(data);
 
-            for (const item of parsedData.values) {
-                const nestedFiles = await getBitbucketFilesRecursively(workspace, repo, branch, item.path);
+            const promises = parsedData.values.map(item =>
+                getBitbucketFilesRecursively(workspace, repo, branch, item.path)
+            );
+            
+            const nestedFilesArray = await Promise.all(promises);
+            for (const nestedFiles of nestedFilesArray) {
                 files.push(...nestedFiles);
             }
 
             if (parsedData.next) {
                 currentResponse = await fetch(parsedData.next, { cache: 'no-store' });
+                 if (!currentResponse.ok) {
+                    console.warn(`Could not fetch Bitbucket page: ${parsedData.next}`);
+                    hasNextPage = false; // Stop if paginated fetch fails
+                }
             } else {
                 hasNextPage = false;
             }
         }
+        return files;
+
     } else {
         // It's a file
         const content = await response.text();
@@ -145,7 +161,7 @@ async function getBitbucketFilesRecursively(
         }
     }
     
-    return files;
+    return []; // Return empty for binary files or other unhandled cases
 }
 
 export async function loadBitbucketFiles(url: string, branch: string): Promise<{ success: boolean; files?: CodeFile[]; error?: string }> {
