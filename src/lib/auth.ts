@@ -1,17 +1,9 @@
 'use server';
 
-import { z } from 'zod';
+import type { User } from './schemas';
 
 // For this prototype, we'll store users in-memory.
 // In a real app, this would be a database.
-const UserSchema = z.object({
-  id: z.string(),
-  email: z.string().email(),
-  password: z.string(), // In a real app, this would be a hashed password
-  role: z.enum(['admin', 'user']),
-});
-
-export type User = z.infer<typeof UserSchema>;
 
 // This is a mock database.
 let users: User[] = [

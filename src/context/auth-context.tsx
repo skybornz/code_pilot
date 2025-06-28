@@ -1,6 +1,6 @@
 'use client';
 
-import type { User } from '@/lib/auth';
+import type { User } from '@/lib/schemas';
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 

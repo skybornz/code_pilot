@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { User } from '@/lib/auth';
+import type { User } from '@/lib/schemas';
 import { addUser, updateUser } from '@/lib/auth';
 import { Loader2 } from 'lucide-react';
 import React from 'react';

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { UserForm } from './user-form';
-import type { User } from '@/lib/auth';
+import type { User } from '@/lib/schemas';
 import { getUsers } from '@/lib/auth';
 import { Loader2, PlusCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
