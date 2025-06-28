@@ -74,7 +74,7 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
         return builder.finish();
       }
     }
-  ).decorations;
+  );
 }
 
 
