@@ -20,17 +20,20 @@ import { Menu } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
+import type { Project } from '@/lib/project-database';
 
 export function SemCoPilotWorkspace() {
   const [files, setFiles] = useState<CodeFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadedProjectInfo, setLoadedProjectInfo] = useState<{ project: Project; branch: string } | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const handleFilesLoaded = useCallback((loadedFiles: CodeFile[]) => {
+  const handleFilesLoaded = useCallback((loadedFiles: CodeFile[], project: Project, branch: string) => {
     setFiles(loadedFiles);
+    setLoadedProjectInfo({ project, branch });
     if (loadedFiles.length > 0) {
       setActiveFileId(loadedFiles[0].id);
     } else {
@@ -103,9 +106,10 @@ export function SemCoPilotWorkspace() {
     }
   }, []);
 
-  const handleUploadClick = () => {
+  const handleSwitchProject = () => {
     setFiles([]);
     setActiveFileId(null);
+    setLoadedProjectInfo(null);
     setAiOutput(null);
   };
 
@@ -151,12 +155,19 @@ export function SemCoPilotWorkspace() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-0">
-               <FileExplorer files={files} activeFileId={activeFileId} onFileSelect={handleFileSelect} onUploadClick={handleUploadClick} />
+               <FileExplorer
+                 files={files}
+                 activeFileId={activeFileId}
+                 onFileSelect={handleFileSelect}
+                 onSwitchProject={handleSwitchProject}
+                 project={loadedProjectInfo?.project}
+                 branch={loadedProjectInfo?.branch}
+               />
             </SheetContent>
           </Sheet>
         </header>
         <main className="flex-1 overflow-y-auto p-4">
-          {files.length > 0 ? (
+          {loadedProjectInfo ? (
             <>
               <div className="h-[50vh]">
                 {editor}
@@ -177,9 +188,16 @@ export function SemCoPilotWorkspace() {
 
   return (
     <div className="h-screen bg-background text-foreground flex">
-      <FileExplorer files={files} activeFileId={activeFileId} onFileSelect={handleFileSelect} onUploadClick={handleUploadClick} />
+      <FileExplorer
+        files={files}
+        activeFileId={activeFileId}
+        onFileSelect={handleFileSelect}
+        onSwitchProject={handleSwitchProject}
+        project={loadedProjectInfo?.project}
+        branch={loadedProjectInfo?.branch}
+      />
       <main className="flex-1 flex gap-4 p-4 overflow-hidden">
-        {files.length > 0 ? (
+        {loadedProjectInfo ? (
           <>
             <div className="flex-1 flex flex-col min-w-0">
               {editor}

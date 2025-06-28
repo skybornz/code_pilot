@@ -1,129 +1,225 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import type { CodeFile } from './types';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import type { Project } from '@/lib/project-database';
+import { dbGetProjects, dbAddProject, dbDeleteProject } from '@/lib/project-database';
 import { fetchBitbucketBranches, loadBitbucketFiles } from '@/actions/github';
-
-const BitbucketIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M2.66 2.479a.998.998 0 0 0-.911.993v16.907c0 .548.421.993.945.993h14.288c.348 0 .668-.18.845-.46l4.24-6.832a.993.993 0 0 0 0-1.125l-4.24-6.831a.998.998 0 0 0-.845-.46L2.694 2.48a.22.22 0 0 0-.034 0zM9.01 17.584h2.443l1.83-11.166H8.353l-1.928 6.96h5.052l-2.467 4.206z"></path>
-    </svg>
-);
+import { Loader2, PlusCircle, Trash2, FolderGit2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProjectLoaderProps {
-  onFilesLoaded: (files: CodeFile[]) => void;
+  onFilesLoaded: (files: CodeFile[], project: Project, branch: string) => void;
 }
 
 export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
-  const [repoUrl, setRepoUrl] = useState('');
-  const [branches, setBranches] = useState<string[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
 
-  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
-  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
-  
+  useEffect(() => {
+    setProjects(dbGetProjects());
+    setIsLoading(false);
+  }, []);
+
+  const handleAddProject = (project: Project) => {
+    setProjects(prev => [...prev, project]);
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    dbDeleteProject(projectId);
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full w-full max-w-4xl mx-auto p-4">
+      <Card className="w-full shadow-2xl bg-card/80 backdrop-blur-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl">Your Projects</CardTitle>
+            <CardDescription>Select a project to load or add a new one.</CardDescription>
+          </div>
+          <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Project
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Bitbucket Project</DialogTitle>
+              </DialogHeader>
+              <AddProjectForm onProjectAdded={(project) => {
+                handleAddProject(project);
+                setIsAddProjectDialogOpen(false);
+              }} />
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          {projects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map(project => (
+                <ProjectCard 
+                  key={project.id} 
+                  project={project}
+                  onDelete={handleDeleteProject}
+                  onFilesLoaded={onFilesLoaded}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 text-muted-foreground">
+              <FolderGit2 className="mx-auto h-12 w-12 mb-4" />
+              <p>No projects yet.</p>
+              <p>Click "Add Project" to get started.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project) => void }) {
+  const [url, setUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleFetchBranches = async () => {
-    if (!repoUrl.trim()) {
-      toast({ variant: 'destructive', title: 'URL Required', description: 'Please enter a public Bitbucket repository URL.' });
+  const handleValidateAndAdd = async () => {
+    if (!url.trim()) {
+      toast({ variant: 'destructive', title: 'URL Required' });
       return;
     }
     
+    setIsLoading(true);
+    const result = await fetchBitbucketBranches(url);
+    setIsLoading(false);
+
+    if (result.success && result.branches) {
+      const repoNameMatch = url.match(/bitbucket.org\/[^/]+\/([^/.]+)/);
+      const name = repoNameMatch ? repoNameMatch[1] : 'New Project';
+      
+      const addResult = dbAddProject({ name, url });
+      if (addResult.success && addResult.project) {
+        toast({ title: 'Project Added!', description: `Successfully added "${name}".` });
+        onProjectAdded(addResult.project);
+      } else {
+        toast({ variant: 'destructive', title: 'Failed to Add Project', description: addResult.message });
+      }
+    } else {
+      toast({ variant: 'destructive', title: 'Invalid Repository', description: result.error || 'Could not validate the repository URL.' });
+    }
+  };
+
+  return (
+    <div className="space-y-4 py-2">
+      <Input
+        placeholder="https://bitbucket.org/workspace/repo"
+        value={url}
+        onChange={e => setUrl(e.target.value)}
+        disabled={isLoading}
+      />
+      <div className="flex justify-end gap-2">
+        <DialogClose asChild>
+          <Button variant="ghost">Cancel</Button>
+        </DialogClose>
+        <Button onClick={handleValidateAndAdd} disabled={isLoading}>
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Add Project
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ProjectCard({ project, onDelete, onFilesLoaded }: { project: Project, onDelete: (id: string) => void, onFilesLoaded: ProjectLoaderProps['onFilesLoaded'] }) {
+  const [branches, setBranches] = useState<string[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const { toast } = useToast();
+
+  const handleFetchBranches = async () => {
     setIsLoadingBranches(true);
-    setBranches([]);
-    setSelectedBranch(null);
-    const result = await fetchBitbucketBranches(repoUrl);
+    const result = await fetchBitbucketBranches(project.url);
     setIsLoadingBranches(false);
 
     if (result.success && result.branches) {
       setBranches(result.branches);
-      toast({ title: 'Branches Loaded', description: 'Please select a branch to continue.' });
+      if (result.branches.length > 0) {
+        setSelectedBranch(result.branches[0]);
+      }
     } else {
-      toast({ variant: 'destructive', title: 'Failed to Fetch Branches', description: result.error });
+      toast({ variant: 'destructive', title: 'Error', description: `Could not fetch branches for ${project.name}.` });
     }
   };
 
   const handleLoadProject = async () => {
-    if (!repoUrl || !selectedBranch) {
-        toast({ variant: 'destructive', title: 'Branch Required', description: 'Please select a branch first.' });
-        return;
-    }
-
+    if (!selectedBranch) return;
+    
     setIsLoadingFiles(true);
     const { id, update } = toast({ title: 'Importing Repository...', description: 'Please wait while we fetch the project files.' });
     
-    const result = await loadBitbucketFiles(repoUrl, selectedBranch);
+    const result = await loadBitbucketFiles(project.url, selectedBranch);
     setIsLoadingFiles(false);
 
     if (result.success && result.files) {
-      update({ id, title: 'Import Successful', description: `Loaded ${result.files.length} files from the repository.` });
-      onFilesLoaded(result.files);
+      update({ id, title: 'Import Successful', description: `Loaded ${result.files.length} files.` });
+      onFilesLoaded(result.files, project, selectedBranch);
     } else {
       update({ id, variant: 'destructive', title: 'Import Failed', description: result.error });
     }
   };
   
-  const isLoading = isLoadingBranches || isLoadingFiles;
-
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full">
-      <Card className="w-full max-w-lg shadow-2xl bg-card/80 backdrop-blur-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Load Your Project</CardTitle>
-          <CardDescription>
-            Import a public Bitbucket repository to start coding with your AI partner.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <div className="relative flex-grow">
-                    <BitbucketIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input 
-                        type="text" 
-                        placeholder="https://bitbucket.org/workspace/repo"
-                        value={repoUrl}
-                        onChange={(e) => setRepoUrl(e.target.value)}
-                        disabled={isLoading || branches.length > 0}
-                        onKeyDown={(e) => { if(e.key === 'Enter') handleFetchBranches() }}
-                        className="pl-10"
-                    />
-                </div>
-                <Button onClick={handleFetchBranches} disabled={isLoading || !repoUrl.trim()}>
-                  {isLoadingBranches && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Fetch Branches
-                </Button>
-              </div>
-
-              {branches.length > 0 && (
-                <div className="space-y-4">
-                    <Select onValueChange={setSelectedBranch} disabled={isLoading}>
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a branch" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {branches.map(branch => (
-                                <SelectItem key={branch} value={branch}>{branch}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Button onClick={handleLoadProject} className="w-full" disabled={isLoading || !selectedBranch}>
-                      {isLoadingFiles && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Load Project Files
-                    </Button>
-                </div>
-              )}
-            </div>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="flex flex-col">
+      <CardHeader className="flex-row items-start justify-between pb-4">
+        <div>
+          <CardTitle className="text-lg">{project.name}</CardTitle>
+          <CardDescription className="text-xs break-all">{project.url}</CardDescription>
+        </div>
+        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => onDelete(project.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </CardHeader>
+      <CardContent className="flex-grow flex flex-col justify-end space-y-2">
+        {branches.length > 0 ? (
+          <>
+            <Select value={selectedBranch} onValueChange={setSelectedBranch} disabled={isLoadingFiles}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a branch" />
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button onClick={handleLoadProject} disabled={isLoadingFiles || !selectedBranch}>
+              {isLoadingFiles && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Load Project
+            </Button>
+          </>
+        ) : (
+          <Button onClick={handleFetchBranches} disabled={isLoadingBranches}>
+            {isLoadingBranches && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Select Branch to Load
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }

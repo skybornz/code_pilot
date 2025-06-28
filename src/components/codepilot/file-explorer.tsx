@@ -10,12 +10,15 @@ import { useMemo } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
+import type { Project } from '@/lib/project-database';
 
 interface FileExplorerProps {
   files: CodeFile[];
   activeFileId: string | null;
   onFileSelect: (fileId: string) => void;
-  onUploadClick: () => void;
+  onSwitchProject: () => void;
+  project?: Project;
+  branch?: string;
 }
 
 type FileTreeNode = {
@@ -113,7 +116,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeV
 };
 
 
-export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick }: FileExplorerProps) {
+export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProject, project, branch }: FileExplorerProps) {
     const fileTree = useMemo(() => buildFileTree(files), [files]);
     const { user, isAdmin, logout } = useAuth();
   
@@ -125,18 +128,25 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick 
         </div>
         <div className="flex-1 overflow-y-auto p-2 min-h-0">
           <div className="flex justify-between items-center mb-2 px-2">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Folder className="w-5 h-5" />
-                  <span>Project Files</span>
-              </h2>
+              {project && branch ? (
+                <div className="overflow-hidden mr-2">
+                  <h2 className="text-lg font-semibold truncate" title={project.name}>{project.name}</h2>
+                  <p className="text-xs text-muted-foreground truncate">Branch: {branch}</p>
+                </div>
+              ) : (
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Folder className="w-5 h-5" />
+                    <span>Project Files</span>
+                </h2>
+              )}
               <Tooltip>
                   <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" onClick={onUploadClick} aria-label="Load another project">
+                      <Button variant="ghost" size="icon" onClick={onSwitchProject} aria-label="Switch project">
                           <Upload className="w-4 h-4" />
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                      <p>Load another project</p>
+                      <p>Switch project</p>
                   </TooltipContent>
               </Tooltip>
           </div>
