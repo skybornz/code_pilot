@@ -118,74 +118,69 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onUploadClick 
     const { user, isAdmin, logout } = useAuth();
   
     return (
-    <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
-      <div className="p-4 border-b border-sidebar-border">
-        <Logo />
-      </div>
-      <div className="flex-1 overflow-y-auto p-2 min-h-0">
-        <div className="flex justify-between items-center mb-2 px-2">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Folder className="w-5 h-5" />
-                <span>Project Files</span>
-            </h2>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={onUploadClick} aria-label="Load another project">
-                            <Upload className="w-4 h-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Load another project</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+    <TooltipProvider>
+      <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
+        <div className="p-4 border-b border-sidebar-border">
+          <Logo />
         </div>
-        
-        <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} />
-      </div>
-      <div className="p-2 border-t border-sidebar-border">
-        {user && (
-            <Card className="bg-card/50">
-                <CardHeader className="p-3 flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                        <UserCircle className="w-6 h-6 flex-shrink-0" />
-                        <div className="text-sm overflow-hidden">
-                            <p className="font-semibold truncate">{user.email}</p>
-                            <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        {isAdmin && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                            <Link href="/admin">
-                                                <Settings className="w-4 h-4" />
-                                            </Link>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>Admin Settings</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout}>
-                                        <LogOut className="w-4 h-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Logout</p></TooltipContent>
-                            </Tooltip>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
-            </CardHeader>
-        </Card>
-        )}
-      </div>
-    </aside>
+        <div className="flex-1 overflow-y-auto p-2 min-h-0">
+          <div className="flex justify-between items-center mb-2 px-2">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Folder className="w-5 h-5" />
+                  <span>Project Files</span>
+              </h2>
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={onUploadClick} aria-label="Load another project">
+                          <Upload className="w-4 h-4" />
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                      <p>Load another project</p>
+                  </TooltipContent>
+              </Tooltip>
+          </div>
+          
+          <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} />
+        </div>
+        <div className="p-2 border-t border-sidebar-border">
+          {user && (
+              <Card className="bg-card/50">
+                  <CardHeader className="p-3 flex flex-row items-center justify-between">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                          <UserCircle className="w-6 h-6 flex-shrink-0" />
+                          <div className="text-sm overflow-hidden">
+                              <p className="font-semibold truncate">{user.email}</p>
+                              <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                          </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                          {isAdmin && (
+                              <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                          <Link href="/admin">
+                                              <Settings className="w-4 h-4" />
+                                          </Link>
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>Admin Settings</p></TooltipContent>
+                              </Tooltip>
+                          )}
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout}>
+                                      <LogOut className="w-4 h-4" />
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p>Logout</p></TooltipContent>
+                          </Tooltip>
+                  </div>
+              </CardHeader>
+          </Card>
+          )}
+        </div>
+      </aside>
+    </TooltipProvider>
   );
 }
