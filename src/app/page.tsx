@@ -175,11 +175,11 @@ export default function CodePilotPage() {
   return (
     <div className="h-screen bg-background text-foreground flex">
       <FileExplorer files={files} activeFileId={activeFileId} onFileSelect={handleFileSelect} onUploadClick={handleUploadClick} />
-      <main className="flex-1 grid grid-cols-2 gap-4 p-4 overflow-hidden">
-        <div className="col-span-1 flex flex-col h-full">
+      <main className="flex-1 flex gap-4 p-4 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0">
           {editor}
         </div>
-        <div className="col-span-1 flex flex-col h-full">
+        <div className="flex-1 flex flex-col min-w-0">
           {outputPanel}
         </div>
       </main>
