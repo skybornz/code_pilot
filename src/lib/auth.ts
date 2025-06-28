@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 // For this prototype, we'll store users in-memory.
 // In a real app, this would be a database.
-export const UserSchema = z.object({
+const UserSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   password: z.string(), // In a real app, this would be a hashed password
