@@ -43,7 +43,7 @@ async function fetchRepoContents(
       // To avoid rate limiting on public repos, it's better to use an auth token
       // 'Authorization': `token ${process.env.GITHUB_TOKEN}`
     },
-    next: { revalidate: 3600 } // Cache for 1 hour
+    cache: 'no-store'
   });
 
   if (!response.ok) {
@@ -100,7 +100,7 @@ async function getFilesRecursively(
       }
       
       try {
-        const fileResponse = await fetch(item.download_url);
+        const fileResponse = await fetch(item.download_url, { cache: 'no-store' });
         if (!fileResponse.ok) {
           console.warn(`Could not fetch file: ${item.download_url}`);
           continue;
