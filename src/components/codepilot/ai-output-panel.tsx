@@ -82,29 +82,27 @@ export function AIOutputPanel({ output, isLoading, onApplyChanges }: AIOutputPan
           <span>AI Assistant</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 p-0 min-h-0">
-        <div className="p-4 h-full overflow-y-auto">
-          {isLoading && (
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-1/4" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-16 w-full" />
-            </div>
-          )}
-          {!isLoading && !output && (
-            <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center">
-              <p>Select an AI action to see the results here.</p>
-              <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
-            </div>
-          )}
-          {!isLoading && output && output.type !== 'completion' && (
-            <div>
-              <h3 className="font-bold text-xl mb-4">{output.title}</h3>
-              {renderOutput(output.data, output.type, onApplyChanges)}
-            </div>
-          )}
-        </div>
+      <CardContent className="flex-1 p-4 min-h-0 overflow-y-auto">
+        {isLoading && (
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        )}
+        {!isLoading && !output && (
+          <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center">
+            <p>Select an AI action to see the results here.</p>
+            <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
+          </div>
+        )}
+        {!isLoading && output && output.type !== 'completion' && (
+          <div>
+            <h3 className="font-bold text-xl mb-4">{output.title}</h3>
+            {renderOutput(output.data, output.type, onApplyChanges)}
+          </div>
+        )}
       </CardContent>
       {!isLoading && output?.type === 'refactor' && (
         <CardFooter className="p-4 border-t">
