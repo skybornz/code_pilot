@@ -2,10 +2,11 @@ import type { FindBugsOutput } from "@/ai/flows/find-bugs";
 import type { RefactorCodeOutput } from "@/ai/flows/refactor-code";
 import type { GenerateUnitTestOutput } from "@/ai/flows/generate-unit-test";
 import type { GenerateCodeDocsOutput } from "@/ai/flows/generate-code-docs";
+import type { GenerateSddOutput } from "@/ai/flows/generate-sdd";
 
-export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'completion' | 'docs';
+export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'completion' | 'docs' | 'sdd';
 
-export type AIOutputData = string | FindBugsOutput | RefactorCodeOutput | GenerateUnitTestOutput | GenerateCodeDocsOutput;
+export type AIOutputData = string | FindBugsOutput | RefactorCodeOutput | GenerateUnitTestOutput | GenerateCodeDocsOutput | GenerateSddOutput;
 
 export type AIOutput = {
     type: ActionType;

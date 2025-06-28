@@ -15,6 +15,7 @@ import { findBugs } from '@/ai/flows/find-bugs';
 import { generateUnitTest } from '@/ai/flows/generate-unit-test';
 import { refactorCode } from '@/ai/flows/refactor-code';
 import { generateCodeDocs } from '@/ai/flows/generate-code-docs';
+import { generateSdd } from '@/ai/flows/generate-sdd';
 import { Menu } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
@@ -83,6 +84,9 @@ export default function CodePilotPage() {
       } else if (action === 'docs') {
         const docs = await generateCodeDocs({ code });
         result = { type: 'docs', data: docs, title: 'Generated Documentation' };
+      } else if (action === 'sdd') {
+        const sdd = await generateSdd({ code });
+        result = { type: 'sdd', data: sdd, title: 'Software Design Document' };
       }
       setAiOutput(result);
     } catch (error) {
