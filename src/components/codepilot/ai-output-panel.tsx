@@ -124,7 +124,7 @@ const renderOutput = (output: AIOutput) => {
 export function AIOutputPanel({ output, isLoading }: AIOutputPanelProps) {
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
-      <CardHeader className="border-b p-4">
+      <CardHeader className="flex-shrink-0 border-b p-4 flex flex-row items-center">
         <CardTitle className="text-lg flex items-center gap-2">
           <Wand2 className="h-5 w-5 text-accent" />
           <span>AI Assistant</span>

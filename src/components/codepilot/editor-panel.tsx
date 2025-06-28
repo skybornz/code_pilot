@@ -36,20 +36,20 @@ const getLanguageExtension = (language: string) => {
     case 'typescript':
     case 'tsx':
     case 'jsx':
-      return javascript({ jsx: true, typescript: true });
+      return [javascript({ jsx: true, typescript: true })];
     case 'css':
-      return css();
+      return [css()];
     case 'python':
-      return python();
+      return [python()];
     default:
       // Fallback for languages like json, html, etc.
-      return javascript({ jsx: true, typescript: true });
+      return [javascript({ jsx: true, typescript: true })];
   }
 };
 
 // Creates a CodeMirror extension that highlights lines based on a provided class list.
 function lineHighlighter(lineClasses: { line: number; class: string }[]) {
-  const plugin = ViewPlugin.fromClass(
+  return ViewPlugin.fromClass(
     class {
       decorations: RangeSet<Decoration>;
 
@@ -75,7 +75,6 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
       }
     }
   );
-  return plugin;
 }
 
 
@@ -107,11 +106,11 @@ const DiffView = ({ original, modified, language }: { original: string, modified
             }
         });
 
-        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
+        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedLineClasses };
     }, [original, modified]);
 
-    const originalExtensions = [langExtension, lineHighlighter(originalLineClasses)];
-    const modifiedExtensions = [langExtension, lineHighlighter(modifiedLineClasses)];
+    const originalExtensions = [...langExtension, lineHighlighter(originalLineClasses)];
+    const modifiedExtensions = [...langExtension, lineHighlighter(modifiedLineClasses)];
 
     const commonEditorProps = {
         height: "100%",
@@ -217,7 +216,7 @@ export function EditorPanel({
 
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
-      <CardHeader className="flex-row items-center justify-between border-b p-4 space-x-4">
+      <CardHeader className="flex-shrink-0 flex-row items-center justify-between border-b p-4 space-x-4">
         <div className="flex-1 min-w-0">
           <CardTitle className="text-lg truncate" title={file.name}>{file.name}</CardTitle>
         </div>
