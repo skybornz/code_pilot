@@ -229,17 +229,16 @@ export function SemCoPilotWorkspace() {
     setRightPanelView('ai-output');
     
     const modelConfig = await getDefaultModel();
-    if (!modelConfig) {
+    if (!modelConfig || modelConfig.type === 'local') {
       toast({
         variant: 'destructive',
-        title: 'No Default Model Set',
-        description: 'An administrator needs to set a default AI model in the settings.',
+        title: 'Online Model Required',
+        description: 'Local models are not currently supported. Please set a default "online" model in the admin settings.',
       });
       setIsLoading(false);
       return;
     }
-    const prefix = modelConfig.type === 'online' ? 'googleai/' : 'ollama/';
-    const model = `${prefix}${modelConfig.name}`;
+    const model = `googleai/${modelConfig.name}`;
     
     let result: Omit<AIOutput, 'fileContext'> | null = null;
     let actionName: string = 'Unknown AI Action';
@@ -301,9 +300,8 @@ export function SemCoPilotWorkspace() {
   const handleCompletion = useCallback(async (code: string, language: string) => {
     try {
       const modelConfig = await getDefaultModel();
-      if (!modelConfig) return;
-      const prefix = modelConfig.type === 'online' ? 'googleai/' : 'ollama/';
-      const model = `${prefix}${modelConfig.name}`;
+      if (!modelConfig || modelConfig.type === 'local') return;
+      const model = `googleai/${modelConfig.name}`;
 
       const { completion } = await codeCompletion({ model, codeSnippet: code, language });
       if (completion) {

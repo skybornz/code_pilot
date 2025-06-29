@@ -59,17 +59,16 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
 
     try {
       const modelConfig = await getDefaultModel();
-      if (!modelConfig) {
+      if (!modelConfig || modelConfig.type === 'local') {
         toast({
           variant: 'destructive',
-          title: 'No Default Model Set',
-          description: 'An administrator needs to set a default AI model in the settings.',
+          title: 'Online Model Required',
+          description: 'The chat feature requires a default "online" model. An administrator can change this in the admin settings.',
         });
         setIsChatLoading(false);
         return;
       }
-      const prefix = modelConfig.type === 'online' ? 'googleai/' : 'ollama/';
-      const model = `${prefix}${modelConfig.name}`;
+      const model = `googleai/${modelConfig.name}`;
 
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
       
