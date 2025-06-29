@@ -21,7 +21,9 @@ export async function getPool(): Promise<sql.ConnectionPool> {
       pool = await sql.connect(config);
     } catch (err) {
       console.error('Database connection failed:', err);
-      throw err;
+      throw new Error(
+        `Failed to connect to the database. Please check your DB_USER, DB_PASSWORD, DB_SERVER, and DB_DATABASE environment variables. Original error: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
   return pool;
