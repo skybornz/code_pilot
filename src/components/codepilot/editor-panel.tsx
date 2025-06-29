@@ -31,6 +31,8 @@ interface EditorPanelProps {
   onDismissCompletion: () => void;
   onCommitChange: (fileId: string, commitHash: string) => void;
   onShowCopilotChat: () => void;
+  viewMode: 'edit' | 'diff';
+  setViewMode: (mode: 'edit' | 'diff') => void;
 }
 
 const getLanguageExtension = (language: string) => {
@@ -176,14 +178,14 @@ export function EditorPanel({
   onDismissCompletion,
   onCommitChange,
   onShowCopilotChat,
+  viewMode,
+  setViewMode,
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content);
-  const [viewMode, setViewMode] = useState<'edit' | 'diff'>('edit');
 
   useEffect(() => {
     setCode(file.content);
-    setViewMode('edit'); // Reset to edit mode when file changes
-  }, [file]);
+  }, [file.content]);
   
   const handleCodeMirrorChange = (value: string) => {
     setCode(value);

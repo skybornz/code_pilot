@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wand2, Send, User, Loader2 } from 'lucide-react';
-import type { AIOutput, CodeFile } from './types';
+import type { AIOutput } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
 import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
@@ -26,7 +26,6 @@ import { Separator } from '../ui/separator';
 interface AIOutputPanelProps {
   output: AIOutput | null;
   isLoading: boolean;
-  activeFile: CodeFile | null;
   messages: Message[];
   onMessagesChange: (messages: Message[]) => void;
   isChatLoading: boolean;
@@ -166,7 +165,6 @@ const renderOutput = (output: AIOutput) => {
 export function AIOutputPanel({ 
   output, 
   isLoading, 
-  activeFile, 
   messages, 
   onMessagesChange, 
   isChatLoading,
@@ -196,7 +194,7 @@ export function AIOutputPanel({
     setIsChatLoading(true);
 
     try {
-      const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
+      const projectContext = output.fileContext ? `The user is discussing an analysis on the file "${output.fileContext.name}".` : 'No file context provided.';
       const discussionContext = formatAiOutputForChat(output);
       
       const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
@@ -259,9 +257,9 @@ export function AIOutputPanel({
           <Wand2 className="h-5 w-5 text-accent" />
           <span>AI Assistant</span>
         </CardTitle>
-        {activeFile && (
-          <p className="text-xs text-muted-foreground pt-1 truncate" title={activeFile.name}>
-            on {activeFile.name}
+        {output && output.fileContext && (
+          <p className="text-xs text-muted-foreground pt-1 truncate" title={output.fileContext.name}>
+            on {output.fileContext.name}
           </p>
         )}
       </CardHeader>

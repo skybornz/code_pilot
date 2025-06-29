@@ -20,6 +20,10 @@ export type AIOutput = {
     data: AIOutputData;
     title: string;
     language?: string;
+    fileContext?: {
+      id: string;
+      name: string;
+    };
 };
 
 export type Commit = {

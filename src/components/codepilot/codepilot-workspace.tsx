@@ -41,6 +41,9 @@ export function SemCoPilotWorkspace() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [editorViewMode, setEditorViewMode] = useState<'edit' | 'diff'>('edit');
+  
+  const activeFile = files.find((f) => f.id === activeFileId);
 
   const resetCopilotChat = useCallback(() => {
     setCopilotChatMessages([
@@ -98,6 +101,7 @@ export function SemCoPilotWorkspace() {
 
   const handleFileSelect = useCallback(async (fileId: string) => {
     setActiveFileId(fileId);
+    setEditorViewMode('edit');
 
     const file = files.find(f => f.id === fileId);
     if (file && !file.commits && loadedProjectInfo) {
@@ -180,7 +184,7 @@ export function SemCoPilotWorkspace() {
                   } 
                 : f
         ));
-        setAiOutput(null);
+        setEditorViewMode('edit');
     } else {
         toast({
             variant: 'destructive',
@@ -189,8 +193,6 @@ export function SemCoPilotWorkspace() {
         });
     }
   }, [files, loadedProjectInfo, toast]);
-
-  const activeFile = files.find((f) => f.id === activeFileId);
 
   const handleCodeChange = (fileId: string, newContent: string) => {
     setFiles((prevFiles) =>
@@ -206,7 +208,7 @@ export function SemCoPilotWorkspace() {
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
     try {
-      let result: AIOutput | null = null;
+      let result: Omit<AIOutput, 'fileContext'> | null = null;
       if (action === 'analyze-diff' && originalCode !== undefined) {
         const analysis = await analyzeDiff({ oldCode: originalCode, newCode: code, language });
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
@@ -229,7 +231,16 @@ export function SemCoPilotWorkspace() {
         const sdd = await generateSdd({ code });
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
       }
-      setAiOutput(result);
+
+      if (result && activeFile) {
+        setAiOutput({ 
+            ...result, 
+            fileContext: { id: activeFile.id, name: activeFile.name } 
+        });
+      } else if (result) {
+        setAiOutput(result as AIOutput);
+      }
+
     } catch (error) {
       console.error('AI action failed:', error);
       toast({
@@ -240,7 +251,7 @@ export function SemCoPilotWorkspace() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, activeFile]);
 
   const handleCompletion = useCallback(async (code: string, language: string) => {
     try {
@@ -299,6 +310,8 @@ export function SemCoPilotWorkspace() {
       }}
       onDismissCompletion={() => setAiOutput(null)}
       onShowCopilotChat={handleShowCopilotChat}
+      viewMode={editorViewMode}
+      setViewMode={setEditorViewMode}
     />
   ) : (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
@@ -319,8 +332,7 @@ export function SemCoPilotWorkspace() {
       case 'ai-output':
         return <AIOutputPanel 
             output={aiOutput} 
-            isLoading={isLoading} 
-            activeFile={activeFile}
+            isLoading={isLoading}
             messages={analysisChatMessages}
             onMessagesChange={setAnalysisChatMessages}
             isChatLoading={isChatLoading}
