@@ -82,7 +82,6 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
     const userMessage: Message = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
     
-    // Add user message to UI immediately for better UX.
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
@@ -100,28 +99,34 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
 
       const reader = stream.getReader();
       const decoder = new TextDecoder();
-      let isFirstChunk = true;
       let done = false;
+      let isFirstChunk = true;
       
       while (!done) {
           const { value, done: readerDone } = await reader.read();
           done = readerDone;
           const chunkValue = decoder.decode(value);
 
-          if (isFirstChunk && chunkValue) {
-              // On the first chunk, create a new message bubble for the model's response.
-              setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
-              isFirstChunk = false;
-          } else if (chunkValue) {
-              // For subsequent chunks, append the text to the last message.
-              setMessages(prev => {
-                  const updatedMessages = [...prev];
-                  const lastMessage = updatedMessages[updatedMessages.length - 1];
-                  if (lastMessage?.role === 'model') {
-                      lastMessage.content += chunkValue;
-                  }
-                  return updatedMessages;
-              });
+          if (chunkValue) {
+            if (isFirstChunk) {
+                // On the first chunk, create a new message bubble for the model's response.
+                setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
+                isFirstChunk = false;
+            } else {
+                // For subsequent chunks, append the text to the last message.
+                setMessages(prev => {
+                    const updatedMessages = [...prev];
+                    const lastMessage = updatedMessages[updatedMessages.length - 1];
+                    if (lastMessage?.role === 'model') {
+                        // Create a new object for the last message to ensure immutability
+                        updatedMessages[updatedMessages.length - 1] = {
+                            ...lastMessage,
+                            content: lastMessage.content + chunkValue,
+                        };
+                    }
+                    return updatedMessages;
+                });
+            }
           }
       }
 
@@ -158,7 +163,7 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
                   </Avatar>
                 )}
                 <div className={cn(
-                    'p-3 rounded-lg max-w-[85%] text-sm', 
+                    'p-3 rounded-lg max-w-[85%] text-sm break-words', 
                     message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 )}>
                   {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
