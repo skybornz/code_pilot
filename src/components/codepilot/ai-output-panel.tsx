@@ -211,16 +211,9 @@ export function AIOutputPanel({
         return;
       }
       
-      if (modelConfig.type === 'local') {
-        toast({
-          variant: 'destructive',
-          title: 'Local Models Unavailable',
-          description: 'The Ollama plugin is currently unstable. Please select an online model in admin settings.',
-        });
-        setIsChatLoading(false);
-        return;
-      }
-      const model = `googleai/${modelConfig.name}`;
+      const model = modelConfig.type === 'local'
+        ? `ollama/${modelConfig.name}`
+        : `googleai/${modelConfig.name}`;
 
       const projectContext = output.fileContext ? `The user is discussing an analysis on the file "${output.fileContext.name}".` : 'No file context provided.';
       const discussionContext = formatAiOutputForChat(output);

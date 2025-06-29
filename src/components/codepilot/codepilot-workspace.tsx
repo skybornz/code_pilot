@@ -223,7 +223,6 @@ export function SemCoPilotWorkspace() {
 
   const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string) => {
     if (!user) return;
-    await updateUserLastActive(user.id);
     setIsLoading(true);
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
@@ -239,16 +238,9 @@ export function SemCoPilotWorkspace() {
       return;
     }
     
-    if (modelConfig.type === 'local') {
-      toast({
-        variant: 'destructive',
-        title: 'Local Models Unavailable',
-        description: 'The Ollama plugin is currently unstable. Please select an online model in admin settings.',
-      });
-      setIsLoading(false);
-      return;
-    }
-    const model = `googleai/${modelConfig.name}`;
+    const model = modelConfig.type === 'local'
+      ? `ollama/${modelConfig.name}`
+      : `googleai/${modelConfig.name}`;
     
     let result: Omit<AIOutput, 'fileContext'> | null = null;
     let actionName: string = 'Unknown AI Action';
@@ -293,6 +285,7 @@ export function SemCoPilotWorkspace() {
             setAiOutput(result as AIOutput);
         }
         await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
+        await updateUserLastActive(user.id);
       }
       
     } catch (error) {
@@ -312,11 +305,10 @@ export function SemCoPilotWorkspace() {
     try {
       const modelConfig = await getDefaultModel();
       if (!modelConfig) return;
-      if (modelConfig.type === 'local') {
-          // Silently fail for completions as they are less critical.
-          return;
-      }
-      const model = `googleai/${modelConfig.name}`;
+      
+      const model = modelConfig.type === 'local'
+        ? `ollama/${modelConfig.name}`
+        : `googleai/${modelConfig.name}`;
 
       const { completion } = await codeCompletion({ model, codeSnippet: code, language });
       if (completion) {
