@@ -144,7 +144,7 @@ export function AIOutputPanel({ output, isLoading }: AIOutputPanelProps) {
         )}
         {!isLoading && output && output.type !== 'completion' && (
           <div>
-            <h3 className="font-bold text-xl mb-4">{output.title}</h3>
+            <h3 className="font-semibold text-lg mb-4 text-accent">{output.title}</h3>
             {renderOutput(output)}
           </div>
         )}
