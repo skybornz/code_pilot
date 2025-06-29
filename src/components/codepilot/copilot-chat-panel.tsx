@@ -64,9 +64,17 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
         setIsChatLoading(false);
         return;
       }
-      const model = modelConfig.type === 'local'
-        ? `ollama/${modelConfig.name}`
-        : `googleai/${modelConfig.name}`;
+      
+      if (modelConfig.type === 'local') {
+        toast({
+          variant: 'destructive',
+          title: 'Local Models Unavailable',
+          description: 'The Ollama plugin is currently unstable. Please select an online model in admin settings.',
+        });
+        setIsChatLoading(false);
+        return;
+      }
+      const model = `googleai/${modelConfig.name}`;
 
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
       

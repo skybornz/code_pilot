@@ -238,9 +238,17 @@ export function SemCoPilotWorkspace() {
       setIsLoading(false);
       return;
     }
-    const model = modelConfig.type === 'local'
-        ? `ollama/${modelConfig.name}`
-        : `googleai/${modelConfig.name}`;
+    
+    if (modelConfig.type === 'local') {
+      toast({
+        variant: 'destructive',
+        title: 'Local Models Unavailable',
+        description: 'The Ollama plugin is currently unstable. Please select an online model in admin settings.',
+      });
+      setIsLoading(false);
+      return;
+    }
+    const model = `googleai/${modelConfig.name}`;
     
     let result: Omit<AIOutput, 'fileContext'> | null = null;
     let actionName: string = 'Unknown AI Action';
@@ -275,14 +283,15 @@ export function SemCoPilotWorkspace() {
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
       }
 
-      if (result && activeFile) {
-        setAiOutput({ 
-            ...result, 
-            fileContext: { id: activeFile.id, name: activeFile.name } 
-        });
-        await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
-      } else if (result) {
-        setAiOutput(result as AIOutput);
+      if (result) {
+        if (activeFile) {
+            setAiOutput({ 
+                ...result, 
+                fileContext: { id: activeFile.id, name: activeFile.name } 
+            });
+        } else {
+            setAiOutput(result as AIOutput);
+        }
         await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
       }
       
@@ -303,9 +312,11 @@ export function SemCoPilotWorkspace() {
     try {
       const modelConfig = await getDefaultModel();
       if (!modelConfig) return;
-      const model = modelConfig.type === 'local'
-        ? `ollama/${modelConfig.name}`
-        : `googleai/${modelConfig.name}`;
+      if (modelConfig.type === 'local') {
+          // Silently fail for completions as they are less critical.
+          return;
+      }
+      const model = `googleai/${modelConfig.name}`;
 
       const { completion } = await codeCompletion({ model, codeSnippet: code, language });
       if (completion) {
