@@ -359,7 +359,7 @@ export function SemCoPilotWorkspace() {
       file={activeFile}
       onCodeChange={handleCodeChange}
       onAiAction={handleAiAction}
-      onCompletion={onCompletion}
+      onCompletion={handleCompletion}
       isLoading={isLoading || isFileLoading}
       completion={aiOutput?.type === 'completion' ? aiOutput.data : null}
       onAcceptCompletion={(completion) => {
