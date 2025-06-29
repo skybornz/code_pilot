@@ -9,25 +9,31 @@ import { Button } from '@/components/ui/button';
 
 export const columns: ColumnDef<UserActivity>[] = [
   {
-    accessorKey: 'action',
+    accessorKey: 'activity',
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Action Type
+        Activity
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
     cell: ({ row }) => {
-      const action = row.getValue('action') as string;
+      const activity = row.original.activity;
+      const activityType = activity.type;
       let variant: 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined =
         'secondary';
-      if (action === 'Login') variant = 'default';
-      if (action === 'AI Action') variant = 'outline';
+      if (activityType === 'Authentication') variant = 'default';
+      if (activityType === 'AI Action') variant = 'outline';
 
-      return <Badge variant={variant}>{action}</Badge>;
+      return <Badge variant={variant}>{activity.name}</Badge>;
     },
+    sortingFn: (rowA, rowB, columnId) => {
+        const nameA = rowA.original.activity.name;
+        const nameB = rowB.original.activity.name;
+        return nameA.localeCompare(nameB);
+    }
   },
   {
     accessorKey: 'details',
