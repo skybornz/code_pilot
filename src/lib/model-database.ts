@@ -5,7 +5,17 @@ import type { Model, NewModel } from './model-schema';
 export async function dbGetModels(): Promise<Model[]> {
   const pool = await getPool();
   const result = await pool.request().execute('sp_GetModels');
-  return result.recordset;
+  return result.recordset.map(r => ({ ...r, id: String(r.ModelID) }));
+}
+
+export async function dbGetDefaultModel(): Promise<Model | null> {
+    const pool = await getPool();
+    const result = await pool.request().execute('sp_GetDefaultModel');
+    if (result.recordset.length > 0) {
+        const record = result.recordset[0];
+        return { ...record, id: String(record.ModelID) };
+    }
+    return null;
 }
 
 export async function dbAddModel(modelData: NewModel): Promise<{ success: boolean; message?: string; model?: Model }> {
@@ -17,9 +27,9 @@ export async function dbAddModel(modelData: NewModel): Promise<{ success: boolea
         .execute('sp_AddModel');
     
     if (result.returnValue === 0 && result.recordset.length > 0) {
-      return { success: true, model: result.recordset[0] };
+      const newModel = result.recordset[0];
+      return { success: true, model: { ...newModel, id: String(newModel.ModelID) } };
     } else {
-      // Assuming SP returns a specific value for duplicate name
       return { success: false, message: 'A model with this name already exists.' };
     }
   } catch(error) {
@@ -28,7 +38,7 @@ export async function dbAddModel(modelData: NewModel): Promise<{ success: boolea
   }
 }
 
-export async function dbUpdateModel(modelData: Omit<Model, 'isDefault'>): Promise<{ success: boolean; message?: string }> {
+export async function dbUpdateModel(modelData: Model): Promise<{ success: boolean; message?: string }> {
     const pool = await getPool();
     const result = await pool.request()
         .input('ModelID', sql.Int, modelData.id)
@@ -56,7 +66,6 @@ export async function dbDeleteModel(modelId: string): Promise<{ success: boolean
       .input('ModelID', sql.Int, modelId)
       .execute('sp_DeleteModel');
   
-  // Stored procedure returns 0 on success, -1 if model is default
   if (result.returnValue === 0) {
       return { success: true };
   }

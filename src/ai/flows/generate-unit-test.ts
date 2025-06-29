@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateUnitTestFlowInputSchema = z.object({
+  model: z.string().describe('The AI model to use for generating the test.'),
   code: z.string().describe('The code block to generate a unit test for.'),
   language: z.string().describe('The programming language of the code.'),
 });
@@ -35,7 +36,7 @@ const generateUnitTestFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await ai.generate({
-        model: 'googleai/gemini-2.0-flash',
+        model: input.model as any,
         prompt: `You are a software quality assurance expert. Generate a unit test for the following code block. Also provide an explanation of what the test covers.
 
 Language: ${input.language}

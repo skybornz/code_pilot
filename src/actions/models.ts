@@ -1,9 +1,13 @@
-'use client';
+'use server';
 
-import { dbGetModels, dbAddModel, dbDeleteModel, dbUpdateModel, dbSetDefaultModel, type Model, type NewModel } from '@/lib/model-database';
+import { dbGetModels, dbAddModel, dbDeleteModel, dbUpdateModel, dbSetDefaultModel, dbGetDefaultModel, type Model, type NewModel } from '@/lib/model-database';
 
 export async function getModels(): Promise<Model[]> {
   return dbGetModels();
+}
+
+export async function getDefaultModel(): Promise<Model | null> {
+    return dbGetDefaultModel();
 }
 
 export async function addModel(modelData: NewModel): Promise<{ success: boolean; message?: string; model?: Model }> {

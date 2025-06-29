@@ -18,6 +18,7 @@ const MessageSchema = z.object({
 export type Message = z.infer<typeof MessageSchema>;
 
 const CopilotChatInputSchema = z.object({
+  model: z.string().describe('The AI model to use for the chat.'),
   messages: z.array(MessageSchema).describe('The conversation history.'),
   projectContext: z
     .string()
@@ -46,7 +47,7 @@ ${input.discussionContext ? `The user is asking a follow-up question about the f
     const historyForApi = firstUserMessageIndex !== -1 ? input.messages.slice(firstUserMessageIndex) : [];
 
     const {stream} = ai.generateStream({
-      model: 'googleai/gemini-2.0-flash',
+      model: input.model as any,
       system: systemPrompt,
       messages: historyForApi.map((m) => ({...m, content: [{text: m.content}]})),
     });

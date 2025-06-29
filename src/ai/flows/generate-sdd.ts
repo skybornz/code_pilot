@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateSddFlowInputSchema = z.object({
+  model: z.string().describe('The AI model to use for generating the SDD.'),
   code: z.string().describe('The code block to generate an SDD for.'),
 });
 export type GenerateSddInput = z.infer<typeof GenerateSddFlowInputSchema>;
@@ -33,7 +34,7 @@ const generateSddFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await ai.generate({
-        model: 'googleai/gemini-2.0-flash',
+        model: input.model as any,
         prompt: `You are an expert software architect. Generate a comprehensive Software Design Document (SDD) in Markdown format for the following code block.
 
 The SDD should include the following sections:

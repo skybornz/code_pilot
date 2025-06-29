@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CodeCompletionFlowInputSchema = z.object({
+  model: z.string().describe('The AI model to use for completion.'),
   codeSnippet: z
     .string()
     .describe('The current code snippet the user is typing.'),
@@ -40,7 +41,7 @@ const codeCompletionFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await ai.generate({
-        model: 'googleai/gemini-2.0-flash',
+        model: input.model as any,
         prompt: `You are an AI code completion assistant. You will receive a code snippet and you will generate a code completion suggestion based on the code, language, and project context.
 
 Language: ${input.language}

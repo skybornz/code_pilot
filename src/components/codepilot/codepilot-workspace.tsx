@@ -27,6 +27,7 @@ import { CopilotChatPanel } from './copilot-chat-panel';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { useAuth } from '@/context/auth-context';
 import { logUserActivity } from '@/actions/activity';
+import { getDefaultModel } from '@/actions/models';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
 
@@ -222,36 +223,48 @@ export function SemCoPilotWorkspace() {
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
     
+    const modelConfig = await getDefaultModel();
+    if (!modelConfig) {
+      toast({
+        variant: 'destructive',
+        title: 'No Default Model Set',
+        description: 'An administrator needs to set a default AI model in the settings.',
+      });
+      setIsLoading(false);
+      return;
+    }
+    const model = `googleai/${modelConfig.name}`;
+    
     let result: Omit<AIOutput, 'fileContext'> | null = null;
     let actionName: string = 'Unknown AI Action';
     try {
       if (action === 'analyze-diff' && originalCode !== undefined) {
         actionName = 'Analyze Diff';
-        const analysis = await analyzeDiff({ oldCode: originalCode, newCode: code, language });
+        const analysis = await analyzeDiff({ model, oldCode: originalCode, newCode: code, language });
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
       } else if (action === 'explain') {
         actionName = 'Explain Code';
-        const explanationData = await explainCode({ code });
+        const explanationData = await explainCode({ model, code });
         result = { type: 'explain', data: explanationData, title: 'Code Explanation' };
       } else if (action === 'bugs') {
         actionName = 'Find Bugs';
-        const bugReport = await findBugs({ code });
+        const bugReport = await findBugs({ model, code });
         result = { type: 'bugs', data: bugReport, title: 'Bug Report' };
       } else if (action === 'test') {
         actionName = 'Generate Test';
-        const unitTest = await generateUnitTest({ code, language });
+        const unitTest = await generateUnitTest({ model, code, language });
         result = { type: 'test', data: unitTest, title: 'Generated Unit Test', language };
       } else if (action === 'refactor') {
         actionName = 'Refactor Code';
-        const refactored = await refactorCode({ code, language });
+        const refactored = await refactorCode({ model, code, language });
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'docs') {
         actionName = 'Generate Docs';
-        const { documentation } = await generateCodeDocs({ code });
+        const { documentation } = await generateCodeDocs({ model, code });
         result = { type: 'docs', data: { documentation }, title: 'Generated Comments', language };
       } else if (action === 'sdd') {
         actionName = 'Generate SDD';
-        const sdd = await generateSdd({ code });
+        const sdd = await generateSdd({ model, code });
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
       }
 
@@ -281,7 +294,11 @@ export function SemCoPilotWorkspace() {
 
   const handleCompletion = useCallback(async (code: string, language: string) => {
     try {
-      const { completion } = await codeCompletion({ codeSnippet: code, language });
+      const modelConfig = await getDefaultModel();
+      if (!modelConfig) return;
+      const model = `googleai/${modelConfig.name}`;
+
+      const { completion } = await codeCompletion({ model, codeSnippet: code, language });
       if (completion) {
         setAiOutput({ type: 'completion', data: completion, title: 'Code Completion' });
       }

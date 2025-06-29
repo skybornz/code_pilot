@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 export const ModelSchema = z.object({
   id: z.string(),
-  type: z.literal('online'),
   name: z.string().min(1, 'Name is required'),
+  type: z.enum(['online']),
   isDefault: z.boolean().optional(),
 });
 

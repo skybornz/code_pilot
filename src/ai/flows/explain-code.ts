@@ -11,6 +11,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ExplainCodeFlowInputSchema = z.object({
+  model: z.string().describe('The AI model to use for the explanation.'),
   code: z.string().describe('The code to be explained.'),
 });
 export type ExplainCodeInput = z.infer<typeof ExplainCodeFlowInputSchema>;
@@ -33,7 +34,7 @@ const explainCodeFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await ai.generate({
-        model: 'googleai/gemini-2.0-flash',
+        model: input.model as any,
         prompt: `You are an expert software developer. Explain the following code.
 Provide a high-level summary, and then a bullet-point breakdown of what each part of the code does.
 

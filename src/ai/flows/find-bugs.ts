@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const FindBugsFlowInputSchema = z.object({
+  model: z.string().describe('The AI model to use for bug detection.'),
   code: z.string().describe('The code snippet to analyze.'),
 });
 export type FindBugsInput = z.infer<typeof FindBugsFlowInputSchema>;
@@ -36,7 +37,7 @@ const findBugsFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
+      model: input.model as any,
       prompt: `You are a security expert. Analyze the following code snippet for potential bugs and vulnerabilities. Provide a list of the bugs found and explain how to fix them.
 
 Code:

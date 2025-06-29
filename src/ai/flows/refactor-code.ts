@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const RefactorCodeFlowInputSchema = z.object({
+  model: z.string().describe('The AI model to use for refactoring.'),
   code: z.string().describe('The block of code to refactor.'),
   language: z.string().describe('The programming language of the code.'),
 });
@@ -35,7 +36,7 @@ const refactorCodeFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await ai.generate({
-        model: 'googleai/gemini-2.0-flash',
+        model: input.model as any,
         prompt: `You are an AI code assistant that refactors code to improve its quality and maintainability.
 
   Given the following code block and its programming language, suggest refactoring improvements.

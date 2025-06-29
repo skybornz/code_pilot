@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -20,7 +21,6 @@ import React, { useEffect } from 'react';
 import type { Model } from '@/lib/model-schema';
 
 const formSchema = z.object({
-    type: z.literal('online'),
     name: z.string().min(1, 'Model name is required.'),
 });
 
@@ -37,31 +37,27 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
 
   const form = useForm<ModelFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: model ? {
-      type: 'online',
-      name: model.name
-    } : {
-      type: 'online',
-      name: '',
+    defaultValues: {
+      name: model?.name || '',
     },
   });
 
   useEffect(() => {
-    form.reset(model ? {
-      type: 'online',
-      name: model.name
-    } : {
-      type: 'online',
-      name: '',
+    form.reset({
+      name: model?.name || '',
     });
   }, [model, form]);
 
 
   async function onSubmit(data: ModelFormValues) {
     setIsSubmitting(true);
+    
+    const modelPayload = { ...data, type: 'online' as const };
+
     const result = model
-      ? await updateModel({ ...data, id: model.id })
-      : await addModel(data);
+      ? await updateModel({ ...modelPayload, id: model.id })
+      : await addModel(modelPayload);
+
     setIsSubmitting(false);
 
     if (result.success) {
@@ -89,8 +85,11 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
             <FormItem>
               <FormLabel>Model Name</FormLabel>
               <FormControl>
-                <Input placeholder="Gemini Pro" {...field} />
+                <Input placeholder="gemini-1.5-flash" {...field} />
               </FormControl>
+              <FormDescription>
+                This must be the exact model ID from the provider (e.g., gemini-1.5-flash).
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

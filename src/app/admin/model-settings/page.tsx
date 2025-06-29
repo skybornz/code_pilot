@@ -92,11 +92,11 @@ export default function ModelSettingsPage() {
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-xl font-semibold text-primary">Model Configuration</CardTitle>
-                    <CardDescription>Add, remove, and manage your cloud-based AI models.</CardDescription>
+                    <CardDescription>Add, remove, and manage your AI models.</CardDescription>
                 </div>
                  <Dialog open={isFormOpen} onOpenChange={(open) => {
-                     setIsFormOpen(open);
                      if (!open) setSelectedModel(null);
+                     setIsFormOpen(open);
                  }}>
                     <DialogTrigger asChild>
                         <Button onClick={handleAdd}>
@@ -131,8 +131,8 @@ export default function ModelSettingsPage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2 text-sm text-muted-foreground">
+                                    <p><span className="font-semibold text-foreground">Type:</span> <span className="capitalize">{model.type}</span></p>
                                     <p><span className="font-semibold text-foreground">Provider:</span> Google</p>
-                                    <p><span className="font-semibold text-foreground">API Key:</span> Set in .env file</p>
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
                                      {!model.isDefault && (

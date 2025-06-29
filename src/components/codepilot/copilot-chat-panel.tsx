@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LogoMark } from './logo-mark';
 import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
+import { getDefaultModel } from '@/actions/models';
 
 
 interface CopilotChatPanelProps {
@@ -50,12 +51,25 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
     setIsChatLoading(true);
 
     try {
+      const modelConfig = await getDefaultModel();
+      if (!modelConfig) {
+        toast({
+          variant: 'destructive',
+          title: 'No Default Model Set',
+          description: 'An administrator needs to set a default AI model in the settings.',
+        });
+        setIsChatLoading(false);
+        return;
+      }
+      const model = `googleai/${modelConfig.name}`;
+
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
       
       const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
       const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
       
       const stream = await copilotChat({
+        model,
         messages: historyForApi,
         projectContext,
       });
