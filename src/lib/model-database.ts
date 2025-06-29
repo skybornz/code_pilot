@@ -65,6 +65,9 @@ export async function dbUpdateModel(modelData: Model): Promise<{ success: boolea
     if (result.returnValue === 0) {
         return { success: true };
     }
+    if (result.returnValue === 1) {
+        return { success: false, message: 'A model with this name already exists.' };
+    }
     return { success: false, message: 'Model not found or update failed.' };
 }
 
@@ -76,7 +79,7 @@ export async function dbSetDefaultModel(modelId: string): Promise<{ success: boo
   return { success: true };
 }
 
-export async function dbDeleteModel(modelId: string): Promise<{ success: boolean }> {
+export async function dbDeleteModel(modelId: string): Promise<{ success: boolean, message?: string }> {
   const pool = await getPool();
   const result = await pool.request()
       .input('ModelID', sql.Int, modelId)
@@ -85,5 +88,8 @@ export async function dbDeleteModel(modelId: string): Promise<{ success: boolean
   if (result.returnValue === 0) {
       return { success: true };
   }
-  return { success: false };
+  if (result.returnValue === 1) {
+    return { success: false, message: "Cannot delete the default model." };
+  }
+  return { success: false, message: "Failed to delete model. It might not exist." };
 }

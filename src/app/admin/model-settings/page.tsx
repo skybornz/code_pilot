@@ -63,7 +63,7 @@ export default function ModelSettingsPage() {
             toast({ title: "Model Deleted", description: "The model has been removed." });
             fetchModels();
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete the model.' });
+            toast({ variant: 'destructive', title: 'Error', description: result.message || 'Failed to delete the model.' });
         }
     }
 
