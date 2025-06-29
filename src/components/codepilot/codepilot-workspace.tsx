@@ -17,20 +17,23 @@ import { refactorCode } from '@/ai/flows/refactor-code';
 import { generateCodeDocs } from '@/ai/flows/generate-code-docs';
 import { generateSdd } from '@/ai/flows/generate-sdd';
 import { analyzeDiff } from '@/ai/flows/analyze-diff';
-import { Menu } from 'lucide-react';
+import { Menu, Loader2 } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
 import type { Project } from '@/lib/project-database';
-import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit } from '@/actions/github';
+import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit, loadBitbucketFiles } from '@/actions/github';
 import { CopilotChatPanel } from './copilot-chat-panel';
 import type { Message } from '@/ai/flows/copilot-chat';
+
+const ACTIVE_PROJECT_KEY = 'semco_active_project_info';
 
 export function SemCoPilotWorkspace() {
   const [files, setFiles] = useState<CodeFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [loadedProjectInfo, setLoadedProjectInfo] = useState<{ project: Project; branch: string } | null>(null);
   const [rightPanelView, setRightPanelView] = useState<'ai-output' | 'copilot-chat'>('copilot-chat');
   const [copilotChatMessages, setCopilotChatMessages] = useState<Message[]>([]);
@@ -45,13 +48,14 @@ export function SemCoPilotWorkspace() {
     ]);
   }, []);
 
-  useEffect(() => {
-    resetCopilotChat();
-  }, [resetCopilotChat]);
-
   const handleFilesLoaded = useCallback((loadedFiles: CodeFile[], project: Project, branch: string) => {
     setFiles(loadedFiles);
     setLoadedProjectInfo({ project, branch });
+    try {
+        localStorage.setItem(ACTIVE_PROJECT_KEY, JSON.stringify({ project, branch }));
+    } catch (e) {
+        console.error("Could not save project info to localStorage", e);
+    }
     if (loadedFiles.length > 0) {
       setActiveFileId(loadedFiles[0].id);
     } else {
@@ -62,6 +66,35 @@ export function SemCoPilotWorkspace() {
     setAnalysisChatMessages([]);
     setRightPanelView('copilot-chat');
   }, [resetCopilotChat]);
+
+  useEffect(() => {
+    resetCopilotChat();
+  }, [resetCopilotChat]);
+
+  useEffect(() => {
+    const loadProjectFromStorage = async () => {
+      try {
+        const storedInfo = localStorage.getItem(ACTIVE_PROJECT_KEY);
+        if (storedInfo) {
+          const { project, branch } = JSON.parse(storedInfo);
+          const result = await loadBitbucketFiles(project.url, branch);
+          if (result.success && result.files) {
+            handleFilesLoaded(result.files, project, branch);
+          } else {
+            toast({ variant: 'destructive', title: 'Failed to auto-reload project', description: result.error });
+            localStorage.removeItem(ACTIVE_PROJECT_KEY);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load project from storage:', error);
+        localStorage.removeItem(ACTIVE_PROJECT_KEY);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    loadProjectFromStorage();
+  }, [handleFilesLoaded, toast]);
 
   const handleFileSelect = useCallback(async (fileId: string) => {
     setActiveFileId(fileId);
@@ -226,6 +259,11 @@ export function SemCoPilotWorkspace() {
     setActiveFileId(null);
     setLoadedProjectInfo(null);
     setAiOutput(null);
+    try {
+        localStorage.removeItem(ACTIVE_PROJECT_KEY);
+    } catch (e) {
+        console.error("Could not remove project info from localStorage", e);
+    }
     resetCopilotChat();
     setAnalysisChatMessages([]);
     setRightPanelView('copilot-chat');
@@ -235,6 +273,14 @@ export function SemCoPilotWorkspace() {
     setRightPanelView('copilot-chat');
   };
   
+  if (isInitializing) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   const editor = activeFile ? (
     <EditorPanel
       key={`${activeFile.id}-${activeFile.activeCommitHash || 'latest'}`}

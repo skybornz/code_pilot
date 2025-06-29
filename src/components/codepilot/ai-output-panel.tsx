@@ -254,11 +254,16 @@ export function AIOutputPanel({
   
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
-      <CardHeader className="flex-shrink-0 border-b p-4 flex flex-row items-center">
+      <CardHeader className="flex-shrink-0 border-b p-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Wand2 className="h-5 w-5 text-accent" />
           <span>AI Assistant</span>
         </CardTitle>
+        {activeFile && (
+          <p className="text-xs text-muted-foreground pt-1 truncate" title={activeFile.name}>
+            on {activeFile.name}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
         <ScrollArea className="flex-1" ref={scrollAreaRef}>
