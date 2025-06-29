@@ -128,3 +128,7 @@ export async function changePassword({ userId, currentPassword, newPassword }: {
         return { success: false, message: 'Failed to update password.' };
     }
 }
+
+export async function updateUserLastActive(userId: string) {
+    await dbUpdateUserLastActive(userId);
+}

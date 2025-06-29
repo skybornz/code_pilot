@@ -26,7 +26,7 @@ import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit, loadBitbuc
 import { CopilotChatPanel } from './copilot-chat-panel';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { useAuth } from '@/context/auth-context';
-import { logUserActivity } from '@/actions/activity';
+import { logUserActivity, updateUserLastActive } from '@/actions/activity';
 import { getDefaultModel } from '@/actions/models';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
@@ -58,7 +58,7 @@ export function SemCoPilotWorkspace() {
     ]);
   }, []);
   
-  const handleFilesLoaded = useCallback((loadedFiles: CodeFile[], project: Project, branch: string) => {
+  const handleFilesLoaded = useCallback(async (loadedFiles: CodeFile[], project: Project, branch: string) => {
     setFiles(loadedFiles);
     setLoadedProjectInfo({ project, branch });
     if (activeProjectKey) {
@@ -77,7 +77,10 @@ export function SemCoPilotWorkspace() {
     resetCopilotChat();
     setAnalysisChatMessages([]);
     setRightPanelView('copilot-chat');
-  }, [resetCopilotChat, activeProjectKey]);
+    if (user) {
+        await updateUserLastActive(user.id);
+    }
+  }, [resetCopilotChat, activeProjectKey, user]);
 
   useEffect(() => {
     resetCopilotChat();
@@ -95,7 +98,7 @@ export function SemCoPilotWorkspace() {
           const { project, branch } = JSON.parse(storedInfo);
           const result = await loadBitbucketFiles(project.url, branch);
           if (result.success && result.files) {
-            handleFilesLoaded(result.files, project, branch);
+            await handleFilesLoaded(result.files, project, branch);
           } else {
             toast({ variant: 'destructive', title: 'Failed to auto-reload project', description: result.error });
             localStorage.removeItem(activeProjectKey);
@@ -219,6 +222,7 @@ export function SemCoPilotWorkspace() {
 
   const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string) => {
     if (!user) return;
+    await updateUserLastActive(user.id);
     setIsLoading(true);
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
