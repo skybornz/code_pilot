@@ -9,3 +9,4 @@ import '@/ai/flows/explain-code.ts';
 import '@/ai/flows/generate-code-docs.ts';
 import '@/ai/flows/generate-sdd.ts';
 import '@/ai/flows/analyze-diff.ts';
+import '@/ai/flows/copilot-chat.ts';

@@ -23,6 +23,7 @@ import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
 import type { Project } from '@/lib/project-database';
 import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit } from '@/actions/github';
+import { CopilotChatPanel } from './copilot-chat-panel';
 
 export function SemCoPilotWorkspace() {
   const [files, setFiles] = useState<CodeFile[]>([]);
@@ -30,6 +31,7 @@ export function SemCoPilotWorkspace() {
   const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadedProjectInfo, setLoadedProjectInfo] = useState<{ project: Project; branch: string } | null>(null);
+  const [rightPanelView, setRightPanelView] = useState<'ai-output' | 'copilot-chat'>('copilot-chat');
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -42,11 +44,13 @@ export function SemCoPilotWorkspace() {
       setActiveFileId(null);
     }
     setAiOutput(null);
+    setRightPanelView('copilot-chat');
   }, []);
 
   const handleFileSelect = useCallback(async (fileId: string) => {
     setActiveFileId(fileId);
     setAiOutput(null);
+    setRightPanelView('copilot-chat');
 
     const file = files.find(f => f.id === fileId);
     if (file && !file.commits && loadedProjectInfo) {
@@ -152,6 +156,7 @@ export function SemCoPilotWorkspace() {
   const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string) => {
     setIsLoading(true);
     setAiOutput(null);
+    setRightPanelView('ai-output');
     try {
       let result: AIOutput | null = null;
       if (action === 'analyze-diff' && originalCode !== undefined) {
@@ -170,8 +175,8 @@ export function SemCoPilotWorkspace() {
         const refactored = await refactorCode({ code, language });
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'docs') {
-        const docs = await generateCodeDocs({ code });
-        result = { type: 'docs', data: docs, title: 'Generated Comments', language };
+        const { documentation } = await generateCodeDocs({ code });
+        result = { type: 'docs', data: { documentation }, title: 'Generated Comments', language };
       } else if (action === 'sdd') {
         const sdd = await generateSdd({ code });
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
@@ -206,6 +211,11 @@ export function SemCoPilotWorkspace() {
     setActiveFileId(null);
     setLoadedProjectInfo(null);
     setAiOutput(null);
+    setRightPanelView('copilot-chat');
+  };
+  
+  const handleShowCopilotChat = () => {
+    setRightPanelView('copilot-chat');
   };
 
   const editor = activeFile ? (
@@ -225,6 +235,7 @@ export function SemCoPilotWorkspace() {
         setAiOutput(null);
       }}
       onDismissCompletion={() => setAiOutput(null)}
+      onShowCopilotChat={handleShowCopilotChat}
     />
   ) : (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
@@ -232,12 +243,16 @@ export function SemCoPilotWorkspace() {
     </Card>
   );
 
-  const outputPanel = (
-    <AIOutputPanel
-      output={aiOutput}
-      isLoading={isLoading}
-    />
-  );
+  const rightPanelContent = () => {
+    switch (rightPanelView) {
+      case 'copilot-chat':
+        return <CopilotChatPanel activeFile={activeFile} />;
+      case 'ai-output':
+        return <AIOutputPanel output={aiOutput} isLoading={isLoading} />;
+      default:
+        return <CopilotChatPanel activeFile={activeFile} />;
+    }
+  };
   
   if (isMobile) {
     return (
@@ -269,7 +284,7 @@ export function SemCoPilotWorkspace() {
                 {editor}
               </div>
               <div className="mt-4 h-[calc(50vh-6rem)]">
-                {outputPanel}
+                {rightPanelContent()}
               </div>
             </>
            ) : (
@@ -299,7 +314,7 @@ export function SemCoPilotWorkspace() {
               {editor}
             </div>
             <div className="flex-1 flex flex-col min-w-0">
-              {outputPanel}
+              {rightPanelContent()}
             </div>
           </>
         ) : (

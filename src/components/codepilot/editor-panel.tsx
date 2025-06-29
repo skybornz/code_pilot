@@ -1,7 +1,7 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles, GitCommit, MoreVertical } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot } from 'lucide-react';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,7 @@ interface EditorPanelProps {
   onAcceptCompletion: (completion: string) => void;
   onDismissCompletion: () => void;
   onCommitChange: (fileId: string, commitHash: string) => void;
+  onShowCopilotChat: () => void;
 }
 
 const getLanguageExtension = (language: string) => {
@@ -174,6 +175,7 @@ export function EditorPanel({
   onAcceptCompletion,
   onDismissCompletion,
   onCommitChange,
+  onShowCopilotChat,
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content);
   const [viewMode, setViewMode] = useState<'edit' | 'diff'>('edit');
@@ -209,19 +211,20 @@ export function EditorPanel({
   };
 
   const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
-  const hasChanges = file.previousContent !== undefined;
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
-  const previousCommit = (activeCommitIndex > -1 && file.commits && activeCommitIndex < file.commits.length - 1)
-      ? file.commits[activeCommitIndex + 1]
-      : null;
+  const hasPreviousVersion = activeCommitIndex > -1 && file.commits ? activeCommitIndex < file.commits.length - 1 : false;
 
-  const analyzeDisabled = isLoading || !hasChanges || viewMode === 'edit';
+  const previousCommit = hasPreviousVersion && file.commits ? file.commits[activeCommitIndex + 1] : null;
+
+  const analyzeDisabled = isLoading || !hasPreviousVersion || viewMode === 'edit';
 
   const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
     { id: 'refactor', label: 'Refactor Code', icon: Wand2 },
   ];
+
+  const copilotAction = { id: 'copilot', label: 'Co-Pilot Chat', icon: Bot };
 
   const secondaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
       { id: 'bugs', label: 'Find Bugs', icon: Bug },
@@ -277,7 +280,7 @@ export function EditorPanel({
                   variant="ghost"
                   size="icon"
                   onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')}
-                  disabled={!hasChanges}
+                  disabled={!hasPreviousVersion}
                   data-active={viewMode === 'diff'}
                   className="data-[active=true]:bg-accent"
                   aria-label="View Changes"
@@ -286,7 +289,7 @@ export function EditorPanel({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{hasChanges ? (viewMode === 'edit' ? 'View Changes' : 'Back to Editor') : 'No previous version to compare'}</p>
+                <p>{hasPreviousVersion ? (viewMode === 'edit' ? 'View Changes' : 'Back to Editor') : 'No previous version to compare'}</p>
               </TooltipContent>
             </Tooltip>
             
@@ -304,7 +307,7 @@ export function EditorPanel({
                 </TooltipTrigger>
                 <TooltipContent>
                     <p>
-                      {!hasChanges
+                      {!hasPreviousVersion
                         ? 'No previous version to compare'
                         : viewMode === 'edit'
                         ? 'Click "View Changes" to enable analysis'
@@ -353,6 +356,11 @@ export function EditorPanel({
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem key={copilotAction.id} onClick={onShowCopilotChat} disabled={isLoading}>
+                    <copilotAction.icon className="mr-2 h-4 w-4" />
+                    <span>{copilotAction.label}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 {secondaryActions.map((action) => (
                     <DropdownMenuItem key={action.id} onClick={() => onAiAction(action.id, code, file.language)} disabled={isLoading}>
                         <action.icon className="mr-2 h-4 w-4" />

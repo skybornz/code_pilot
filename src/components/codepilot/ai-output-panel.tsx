@@ -80,15 +80,7 @@ const renderOutput = (output: AIOutput) => {
 
   if (type === 'test') {
     const testData = data as GenerateUnitTestOutput;
-    return (
-      <div className="space-y-4">
-        <CodeBlock code={testData.unitTest} language={language} />
-        <div>
-          <h4 className="font-semibold mb-2">Explanation:</h4>
-          <p className="text-muted-foreground whitespace-pre-wrap">{testData.explanation}</p>
-        </div>
-      </div>
-    );
+    return <CodeBlock code={testData.unitTest} language={language} />;
   }
 
   if (type === 'docs') {
