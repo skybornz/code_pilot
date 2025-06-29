@@ -10,6 +10,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EditorView } from '@codemirror/view';
 
 interface CodeBlockProps {
   code: string;
@@ -74,7 +75,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
             value={code}
             height="auto"
             theme={vscodeDark}
-            extensions={langExtension}
+            extensions={[...langExtension, EditorView.lineWrapping]}
             readOnly={true}
             basicSetup={{
               lineNumbers: true,
