@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Globe, Server } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Globe, Server, Pencil } from 'lucide-react';
 import type { Model } from '@/lib/model-database';
 import { getModels, deleteModel } from '@/actions/models';
 import { ModelForm } from './model-form';
@@ -25,6 +25,7 @@ export default function ModelSettingsPage() {
     const [models, setModels] = useState<Model[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [selectedModel, setSelectedModel] = useState<Model | null>(null);
     const { toast } = useToast();
 
     const fetchModels = useCallback(async () => {
@@ -50,6 +51,7 @@ export default function ModelSettingsPage() {
 
     const onFormSubmit = () => {
         setIsFormOpen(false);
+        setSelectedModel(null);
         fetchModels();
     };
 
@@ -62,6 +64,16 @@ export default function ModelSettingsPage() {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete the model.' });
         }
     }
+    
+    const handleEdit = (model: Model) => {
+        setSelectedModel(model);
+        setIsFormOpen(true);
+    }
+    
+    const handleAdd = () => {
+        setSelectedModel(null);
+        setIsFormOpen(true);
+    }
 
     return (
         <Card>
@@ -70,18 +82,21 @@ export default function ModelSettingsPage() {
                     <CardTitle className="text-xl font-semibold text-primary">Model Configuration</CardTitle>
                     <CardDescription>Add, remove, and manage your AI models.</CardDescription>
                 </div>
-                 <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                 <Dialog open={isFormOpen} onOpenChange={(open) => {
+                     setIsFormOpen(open);
+                     if (!open) setSelectedModel(null);
+                 }}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button onClick={handleAdd}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Model
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                            <DialogTitle>Add New AI Model</DialogTitle>
+                            <DialogTitle>{selectedModel ? 'Edit AI Model' : 'Add New AI Model'}</DialogTitle>
                         </DialogHeader>
-                        <ModelForm onSubmitSuccess={onFormSubmit} />
+                        <ModelForm model={selectedModel} onSubmitSuccess={onFormSubmit} />
                     </DialogContent>
                 </Dialog>
             </CardHeader>
@@ -112,7 +127,11 @@ export default function ModelSettingsPage() {
                                         </>
                                     )}
                                 </CardContent>
-                                <CardFooter>
+                                <CardFooter className="flex justify-end gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => handleEdit(model)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="destructive" size="sm">

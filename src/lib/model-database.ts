@@ -70,6 +70,19 @@ export function dbAddModel(modelData: NewModel): { success: boolean; message?: s
   return { success: true, model: newModel };
 }
 
+export function dbUpdateModel(modelData: Model): { success: boolean; message?: string } {
+    const models = getModelsFromStorage();
+    const modelIndex = models.findIndex(m => m.id === modelData.id);
+
+    if (modelIndex === -1) {
+        return { success: false, message: 'Model not found.' };
+    }
+
+    models[modelIndex] = modelData;
+    saveModelsToStorage(models);
+    return { success: true };
+}
+
 export function dbDeleteModel(modelId: string): { success: boolean } {
   let models = getModelsFromStorage();
   models = models.filter(m => m.id !== modelId);
