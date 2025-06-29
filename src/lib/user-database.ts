@@ -3,8 +3,8 @@ import type { User } from './schemas';
 // For this prototype, we'll store users in-memory.
 // In a real app, this would be a database.
 let users: User[] = [
-  { id: '1', email: 'admin@example.com', password: 'password', role: 'admin' },
-  { id: '2', email: 'user@example.com', password: 'password', role: 'user' },
+  { id: '1', email: 'admin@example.com', password: 'password', role: 'admin', isActive: true },
+  { id: '2', email: 'user@example.com', password: 'password', role: 'user', isActive: true },
 ];
 
 // These are simple functions, not server actions.

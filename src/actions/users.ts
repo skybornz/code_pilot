@@ -20,6 +20,9 @@ export async function loginUser(credentials: Pick<User, 'email' | 'password'>): 
     if (!user || user.password !== credentials.password) {
         return { success: false, message: 'Invalid email or password' };
     }
+    if (!user.isActive) {
+        return { success: false, message: 'This account has been deactivated.' };
+    }
     const { password, ...userWithoutPassword } = user;
     return { success: true, user: userWithoutPassword };
 }

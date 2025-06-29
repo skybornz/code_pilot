@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,11 +20,13 @@ import type { User } from '@/lib/schemas';
 import { addUser, updateUser } from '@/actions/users';
 import { Loader2 } from 'lucide-react';
 import React from 'react';
+import { Switch } from '@/components/ui/switch';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters.' }).optional().or(z.literal('')),
   role: z.enum(['admin', 'user']),
+  isActive: z.boolean(),
 });
 
 type UserFormValues = z.infer<typeof formSchema>;
@@ -43,6 +46,7 @@ export function UserForm({ user, onSubmitSuccess }: UserFormProps) {
       email: user?.email || '',
       password: '',
       role: user?.role || 'user',
+      isActive: user ? user.isActive : true,
     },
   });
 
@@ -51,7 +55,7 @@ export function UserForm({ user, onSubmitSuccess }: UserFormProps) {
     let result;
     if (user) {
       // Update user
-      const userData: any = { id: user.id, email: data.email, role: data.role };
+      const userData: any = { id: user.id, email: data.email, role: data.role, isActive: data.isActive };
       if (data.password) {
         userData.password = data.password;
       }
@@ -63,7 +67,7 @@ export function UserForm({ user, onSubmitSuccess }: UserFormProps) {
         setIsSubmitting(false);
         return;
       }
-      result = await addUser({ email: data.email, password: data.password, role: data.role });
+      result = await addUser({ email: data.email, password: data.password, role: data.role, isActive: data.isActive });
     }
 
     setIsSubmitting(false);
@@ -130,6 +134,26 @@ export function UserForm({ user, onSubmitSuccess }: UserFormProps) {
                 </SelectContent>
               </Select>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="isActive"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Active</FormLabel>
+                <FormDescription>
+                  Inactive users will not be able to log in.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
             </FormItem>
           )}
         />

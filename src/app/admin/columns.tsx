@@ -31,6 +31,18 @@ export const columns = ({ onEdit }: ColumnsProps): ColumnDef<Omit<User, 'passwor
     },
   },
   {
+    accessorKey: 'isActive',
+    header: 'Status',
+    cell: ({ row }) => {
+      const isActive = row.getValue('isActive');
+      return (
+        <Badge variant={isActive ? 'default' : 'destructive'}>
+          {isActive ? 'Active' : 'Inactive'}
+        </Badge>
+      );
+    },
+  },
+  {
     id: 'actions',
     cell: ({ row }) => {
       const user = row.original;
