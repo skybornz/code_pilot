@@ -359,8 +359,7 @@ export function SemCoPilotWorkspace() {
       file={activeFile}
       onCodeChange={handleCodeChange}
       onAiAction={handleAiAction}
-      onCompletion={handleCompletion}
-      onCommitChange={handleCommitChange}
+      onCompletion={onCompletion}
       isLoading={isLoading || isFileLoading}
       completion={aiOutput?.type === 'completion' ? aiOutput.data : null}
       onAcceptCompletion={(completion) => {
@@ -370,6 +369,7 @@ export function SemCoPilotWorkspace() {
         setAiOutput(null);
       }}
       onDismissCompletion={() => setAiOutput(null)}
+      onCommitChange={handleCommitChange}
       onShowCopilotChat={handleShowCopilotChat}
       viewMode={editorViewMode}
       setViewMode={setEditorViewMode}
