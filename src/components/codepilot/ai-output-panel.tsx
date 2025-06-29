@@ -211,18 +211,9 @@ export function AIOutputPanel({
         return;
       }
       
-      if (modelConfig.type === 'local') {
-          toast({
-            variant: 'destructive',
-            title: 'Online Model Required',
-            description: 'The chat feature requires a default "online" model. An administrator can change this in the admin settings.',
-          });
-          setIsChatLoading(false);
-          const errorMessage: Message = { role: 'model', content: "Sorry, this feature requires an online model. Please ask an administrator to change the default model." };
-          onMessagesChange([...newMessages, errorMessage]);
-          return;
-      }
-      const model = `googleai/${modelConfig.name}`;
+      const model = modelConfig.type === 'local'
+        ? `ollama/${modelConfig.name}`
+        : `googleai/${modelConfig.name}`;
 
       const projectContext = output.fileContext ? `The user is discussing an analysis on the file "${output.fileContext.name}".` : 'No file context provided.';
       const discussionContext = formatAiOutputForChat(output);

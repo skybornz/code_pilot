@@ -229,16 +229,18 @@ export function SemCoPilotWorkspace() {
     setRightPanelView('ai-output');
     
     const modelConfig = await getDefaultModel();
-    if (!modelConfig || modelConfig.type === 'local') {
+    if (!modelConfig) {
       toast({
         variant: 'destructive',
-        title: 'Online Model Required',
-        description: 'Local models are not currently supported. Please set a default "online" model in the admin settings.',
+        title: 'No Default Model Set',
+        description: 'Please set a default AI model in the admin settings.',
       });
       setIsLoading(false);
       return;
     }
-    const model = `googleai/${modelConfig.name}`;
+    const model = modelConfig.type === 'local'
+        ? `ollama/${modelConfig.name}`
+        : `googleai/${modelConfig.name}`;
     
     let result: Omit<AIOutput, 'fileContext'> | null = null;
     let actionName: string = 'Unknown AI Action';
@@ -278,12 +280,12 @@ export function SemCoPilotWorkspace() {
             ...result, 
             fileContext: { id: activeFile.id, name: activeFile.name } 
         });
+        await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
       } else if (result) {
         setAiOutput(result as AIOutput);
+        await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
       }
       
-      await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
-
     } catch (error) {
       console.error('AI action failed:', error);
       toast({
@@ -300,8 +302,10 @@ export function SemCoPilotWorkspace() {
   const handleCompletion = useCallback(async (code: string, language: string) => {
     try {
       const modelConfig = await getDefaultModel();
-      if (!modelConfig || modelConfig.type === 'local') return;
-      const model = `googleai/${modelConfig.name}`;
+      if (!modelConfig) return;
+      const model = modelConfig.type === 'local'
+        ? `ollama/${modelConfig.name}`
+        : `googleai/${modelConfig.name}`;
 
       const { completion } = await codeCompletion({ model, codeSnippet: code, language });
       if (completion) {
