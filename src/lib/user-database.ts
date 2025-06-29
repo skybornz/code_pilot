@@ -99,7 +99,7 @@ export async function dbUpdateUser(userData: Partial<User> & { id: string }): Pr
     
     const result = await request.execute('sp_UpdateUser');
 
-    if (result.recordset && result.recordset.length > 0 && result.recordset[0].Result === 1) {
+    if (result.recordset && result.recordset.length > 0 && result.recordset[0].Result === true) {
         return { success: true };
     }
     return { success: false, message: 'User not found or update failed.' };
