@@ -2,6 +2,7 @@
 
 
 
+
 import sql from 'mssql';
 import { getPool } from './database/db';
 import type { User } from './schemas';
@@ -114,7 +115,7 @@ export async function dbAddUser(userData: Omit<User, 'id' | 'lastActive'>): Prom
         .input('Email', sql.NVarChar, userData.email)
         .input('PasswordHash', sql.NVarChar, userData.password)
         .input('Role', sql.NVarChar, userData.role)
-        .execute('sp_AddUser');
+        .execute('sp_CreateUser');
     
     if (result.recordset && result.recordset.length > 0 && result.recordset[0].UserID > 0) {
         const newUser = await dbGetUserById(String(result.recordset[0].UserID));
