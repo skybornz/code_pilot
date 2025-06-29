@@ -10,7 +10,7 @@ import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
 import type { GenerateCodeDocsOutput } from '@/ai/flows/generate-code-docs';
 import type { GenerateSddOutput } from '@/ai/flows/generate-sdd';
 import { CodeBlock } from './code-block';
-import type { AnalyzeDiffOutput } from './types';
+import type { AnalyzeDiffOutput, ExplainCodeOutput } from './types';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -19,6 +19,28 @@ interface AIOutputPanelProps {
 
 const renderOutput = (output: AIOutput) => {
   const { data, type, language } = output;
+
+  if (type === 'explain') {
+    const explanation = data as ExplainCodeOutput;
+    return (
+      <div className="space-y-4">
+        <div>
+          <h4 className="font-semibold mb-2">Summary</h4>
+          <p className="text-muted-foreground whitespace-pre-wrap">{explanation.summary}</p>
+        </div>
+        <div>
+          <h4 className="font-semibold mb-2">Breakdown</h4>
+          {explanation.breakdown.length > 0 ? (
+            <ul className="list-disc list-inside space-y-2 bg-muted/50 p-4 rounded-md">
+              {explanation.breakdown.map((point, index) => <li key={index}>{point}</li>)}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground">No breakdown available.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (type === 'analyze-diff') {
     const analysis = data as AnalyzeDiffOutput;

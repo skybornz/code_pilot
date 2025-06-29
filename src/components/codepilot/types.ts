@@ -6,12 +6,14 @@ import type { GenerateUnitTestOutput } from "@/ai/flows/generate-unit-test";
 import type { GenerateCodeDocsOutput } from "@/ai/flows/generate-code-docs";
 import type { GenerateSddOutput } from "@/ai/flows/generate-sdd";
 import type { AnalyzeDiffOutput as AnalyzeDiffFlowOutput } from "@/ai/flows/analyze-diff";
+import type { ExplainCodeOutput as ExplainCodeFlowOutput } from "@/ai/flows/explain-code";
 
 export type AnalyzeDiffOutput = AnalyzeDiffFlowOutput;
+export type ExplainCodeOutput = ExplainCodeFlowOutput;
 
 export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'completion' | 'docs' | 'sdd' | 'analyze-diff';
 
-export type AIOutputData = string | FindBugsOutput | RefactorCodeOutput | GenerateUnitTestOutput | GenerateCodeDocsOutput | GenerateSddOutput | AnalyzeDiffOutput;
+export type AIOutputData = string | FindBugsOutput | RefactorCodeOutput | GenerateUnitTestOutput | GenerateCodeDocsOutput | GenerateSddOutput | AnalyzeDiffOutput | ExplainCodeOutput;
 
 export type AIOutput = {
     type: ActionType;

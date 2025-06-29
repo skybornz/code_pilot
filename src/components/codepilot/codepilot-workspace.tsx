@@ -163,8 +163,8 @@ export function SemCoPilotWorkspace() {
         const analysis = await analyzeDiff({ oldCode: originalCode, newCode: code, language });
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
       } else if (action === 'explain') {
-        const { explanation } = await explainCode({ code });
-        result = { type: 'explain', data: explanation, title: 'Code Explanation' };
+        const explanationData = await explainCode({ code });
+        result = { type: 'explain', data: explanationData, title: 'Code Explanation' };
       } else if (action === 'bugs') {
         const bugReport = await findBugs({ code });
         result = { type: 'bugs', data: bugReport, title: 'Bug Report' };

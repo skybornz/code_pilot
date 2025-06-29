@@ -18,7 +18,8 @@ const ExplainCodeInputSchema = z.object({
 export type ExplainCodeInput = z.infer<typeof ExplainCodeInputSchema>;
 
 const ExplainCodeOutputSchema = z.object({
-  explanation: z.string().describe('The explanation of the code.'),
+  summary: z.string().describe('A high-level summary of what the code does.'),
+  breakdown: z.array(z.string()).describe('A bullet-point breakdown of key parts of the code.'),
 });
 export type ExplainCodeOutput = z.infer<typeof ExplainCodeOutputSchema>;
 
@@ -30,9 +31,14 @@ const prompt = ai.definePrompt({
   name: 'explainCodePrompt',
   input: {schema: ExplainCodeInputSchema},
   output: {schema: ExplainCodeOutputSchema},
-  prompt: `You are an expert software developer. Explain the following code in plain language:
+  prompt: `You are an expert software developer. Explain the following code.
+Provide a high-level summary, and then a bullet-point breakdown of what each part of the code does.
 
-  {{code}}`,
+Code:
+\`\`\`
+{{{code}}}
+\`\`\`
+`,
 });
 
 const explainCodeFlow = ai.defineFlow(
