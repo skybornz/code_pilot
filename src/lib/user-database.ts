@@ -4,9 +4,10 @@
 
 
 
+
 import sql from 'mssql';
 import { getPool } from './database/db';
-import type { User } from './schemas';
+import type { User, NewUser } from './schemas';
 
 export async function dbGetUsers(): Promise<Omit<User, 'password'>[]> {
   const pool = await getPool();
@@ -110,7 +111,7 @@ export async function dbUpdateUser(userData: Partial<User> & { id: string }): Pr
     return { success: false, message: 'User not found or update failed.' };
 }
 
-export async function dbAddUser(userData: Omit<User, 'id' | 'lastActive'>): Promise<{ success: boolean; message?: string; user?: Omit<User, 'password'> }> {
+export async function dbAddUser(userData: NewUser): Promise<{ success: boolean; message?: string; user?: Omit<User, 'password'> }> {
     const pool = await getPool();
     const result = await pool.request()
         .input('Email', sql.NVarChar, userData.email)

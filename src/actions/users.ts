@@ -1,6 +1,6 @@
 'use server';
 
-import type { User } from '@/lib/schemas';
+import type { User, NewUser } from '@/lib/schemas';
 import { dbGetUsers, dbAddUser, dbUpdateUser, dbGetUserByEmail, dbGetUserById, dbUpdateUserLastActive, dbGetUserWithPassword } from '@/lib/user-database';
 import { logUserActivity } from './activity';
 import bcrypt from 'bcrypt';
@@ -30,7 +30,7 @@ export async function updateUser(userData: Omit<User, 'password' | 'lastActive'>
     return dbUpdateUser(dataToUpdate);
 }
 
-export async function addUser(userData: Omit<User, 'id' | 'lastActive'>): Promise<{ success:boolean; message?: string; user?: Omit<User, 'password'> }> {
+export async function addUser(userData: NewUser): Promise<{ success:boolean; message?: string; user?: Omit<User, 'password'> }> {
   const hashedPassword = await bcrypt.hash(userData.password, SALT_ROUNDS);
   const dataToAdd = { ...userData, password: hashedPassword };
   return dbAddUser(dataToAdd);
