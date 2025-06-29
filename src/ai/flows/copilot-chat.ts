@@ -36,17 +36,6 @@ export async function copilotChat(
   return copilotChatFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'copilotChatPrompt',
-  input: {schema: CopilotChatInputSchema},
-  output: {schema: CopilotChatOutputSchema},
-  system: `You are SemCo-Pilot, an expert software development assistant. Your role is to help users with their coding questions, explain concepts, and provide solutions. Be friendly and helpful.
-
-You have access to the following context about the user's project:
-{{{projectContext}}}`,
-  messages: [(input) => input.messages],
-});
-
 const copilotChatFlow = ai.defineFlow(
   {
     name: 'copilotChatFlow',
@@ -54,7 +43,19 @@ const copilotChatFlow = ai.defineFlow(
     outputSchema: CopilotChatOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
+    const systemPrompt = `You are SemCo-Pilot, an expert software development assistant. Your role is to help users with their coding questions, explain concepts, and provide solutions. Be friendly and helpful.
+
+You have access to the following context about the user's project:
+${input.projectContext || 'No context provided.'}`;
+
+    const {output} = await ai.generate({
+      system: systemPrompt,
+      messages: input.messages,
+      output: {
+        schema: CopilotChatOutputSchema,
+      },
+    });
+
     if (!output) {
       throw new Error('AI model did not return a valid response.');
     }
