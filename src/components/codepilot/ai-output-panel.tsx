@@ -1,9 +1,10 @@
 'use client';
 
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wand2, Send } from 'lucide-react';
-import type { AIOutput } from './types';
+import { Wand2, Send, User, Loader2 } from 'lucide-react';
+import type { AIOutput, CodeFile } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
 import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
@@ -13,13 +14,49 @@ import { CodeBlock } from './code-block';
 import type { AnalyzeDiffOutput, ExplainCodeOutput } from './types';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { useState } from 'react';
+import { copilotChat, type Message } from '@/ai/flows/copilot-chat';
+import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { LogoMark } from './logo-mark';
+import { cn } from '@/lib/utils';
+import { MessageContent } from './message-content';
+import { Separator } from '../ui/separator';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
   isLoading: boolean;
-  onSendMessage: (message: string) => void;
+  activeFile: CodeFile | null;
 }
+
+const formatAiOutputForChat = (output: AIOutput): string => {
+  const { data, type, language } = output;
+  let content = `Regarding your previous analysis on "${output.title}":\n\n`;
+
+  if (type === 'explain') {
+    const explanation = data as ExplainCodeOutput;
+    content += `**Summary**\n${explanation.summary}\n\n**Breakdown**\n${explanation.breakdown.map((b) => `- ${b}`).join('\n')}`;
+  } else if (type === 'analyze-diff') {
+    const analysis = data as AnalyzeDiffOutput;
+    content += `**Summary of Changes:**\n${analysis.summary}\n\n**Detailed Analysis:**\n${analysis.detailedAnalysis.map((p) => `- ${p}`).join('\n')}`;
+  } else if (type === 'bugs') {
+    const bugReport = data as FindBugsOutput;
+    content += `**Bugs Found:**\n${bugReport.bugs.map((b) => `- ${b}`).join('\n')}\n\n**Explanation & Fixes:**\n${bugReport.explanation}`;
+  } else if (type === 'refactor') {
+    const refactorData = data as RefactorCodeOutput;
+    content += `**Refactored Code:**\n\`\`\`${language}\n${refactorData.refactoredCode}\n\`\`\`\n\n**Explanation:**\n${refactorData.explanation}`;
+  } else if (type === 'test') {
+    const testData = data as GenerateUnitTestOutput;
+    content += `**Generated Unit Test:**\n\`\`\`${language}\n${testData.unitTest}\n\`\`\``;
+  } else if (type === 'docs') {
+    const docsData = data as GenerateCodeDocsOutput;
+    content += `**Generated Comments:**\n\`\`\`${language}\n${docsData.documentation}\n\`\`\``;
+  } else if (type === 'sdd') {
+    const sddData = data as GenerateSddOutput;
+    content += `**Software Design Document:**\n${sddData.sdd}`;
+  }
+  return content;
+};
 
 const renderOutput = (output: AIOutput) => {
   const { data, type, language } = output;
@@ -122,14 +159,93 @@ const renderOutput = (output: AIOutput) => {
   return <p className="whitespace-pre-wrap">{String(data)}</p>;
 };
 
-export function AIOutputPanel({ output, isLoading, onSendMessage }: AIOutputPanelProps) {
+export function AIOutputPanel({ output, isLoading, activeFile }: AIOutputPanelProps) {
   const [input, setInput] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    onSendMessage(input);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const { toast } = useToast();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    // Reset chat when the main AI output changes
+    setMessages([]);
     setInput('');
+  }, [output]);
+  
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || !output) return;
+
+    const userMessage: Message = { role: 'user', content: input };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setInput('');
+    setIsChatLoading(true);
+
+    try {
+      const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
+      const discussionContext = formatAiOutputForChat(output);
+      
+      const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
+      const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
+
+      const stream = await copilotChat({
+        messages: historyForApi,
+        projectContext,
+        discussionContext,
+      });
+
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let isFirstChunk = true;
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        const chunkValue = decoder.decode(value);
+
+        if (chunkValue) {
+          if (isFirstChunk) {
+            setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
+            isFirstChunk = false;
+          } else {
+            setMessages(prev => {
+              const updatedMessages = [...prev];
+              const lastMessage = updatedMessages[updatedMessages.length - 1];
+              if (lastMessage?.role === 'model') {
+                updatedMessages[updatedMessages.length - 1] = {
+                  ...lastMessage,
+                  content: lastMessage.content + chunkValue,
+                };
+              }
+              return updatedMessages;
+            });
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Chat failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'The chat feature failed. Please try again.',
+      });
+      const errorMessage: Message = { role: 'model', content: "Sorry, I encountered an error. Please try again." };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsChatLoading(false);
+    }
   };
   
   return (
@@ -140,27 +256,66 @@ export function AIOutputPanel({ output, isLoading, onSendMessage }: AIOutputPane
           <span>AI Assistant</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 p-4 min-h-0 overflow-y-auto">
-        {isLoading && (
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-16 w-full" />
+      <CardContent className="flex-1 p-0 flex flex-col min-h-0">
+        <ScrollArea className="flex-1" ref={scrollAreaRef}>
+          <div className="p-4">
+            {isLoading && (
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            )}
+            {!isLoading && !output && (
+              <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-16">
+                <p>Select an AI action to see the results here.</p>
+                <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
+              </div>
+            )}
+            {!isLoading && output && output.type !== 'completion' && (
+              <div>
+                <h3 className="font-semibold text-lg mb-4 text-accent">{output.title}</h3>
+                {renderOutput(output)}
+              </div>
+            )}
           </div>
-        )}
-        {!isLoading && !output && (
-          <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center">
-            <p>Select an AI action to see the results here.</p>
-            <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
+          
+          {messages.length > 0 && <Separator className="my-0" />}
+
+          <div className="space-y-6 p-4">
+            {messages.map((message, index) => (
+              <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
+                {message.role === 'model' && (
+                  <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
+                    <AvatarFallback className="bg-transparent"><LogoMark /></AvatarFallback>
+                  </Avatar>
+                )}
+                <div className={cn(
+                    'p-3 rounded-lg max-w-[85%] text-sm break-words', 
+                    message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                )}>
+                  {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
+                </div>
+                {message.role === 'user' && (
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+            ))}
+            {isChatLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
+              <div className="flex items-start gap-3">
+                 <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
+                    <AvatarFallback className="bg-transparent"><LogoMark /></AvatarFallback>
+                  </Avatar>
+                <div className="p-3 rounded-lg bg-muted flex items-center">
+                    <Loader2 className="h-5 w-5 animate-spin"/>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-        {!isLoading && output && output.type !== 'completion' && (
-          <div>
-            <h3 className="font-semibold text-lg mb-4 text-accent">{output.title}</h3>
-            {renderOutput(output)}
-          </div>
-        )}
+        </ScrollArea>
       </CardContent>
        {output && !isLoading && (
         <CardFooter className="p-4 border-t">
@@ -169,8 +324,9 @@ export function AIOutputPanel({ output, isLoading, onSendMessage }: AIOutputPane
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a follow-up about the result..."
+              disabled={isChatLoading}
             />
-            <Button type="submit" disabled={!input.trim()} size="icon">
+            <Button type="submit" disabled={!input.trim() || isChatLoading} size="icon">
               <Send className="h-4 w-4" />
               <span className="sr-only">Send</span>
             </Button>
