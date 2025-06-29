@@ -48,8 +48,15 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
 
     try {
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
+      
+      const fullHistory = [...messages, userMessage];
+      // The API requires the conversation to start with a user message.
+      // We find the first user message and slice the array from there to create a valid history for the API.
+      const firstUserMessageIndex = fullHistory.findIndex(m => m.role === 'user');
+      const messagesForApi = firstUserMessageIndex !== -1 ? fullHistory.slice(firstUserMessageIndex) : [];
+      
       const { response } = await copilotChat({
-        messages: [...messages, userMessage],
+        messages: messagesForApi,
         projectContext,
       });
       const modelMessage: Message = { role: 'model', content: response };
