@@ -1,6 +1,7 @@
 
 
 
+
 import sql from 'mssql';
 import { getPool } from './database/db';
 import type { User } from './schemas';
@@ -110,10 +111,10 @@ export async function dbUpdateUser(userData: Partial<User> & { id: string }): Pr
 export async function dbAddUser(userData: Omit<User, 'id' | 'lastActive'>): Promise<{ success: boolean; message?: string; user?: Omit<User, 'password'> }> {
     const pool = await getPool();
     const result = await pool.request()
-        .input('loginame', sql.NVarChar, userData.email)
+        .input('Email', sql.NVarChar, userData.email)
         .input('PasswordHash', sql.NVarChar, userData.password)
         .input('Role', sql.NVarChar, userData.role)
-        .execute('sp_adduser');
+        .execute('sp_AddUser');
     
     if (result.recordset && result.recordset.length > 0 && result.recordset[0].UserID > 0) {
         const newUser = await dbGetUserById(String(result.recordset[0].UserID));
