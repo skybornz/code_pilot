@@ -33,6 +33,7 @@ export function SemCoPilotWorkspace() {
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFileLoading, setIsFileLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [loadedProjectInfo, setLoadedProjectInfo] = useState<{ project: Project; branch: string } | null>(null);
   const [rightPanelView, setRightPanelView] = useState<'ai-output' | 'copilot-chat'>('copilot-chat');
@@ -105,7 +106,7 @@ export function SemCoPilotWorkspace() {
 
     const file = files.find(f => f.id === fileId);
     if (file && !file.commits && loadedProjectInfo) {
-        setIsLoading(true);
+        setIsFileLoading(true);
         const result = await fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, file.id);
         
         if (result.success && result.commits && result.commits.length > 0) {
@@ -119,7 +120,7 @@ export function SemCoPilotWorkspace() {
                     : Promise.resolve({ success: false })
             ]);
 
-            setIsLoading(false);
+            setIsFileLoading(false);
 
             if (latestContentResult.success) {
                 setFiles(prevFiles => prevFiles.map(f => 
@@ -141,7 +142,7 @@ export function SemCoPilotWorkspace() {
                 });
             }
         } else {
-            setIsLoading(false);
+            setIsFileLoading(false);
             if (result.error) {
                 toast({
                     variant: 'destructive',
@@ -164,14 +165,14 @@ export function SemCoPilotWorkspace() {
 
     const previousCommitHash = commitIndex < file.commits.length - 1 ? file.commits[commitIndex + 1].hash : null;
 
-    setIsLoading(true);
+    setIsFileLoading(true);
     const [currentContentResult, previousContentResult] = await Promise.all([
         getBitbucketFileContentForCommit(loadedProjectInfo.project.url, commitHash, file.id),
         previousCommitHash
             ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id)
             : Promise.resolve({ success: false })
     ]);
-    setIsLoading(false);
+    setIsFileLoading(false);
 
     if (currentContentResult.success) {
         setFiles(prevFiles => prevFiles.map(f => 
@@ -204,7 +205,6 @@ export function SemCoPilotWorkspace() {
 
   const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string) => {
     setIsLoading(true);
-    setAiOutput(null);
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
     try {
@@ -300,7 +300,7 @@ export function SemCoPilotWorkspace() {
       onAiAction={handleAiAction}
       onCompletion={handleCompletion}
       onCommitChange={handleCommitChange}
-      isLoading={isLoading}
+      isLoading={isLoading || isFileLoading}
       completion={aiOutput?.type === 'completion' ? aiOutput.data : null}
       onAcceptCompletion={(completion) => {
         if (activeFile) {
