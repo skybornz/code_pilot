@@ -1,10 +1,14 @@
 'use server';
 
 import type { User } from '@/lib/schemas';
-import { dbGetUsers, dbAddUser, dbUpdateUser, dbGetUserByEmail } from '@/lib/user-database';
+import { dbGetUsers, dbAddUser, dbUpdateUser, dbGetUserByEmail, dbGetUserById } from '@/lib/user-database';
 
 export async function getUsers(): Promise<Omit<User, 'password'>[]> {
   return dbGetUsers();
+}
+
+export async function getUserById(id: string): Promise<Omit<User, 'password'> | undefined> {
+    return dbGetUserById(id);
 }
 
 export async function updateUser(userData: Omit<User, 'password' | 'lastActive'> & { password?: string }): Promise<{ success: boolean; message?: string }> {

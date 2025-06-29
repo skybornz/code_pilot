@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import type { User } from '@/lib/schemas';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,9 +10,11 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 type ColumnsProps = {
   onEdit: (user: Omit<User, 'password'>) => void;
@@ -55,8 +57,9 @@ export const columns = ({ onEdit }: ColumnsProps): ColumnDef<Omit<User, 'passwor
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
+    cell: function ActionsCell({ row }) {
       const user = row.original;
+      const router = useRouter();
 
       return (
         <div className="text-right">
@@ -69,7 +72,15 @@ export const columns = ({ onEdit }: ColumnsProps): ColumnDef<Omit<User, 'passwor
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onEdit(user)}>Edit user</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`/admin/user-management/${user.id}`)}>
+                <Eye className="mr-2 h-4 w-4" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onEdit(user)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit User
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
