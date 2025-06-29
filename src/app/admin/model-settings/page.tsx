@@ -5,7 +5,7 @@ export default function ModelSettingsPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Model Configuration</CardTitle>
+          <CardTitle className="text-xl font-semibold text-primary">Model Configuration</CardTitle>
         </CardHeader>
         <CardContent>
           <p>Adjust model settings here. This is a placeholder.</p>

@@ -55,7 +55,7 @@ export default function UserManagementPage() {
     <>
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>User Accounts</CardTitle>
+                <CardTitle className="text-xl font-semibold text-primary">User Accounts</CardTitle>
                 <Dialog open={isFormOpen} onOpenChange={(open) => {
                     setIsFormOpen(open);
                     if (!open) setSelectedUser(null);

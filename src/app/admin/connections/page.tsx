@@ -112,7 +112,7 @@ function UsageStatsContent({ period }: { period: 'daily' | 'weekly' | 'monthly' 
             <div className="grid gap-6 md:grid-cols-5">
                 <Card className="md:col-span-3">
                     <CardHeader>
-                        <CardTitle>AI Actions Over Time</CardTitle>
+                        <CardTitle className="text-xl font-semibold text-primary">AI Actions Over Time</CardTitle>
                         <CardDescription>A trend of total AI actions over the selected period.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
@@ -132,7 +132,7 @@ function UsageStatsContent({ period }: { period: 'daily' | 'weekly' | 'monthly' 
                 </Card>
                 <Card className="md:col-span-2">
                     <CardHeader>
-                        <CardTitle>AI Feature Distribution</CardTitle>
+                        <CardTitle className="text-xl font-semibold text-primary">AI Feature Distribution</CardTitle>
                         <CardDescription>Breakdown of AI actions by feature.</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -159,7 +159,7 @@ function UsageStatsContent({ period }: { period: 'daily' | 'weekly' | 'monthly' 
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Detailed Usage Breakdown</CardTitle>
+                    <CardTitle className="text-xl font-semibold text-primary">Detailed Usage Breakdown</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
