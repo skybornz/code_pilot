@@ -193,10 +193,6 @@ export function AIOutputPanel({
         return;
     }
 
-    if (user) {
-      await logUserActivity(user.id, 'AI Assistant Chat', `User asked a follow-up about "${output.title}".`);
-    }
-
     const userMessage: Message = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
     onMessagesChange(newMessages);
@@ -214,8 +210,19 @@ export function AIOutputPanel({
         setIsChatLoading(false);
         return;
       }
-      const prefix = modelConfig.type === 'online' ? 'googleai/' : 'ollama/';
-      const model = `${prefix}${modelConfig.name}`;
+      
+      if (modelConfig.type === 'local') {
+          toast({
+            variant: 'destructive',
+            title: 'Online Model Required',
+            description: 'The chat feature requires a default "online" model. An administrator can change this in the admin settings.',
+          });
+          setIsChatLoading(false);
+          const errorMessage: Message = { role: 'model', content: "Sorry, this feature requires an online model. Please ask an administrator to change the default model." };
+          onMessagesChange([...newMessages, errorMessage]);
+          return;
+      }
+      const model = `googleai/${modelConfig.name}`;
 
       const projectContext = output.fileContext ? `The user is discussing an analysis on the file "${output.fileContext.name}".` : 'No file context provided.';
       const discussionContext = formatAiOutputForChat(output);
@@ -234,6 +241,7 @@ export function AIOutputPanel({
       const decoder = new TextDecoder();
       let done = false;
       let isFirstChunk = true;
+      let activityLogged = false;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -241,6 +249,11 @@ export function AIOutputPanel({
         const chunkValue = decoder.decode(value);
 
         if (chunkValue) {
+          if (!activityLogged && user) {
+            await logUserActivity(user.id, 'AI Assistant Chat', `User asked a follow-up about "${output.title}".`);
+            activityLogged = true;
+          }
+
           if (isFirstChunk) {
             onMessagesChange(prev => [...prev, { role: 'model', content: chunkValue }]);
             isFirstChunk = false;

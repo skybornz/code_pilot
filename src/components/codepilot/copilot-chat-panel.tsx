@@ -47,10 +47,6 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
     const currentInput = input;
     if (!currentInput.trim()) return;
 
-    if (user) {
-      await logUserActivity(user.id, 'Co-Pilot Chat', `User sent a message in the general chat.`);
-    }
-
     const userMessage: Message = { role: 'user', content: currentInput };
     const newMessages: Message[] = [...messages, userMessage];
     onMessagesChange(newMessages);
@@ -66,6 +62,8 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
           description: 'The chat feature requires a default "online" model. An administrator can change this in the admin settings.',
         });
         setIsChatLoading(false);
+        const errorMessage: Message = { role: 'model', content: "Sorry, this feature requires an online model. Please ask an administrator to change the default model." };
+        onMessagesChange([...newMessages, errorMessage]);
         return;
       }
       const model = `googleai/${modelConfig.name}`;
@@ -85,6 +83,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
       const decoder = new TextDecoder();
       let done = false;
       let isFirstChunk = true;
+      let activityLogged = false;
       
       while (!done) {
           const { value, done: readerDone } = await reader.read();
@@ -92,6 +91,11 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
           const chunkValue = decoder.decode(value);
 
           if (chunkValue) {
+            if (!activityLogged && user) {
+              await logUserActivity(user.id, 'Co-Pilot Chat', `User sent a message in the general chat.`);
+              activityLogged = true;
+            }
+
             if (isFirstChunk) {
                 // On the first chunk, create a new message bubble for the model's response.
                 onMessagesChange(prev => [...prev, { role: 'model', content: chunkValue }]);
