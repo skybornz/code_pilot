@@ -18,7 +18,12 @@ export async function dbGetProjects(userId: string): Promise<Project[]> {
         .input('UserID', sql.Int, userId)
         .execute('sp_GetProjectsByUser');
 
-    return result.recordset.map(p => ({...p, id: String(p.ProjectID), userId: String(p.UserID) }));
+    return result.recordset.map(p => ({
+        id: String(p.ProjectID),
+        userId: String(p.UserID),
+        name: p.Name,
+        url: p.URL
+    }));
 }
 
 export async function dbAddProject(projectData: NewProject): Promise<{ success: boolean; message?: string; project?: Project }> {
@@ -32,7 +37,12 @@ export async function dbAddProject(projectData: NewProject): Promise<{ success: 
 
         if (result.returnValue === 0) {
             const newProject = result.recordset[0];
-            return { success: true, project: {...newProject, id: String(newProject.ProjectID), userId: String(newProject.UserID) } };
+            return { success: true, project: {
+                id: String(newProject.ProjectID), 
+                userId: String(newProject.UserID),
+                name: newProject.Name,
+                url: newProject.URL
+            }};
         } else {
             return { success: false, message: 'This project URL already exists for your account.' };
         }
