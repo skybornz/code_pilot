@@ -1,3 +1,4 @@
+
 import sql from 'mssql';
 import { getPool } from './database/db';
 import type { User } from './schemas';
@@ -89,20 +90,13 @@ export async function dbUpdateUser(userData: Partial<User> & { id: string }): Pr
     // Always provide UserID
     request.input('UserID', sql.Int, userData.id);
 
-    // Conditionally add other parameters only if they are provided (not null/undefined)
-    if (userData.email != null) {
-        request.input('Email', sql.NVarChar, userData.email);
-    }
-    if (userData.password != null) {
-        request.input('PasswordHash', sql.NVarChar, userData.password);
-    }
-    if (userData.role != null) {
-        request.input('Role', sql.NVarChar, userData.role);
-    }
-    if (userData.isActive != null) {
-        request.input('IsActive', sql.Bit, userData.isActive);
-    }
-
+    // Explicitly pass all potential parameters, sending NULL for any that are undefined.
+    // This ensures the stored procedure call is always valid for partial updates.
+    request.input('Email', sql.NVarChar, userData.email === undefined ? null : userData.email);
+    request.input('PasswordHash', sql.NVarChar, userData.password === undefined ? null : userData.password);
+    request.input('Role', sql.NVarChar, userData.role === undefined ? null : userData.role);
+    request.input('IsActive', sql.Bit, userData.isActive === undefined ? null : userData.isActive);
+    
     const result = await request.execute('sp_UpdateUser');
 
     if (result.recordset && result.recordset.length > 0 && result.recordset[0].Result === 1) {
