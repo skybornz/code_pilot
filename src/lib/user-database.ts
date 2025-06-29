@@ -84,15 +84,28 @@ export async function dbUpdateUserLastActive(userId: string): Promise<void> {
 
 export async function dbUpdateUser(userData: Partial<User> & { id: string }): Promise<{ success: boolean; message?: string }> {
     const pool = await getPool();
-    const result = await pool.request()
-        .input('UserID', sql.Int, userData.id)
-        .input('Email', sql.NVarChar, userData.email ?? null)
-        .input('PasswordHash', sql.NVarChar, userData.password ?? null)
-        .input('Role', sql.NVarChar, userData.role ?? null)
-        .input('IsActive', sql.Bit, userData.isActive ?? null)
-        .execute('sp_UpdateUser');
+    const request = pool.request();
 
-    if (result.recordset[0].Result === 1) {
+    // Always provide UserID
+    request.input('UserID', sql.Int, userData.id);
+
+    // Conditionally add other parameters only if they are provided (not null/undefined)
+    if (userData.email != null) {
+        request.input('Email', sql.NVarChar, userData.email);
+    }
+    if (userData.password != null) {
+        request.input('PasswordHash', sql.NVarChar, userData.password);
+    }
+    if (userData.role != null) {
+        request.input('Role', sql.NVarChar, userData.role);
+    }
+    if (userData.isActive != null) {
+        request.input('IsActive', sql.Bit, userData.isActive);
+    }
+
+    const result = await request.execute('sp_UpdateUser');
+
+    if (result.recordset && result.recordset.length > 0 && result.recordset[0].Result === 1) {
         return { success: true };
     }
     return { success: false, message: 'User not found or update failed.' };
