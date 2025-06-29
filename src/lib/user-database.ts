@@ -3,8 +3,8 @@ import type { User } from './schemas';
 // For this prototype, we'll store users in-memory.
 // In a real app, this would be a database.
 let users: User[] = [
-  { id: '1', email: 'admin@example.com', password: 'password', role: 'admin', isActive: true },
-  { id: '2', email: 'user@example.com', password: 'password', role: 'user', isActive: true },
+  { id: '1', email: 'admin@example.com', password: 'password', role: 'admin', isActive: true, lastActive: new Date(Date.now() - 1000 * 60 * 5) },
+  { id: '2', email: 'user@example.com', password: 'password', role: 'user', isActive: true, lastActive: new Date(Date.now() - 1000 * 60 * 60 * 25) },
 ];
 
 // These are simple functions, not server actions.
@@ -25,7 +25,7 @@ export function dbGetUserById(id: string): Omit<User, 'password'> | undefined {
     return undefined;
 }
 
-export function dbUpdateUser(userData: Omit<User, 'password'> & { password?: string }): { success: boolean; message?: string } {
+export function dbUpdateUser(userData: Partial<User> & { id: string }): { success: boolean; message?: string } {
     const userIndex = users.findIndex((u) => u.id === userData.id);
     if (userIndex === -1) {
         return { success: false, message: 'User not found.' };
@@ -34,16 +34,15 @@ export function dbUpdateUser(userData: Omit<User, 'password'> & { password?: str
     users[userIndex] = {
         ...existingUser,
         ...userData,
-        password: userData.password || existingUser.password,
     };
     return { success: true };
 }
 
-export function dbAddUser(userData: Omit<User, 'id'>): { success: boolean; message?: string; user?: Omit<User, 'password'> } {
+export function dbAddUser(userData: Omit<User, 'id' | 'lastActive'>): { success: boolean; message?: string; user?: Omit<User, 'password'> } {
   if (users.some(u => u.email === userData.email)) {
     return { success: false, message: 'User with this email already exists.' };
   }
-  const newUser = { ...userData, id: String(Date.now()) };
+  const newUser: User = { ...userData, id: String(Date.now()), lastActive: new Date() };
   users.push(newUser);
   const { password, ...userWithoutPassword } = newUser;
   return { success: true, user: userWithoutPassword };

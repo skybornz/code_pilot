@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
 
 type ColumnsProps = {
   onEdit: (user: Omit<User, 'password'>) => void;
@@ -40,6 +41,16 @@ export const columns = ({ onEdit }: ColumnsProps): ColumnDef<Omit<User, 'passwor
           {isActive ? 'Active' : 'Inactive'}
         </Badge>
       );
+    },
+  },
+  {
+    accessorKey: 'lastActive',
+    header: 'Last Active',
+    cell: ({ row }) => {
+      const lastActive = row.getValue('lastActive') as string;
+      if (!lastActive) return <span>-</span>;
+      const date = new Date(lastActive);
+      return <span>{formatDistanceToNow(date, { addSuffix: true })}</span>;
     },
   },
   {

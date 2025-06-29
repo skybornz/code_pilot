@@ -6,6 +6,7 @@ export const UserSchema = z.object({
   password: z.string(),
   role: z.enum(['admin', 'user']),
   isActive: z.boolean(),
+  lastActive: z.date(),
 });
 
 export type User = z.infer<typeof UserSchema>;

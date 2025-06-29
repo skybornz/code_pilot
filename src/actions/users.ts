@@ -7,11 +7,11 @@ export async function getUsers(): Promise<Omit<User, 'password'>[]> {
   return dbGetUsers();
 }
 
-export async function updateUser(userData: Omit<User, 'password'> & { password?: string }): Promise<{ success: boolean; message?: string }> {
+export async function updateUser(userData: Omit<User, 'password' | 'lastActive'> & { password?: string }): Promise<{ success: boolean; message?: string }> {
     return dbUpdateUser(userData);
 }
 
-export async function addUser(userData: Omit<User, 'id'>): Promise<{ success:boolean; message?: string; user?: Omit<User, 'password'> }> {
+export async function addUser(userData: Omit<User, 'id' | 'lastActive'>): Promise<{ success:boolean; message?: string; user?: Omit<User, 'password'> }> {
   return dbAddUser(userData);
 }
 
@@ -23,6 +23,12 @@ export async function loginUser(credentials: Pick<User, 'email' | 'password'>): 
     if (!user.isActive) {
         return { success: false, message: 'This account has been deactivated.' };
     }
-    const { password, ...userWithoutPassword } = user;
+    
+    // Update last active time
+    dbUpdateUser({ id: user.id, lastActive: new Date() });
+    
+    const updatedUser = { ...user, lastActive: new Date() };
+
+    const { password, ...userWithoutPassword } = updatedUser;
     return { success: true, user: userWithoutPassword };
 }
