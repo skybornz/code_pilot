@@ -35,8 +35,8 @@ export function AdminSidebar() {
                 <Logo />
             </SidebarHeader>
             <SidebarSeparator />
-            <SidebarContent>
-                <SidebarMenu className="mt-4">
+            <SidebarContent className="p-2">
+                <SidebarMenu>
                     {menuItems.map((item) => (
                         <SidebarMenuItem key={item.href}>
                              <SidebarMenuButton asChild isActive={item.href === '/admin' ? pathname === item.href : pathname.startsWith(item.href)} tooltip={item.label}>
