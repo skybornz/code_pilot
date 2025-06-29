@@ -88,31 +88,50 @@ export async function fetchBitbucketBranches(url: string, userId: string): Promi
         return { success: false, error: 'Invalid Bitbucket repository URL.' };
     }
     const { workspace, repo } = bitbucketInfo;
-    const authHeaders = await getAuthHeaders(userId);
-
     const branchesUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/refs/branches`;
+    
     try {
-        let currentUrl: string | undefined = branchesUrl;
+        let headersToUse: HeadersInit = { 'Accept': 'application/json' };
+        let response = await fetch(branchesUrl, { headers: headersToUse, cache: 'no-store' });
+
+        // If anonymous fails, try with authentication
+        if (response.status === 401 || response.status === 403) {
+            const authHeaders = await getAuthHeaders(userId);
+            if (authHeaders.Authorization) {
+                headersToUse = authHeaders;
+                response = await fetch(branchesUrl, { headers: headersToUse, cache: 'no-store' });
+            }
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData?.error?.message || response.statusText;
+            const errorDetail = (response.status === 401 || response.status === 403) 
+                ? 'Access denied. The repository may be private. Please check your credentials.'
+                : `Failed to fetch branches: ${errorMessage}`;
+            return { success: false, error: errorDetail };
+        }
+
         const branches: string[] = [];
+        let data = await response.json();
+        let parsedData = BitbucketBranchesResponseSchema.parse(data);
+        branches.push(...parsedData.values.map(b => b.name));
+        let currentUrl = parsedData.next;
 
         while (currentUrl) {
-            const response = await fetch(currentUrl, { headers: authHeaders, cache: 'no-store' });
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                const errorMessage = errorData?.error?.message || response.statusText;
-                const errorDetail = (response.status === 401 || response.status === 403) 
-                    ? 'Access denied. The repository may be private. Please check your credentials.'
-                    : `Failed to fetch branches: ${errorMessage}`;
-                return { success: false, error: errorDetail };
+            const pageResponse = await fetch(currentUrl, { headers: headersToUse, cache: 'no-store' });
+             if (!pageResponse.ok) {
+                console.warn(`Could not fetch next page of branches: ${currentUrl}`);
+                break;
             }
-            const data = await response.json();
-            const parsedData = BitbucketBranchesResponseSchema.parse(data);
-            branches.push(...parsedData.values.map(b => b.name));
-            currentUrl = parsedData.next;
+            const pageData = await pageResponse.json();
+            const parsedPageData = BitbucketBranchesResponseSchema.parse(pageData);
+            branches.push(...parsedPageData.values.map(b => b.name));
+            currentUrl = parsedPageData.next;
         }
         
         if (branches.length === 0) {
-            return { success: false, error: 'No branches found. The repository might be private, empty, or you may lack permissions.' };
+            return { success: false, error: 'No branches found. The repository might be empty or you may lack permissions.' };
         }
         return { success: true, branches };
     } catch (error) {
@@ -218,14 +237,23 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
         return { success: false, error: 'Invalid Bitbucket repository URL.' };
     }
     const { workspace, repo } = bitbucketInfo;
-    const authHeaders = await getAuthHeaders(userId);
-
+    
     try {
-        // 1. Get main branch name
+        // 1. Determine auth strategy and get main branch name
         const repoDetailsUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}`;
-        const repoDetailsResponse = await fetch(repoDetailsUrl, { headers: authHeaders, cache: 'no-store' });
+        let headersToUse: HeadersInit = { 'Accept': 'application/json' };
+        let repoDetailsResponse = await fetch(repoDetailsUrl, { headers: headersToUse, cache: 'no-store' });
+
+        if (repoDetailsResponse.status === 401 || repoDetailsResponse.status === 403) {
+            const authHeaders = await getAuthHeaders(userId);
+            if (authHeaders.Authorization) {
+                headersToUse = authHeaders;
+                repoDetailsResponse = await fetch(repoDetailsUrl, { headers: headersToUse, cache: 'no-store' });
+            }
+        }
+        
         if (!repoDetailsResponse.ok) {
-            return { success: false, error: 'Could not fetch repository details to determine the main branch. Check repository URL and credentials.' };
+            return { success: false, error: 'Could not fetch repository details. Check repository URL and credentials.' };
         }
         const repoData = await repoDetailsResponse.json();
         const mainBranch = repoData?.mainbranch?.name;
@@ -234,8 +262,7 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
             return { success: false, error: 'Could not determine the main branch for this repository.' };
         }
 
-
-        const files = await getBitbucketFilesRecursively(workspace, repo, branch, mainBranch, authHeaders);
+        const files = await getBitbucketFilesRecursively(workspace, repo, branch, mainBranch, headersToUse);
         if (files.length === 0) {
             return {
                 success: false,
@@ -274,24 +301,42 @@ export async function fetchBitbucketFileCommits(url: string, branch: string, pat
         return { success: false, error: 'Invalid Bitbucket repository URL.' };
     }
     const { workspace, repo } = bitbucketInfo;
-    const authHeaders = await getAuthHeaders(userId);
-    
     const commitsUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/commits/${branch}?path=${encodeURIComponent(path)}&fields=values.hash,values.message,values.date`;
+
     try {
+        let headersToUse: HeadersInit = { 'Accept': 'application/json' };
+        let response = await fetch(commitsUrl, { headers: headersToUse, cache: 'no-store' });
+
+        if (response.status === 401 || response.status === 403) {
+            const authHeaders = await getAuthHeaders(userId);
+            if (authHeaders.Authorization) {
+                headersToUse = authHeaders;
+                response = await fetch(commitsUrl, { headers: headersToUse, cache: 'no-store' });
+            }
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData?.error?.message || response.statusText;
+            return { success: false, error: `Failed to fetch commits: ${errorMessage}` };
+        }
+
         const commits: Commit[] = [];
-        let currentUrl: string | undefined = commitsUrl;
+        let data = await response.json();
+        let parsedData = BitbucketCommitsResponseSchema.parse(data);
+        commits.push(...parsedData.values.map(c => ({...c, message: c.message.split('\n')[0] })));
+        let currentUrl = parsedData.next;
 
         while (currentUrl) {
-            const response = await fetch(currentUrl, { headers: authHeaders, cache: 'no-store' });
-            if (!response.ok) {
-                const errorData = await response.json();
-                const errorMessage = errorData?.error?.message || response.statusText;
-                return { success: false, error: `Failed to fetch commits: ${errorMessage}` };
+            const pageResponse = await fetch(currentUrl, { headers: headersToUse, cache: 'no-store' });
+             if (!pageResponse.ok) {
+                console.warn(`Could not fetch next page of commits: ${currentUrl}`);
+                break;
             }
-            const data = await response.json();
-            const parsedData = BitbucketCommitsResponseSchema.parse(data);
-            commits.push(...parsedData.values.map(c => ({...c, message: c.message.split('\n')[0] }))); // take only first line of commit message
-            currentUrl = parsedData.next;
+            const pageData = await pageResponse.json();
+            const parsedPageData = BitbucketCommitsResponseSchema.parse(pageData);
+            commits.push(...parsedPageData.values.map(c => ({...c, message: c.message.split('\n')[0] })));
+            currentUrl = parsedPageData.next;
         }
         
         return { success: true, commits };
@@ -310,10 +355,30 @@ export async function getBitbucketFileContentForCommit(url: string, commitHash: 
         return { success: false, error: 'Invalid Bitbucket repository URL.' };
     }
     const { workspace, repo } = bitbucketInfo;
-    const authHeaders = await getAuthHeaders(userId);
-    const content = await getBitbucketFileContent(workspace, repo, commitHash, path, authHeaders);
-    if (content !== null) {
-        return { success: true, content };
+    const contentUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/src/${commitHash}/${path}`;
+
+    let headersToUse: HeadersInit = { 'Accept': 'application/json' };
+    let response = await fetch(contentUrl, { headers: headersToUse, cache: 'no-store' });
+
+    if (response.status === 401 || response.status === 403) {
+        const authHeaders = await getAuthHeaders(userId);
+        if (authHeaders.Authorization) {
+            headersToUse = authHeaders;
+            response = await fetch(contentUrl, { headers: headersToUse, cache: 'no-store' });
+        }
     }
-    return { success: false, error: 'Could not fetch file content for the specified commit.' };
+    
+    if (!response.ok) {
+        return { success: false, error: 'Could not fetch file content for the specified commit.' };
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && !contentType.includes('application/json')) {
+        const content = await response.text();
+        if (!content.includes('\uFFFD')) { // Basic binary file check
+            return { success: true, content };
+        }
+    }
+    
+    return { success: false, error: 'Could not fetch file content for the specified commit (content type error).' };
 }
