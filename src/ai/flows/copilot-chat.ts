@@ -36,24 +36,15 @@ export async function copilotChat(
   return copilotChatFlow(input);
 }
 
-// Internal schema for the prompt, with a pre-formatted history string.
-const PromptInputSchema = z.object({
-    projectContext: CopilotChatInputSchema.shape.projectContext,
-    history: z.string().describe('The formatted conversation history.'),
-});
-
 const prompt = ai.definePrompt({
   name: 'copilotChatPrompt',
-  input: {schema: PromptInputSchema},
+  input: {schema: CopilotChatInputSchema},
   output: {schema: CopilotChatOutputSchema},
-  prompt: `You are SemCo-Pilot, an expert software development assistant. Your role is to help users with their coding questions, explain concepts, and provide solutions. Be friendly and helpful.
+  system: `You are SemCo-Pilot, an expert software development assistant. Your role is to help users with their coding questions, explain concepts, and provide solutions. Be friendly and helpful.
 
 You have access to the following context about the user's project:
-{{{projectContext}}}
-
-Continue the following conversation:
-{{{history}}}
-Model:`,
+{{{projectContext}}}`,
+  messages: [(input) => input.messages],
 });
 
 const copilotChatFlow = ai.defineFlow(
@@ -62,16 +53,11 @@ const copilotChatFlow = ai.defineFlow(
     inputSchema: CopilotChatInputSchema,
     outputSchema: CopilotChatOutputSchema,
   },
-  async input => {
-    const history = input.messages.map(m => {
-        const role = m.role === 'user' ? 'User' : 'Model';
-        return `${role}: ${m.content}`;
-    }).join('\n');
-    
-    const {output} = await prompt({
-        history,
-        projectContext: input.projectContext,
-    });
-    return output!;
+  async (input) => {
+    const {output} = await prompt(input);
+    if (!output) {
+      throw new Error('AI model did not return a valid response.');
+    }
+    return output;
   }
 );
