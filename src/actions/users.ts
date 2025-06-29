@@ -43,11 +43,25 @@ export async function loginUser(credentials: Pick<User, 'email' | 'password'>): 
         return { success: false, message: 'Invalid email or password' };
     }
 
-    const passwordMatch = await bcrypt.compare(credentials.password, user.password);
+    const isPotentiallyHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$');
+    let passwordMatch = false;
+
+    if (isPotentiallyHashed) {
+        passwordMatch = await bcrypt.compare(credentials.password, user.password);
+    } else {
+        passwordMatch = credentials.password === user.password;
+    }
+
     if (!passwordMatch) {
         return { success: false, message: 'Invalid email or password' };
     }
     
+    // If login is successful with a plaintext password, hash it for future logins
+    if (!isPotentiallyHashed && passwordMatch) {
+        const hashedNewPassword = await bcrypt.hash(credentials.password, SALT_ROUNDS);
+        await dbUpdateUser({ id: user.id, password: hashedNewPassword });
+    }
+
     if (!user.isActive) {
         return { success: false, message: 'This account has been deactivated.' };
     }
@@ -62,7 +76,7 @@ export async function loginUser(credentials: Pick<User, 'email' | 'password'>): 
 }
 
 
-export async function changePassword({ userId, currentPassword, newPassword }: { userId: string, currentPassword?: string, newPassword?: string, isAdminChange?: boolean }): Promise<{ success: boolean; message: string }> {
+export async function changePassword({ userId, currentPassword, newPassword }: { userId: string, currentPassword?: string, newPassword?: string }): Promise<{ success: boolean; message: string }> {
     if (!newPassword || newPassword.length < 8) {
         return { success: false, message: 'New password must be at least 8 characters long.' };
     }
@@ -79,12 +93,16 @@ export async function changePassword({ userId, currentPassword, newPassword }: {
         
         let passwordMatch = false;
         try {
-            // First, try to compare as a bcrypt hash
-            passwordMatch = await bcrypt.compare(currentPassword, userWithPassword.password);
+            // Check if it's a valid bcrypt hash, otherwise it's plaintext
+            const isPotentiallyHashed = userWithPassword.password.startsWith('$2a$') || userWithPassword.password.startsWith('$2b$');
+            if (isPotentiallyHashed) {
+                passwordMatch = await bcrypt.compare(currentPassword, userWithPassword.password);
+            } else {
+                passwordMatch = currentPassword === userWithPassword.password;
+            }
         } catch (e) {
-            // If bcrypt fails, it's likely a plaintext password from before encryption was added.
-            // As a fallback, do a simple string comparison. This provides a migration path for old users.
-            passwordMatch = currentPassword === userWithPassword.password;
+            // Fallback for any unexpected error during comparison
+            passwordMatch = false;
         }
 
         if (!passwordMatch) {
