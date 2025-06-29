@@ -4,7 +4,6 @@ import type { User } from '@/lib/schemas';
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { loginUser, getUserById } from '@/actions/users';
-import { Loader2 } from 'lucide-react';
 
 const SESSION_STORAGE_KEY = 'semco_pilot_session';
 
@@ -78,13 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         isLoading,
     }}>
-      {isLoading ? (
-        <div className="flex h-screen w-full items-center justify-center bg-background">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AuthContext.Provider>
   );
 }
