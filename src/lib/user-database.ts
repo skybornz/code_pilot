@@ -9,8 +9,11 @@ export async function dbGetUsers(): Promise<Omit<User, 'password'>[]> {
   const pool = await getPool();
   const result = await pool.request().execute('sp_GetUsers');
   return result.recordset.map(record => ({
-    ...record,
-    id: String(record.UserID)
+    id: String(record.UserID),
+    email: record.Email,
+    role: record.Role,
+    isActive: record.IsActive,
+    lastActive: record.LastActive
   }));
 }
 
@@ -43,8 +46,11 @@ export async function dbGetUserById(id: string): Promise<Omit<User, 'password'> 
     if (result.recordset.length > 0) {
         const record = result.recordset[0];
         return {
-            ...record,
-            id: String(record.UserID)
+            id: String(record.UserID),
+            email: record.Email,
+            role: record.Role,
+            isActive: record.IsActive,
+            lastActive: record.LastActive
         };
     }
     return undefined;
