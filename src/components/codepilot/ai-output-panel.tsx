@@ -27,6 +27,10 @@ interface AIOutputPanelProps {
   output: AIOutput | null;
   isLoading: boolean;
   activeFile: CodeFile | null;
+  messages: Message[];
+  onMessagesChange: (messages: Message[]) => void;
+  isChatLoading: boolean;
+  setIsChatLoading: (isLoading: boolean) => void;
 }
 
 const formatAiOutputForChat = (output: AIOutput): string => {
@@ -159,18 +163,18 @@ const renderOutput = (output: AIOutput) => {
   return <p className="whitespace-pre-wrap">{String(data)}</p>;
 };
 
-export function AIOutputPanel({ output, isLoading, activeFile }: AIOutputPanelProps) {
+export function AIOutputPanel({ 
+  output, 
+  isLoading, 
+  activeFile, 
+  messages, 
+  onMessagesChange, 
+  isChatLoading,
+  setIsChatLoading,
+}: AIOutputPanelProps) {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isChatLoading, setIsChatLoading] = useState(false);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    // Reset chat when the main AI output changes
-    setMessages([]);
-    setInput('');
-  }, [output]);
   
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -187,7 +191,7 @@ export function AIOutputPanel({ output, isLoading, activeFile }: AIOutputPanelPr
 
     const userMessage: Message = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    onMessagesChange(newMessages);
     setInput('');
     setIsChatLoading(true);
 
@@ -216,10 +220,10 @@ export function AIOutputPanel({ output, isLoading, activeFile }: AIOutputPanelPr
 
         if (chunkValue) {
           if (isFirstChunk) {
-            setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
+            onMessagesChange(prev => [...prev, { role: 'model', content: chunkValue }]);
             isFirstChunk = false;
           } else {
-            setMessages(prev => {
+            onMessagesChange(prev => {
               const updatedMessages = [...prev];
               const lastMessage = updatedMessages[updatedMessages.length - 1];
               if (lastMessage?.role === 'model') {
@@ -242,7 +246,7 @@ export function AIOutputPanel({ output, isLoading, activeFile }: AIOutputPanelPr
         description: 'The chat feature failed. Please try again.',
       });
       const errorMessage: Message = { role: 'model', content: "Sorry, I encountered an error. Please try again." };
-      setMessages(prev => [...prev, errorMessage]);
+      onMessagesChange([...newMessages, errorMessage]);
     } finally {
       setIsChatLoading(false);
     }

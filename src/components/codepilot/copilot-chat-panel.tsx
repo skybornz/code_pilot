@@ -17,21 +17,16 @@ import { MessageContent } from './message-content';
 
 interface CopilotChatPanelProps {
   activeFile: CodeFile | null;
-  initialMessages?: Message[];
-  discussionContext?: string;
+  messages: Message[];
+  onMessagesChange: (messages: Message[]) => void;
+  isChatLoading: boolean;
+  setIsChatLoading: (isLoading: boolean) => void;
 }
 
-export function CopilotChatPanel({ activeFile, initialMessages, discussionContext }: CopilotChatPanelProps) {
-  const [messages, setMessages] = useState<Message[]>(
-    initialMessages || [
-      { role: 'model', content: "Hello! I'm SemCo-Pilot. How can I help you with your code today?" }
-    ]
-  );
+export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isChatLoading, setIsChatLoading }: CopilotChatPanelProps) {
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const isInitialConversation = useRef(!!initialMessages);
 
   // Auto-scroll to the bottom when new messages are added.
   useEffect(() => {
@@ -46,22 +41,13 @@ export function CopilotChatPanel({ activeFile, initialMessages, discussionContex
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const currentInput = input;
-    if (!currentInput.trim() && !isInitialConversation.current) return;
+    if (!currentInput.trim()) return;
     
-    let userMessage: Message | null = null;
-    let newMessages: Message[];
-
-    if (isInitialConversation.current) {
-      // For the first message in a follow-up, the messages are already set
-      newMessages = messages;
-    } else {
-      userMessage = { role: 'user', content: currentInput };
-      newMessages = [...messages, userMessage];
-      setMessages(newMessages);
-      setInput('');
-    }
-
-    setIsLoading(true);
+    const userMessage: Message = { role: 'user', content: currentInput };
+    const newMessages: Message[] = [...messages, userMessage];
+    onMessagesChange(newMessages);
+    setInput('');
+    setIsChatLoading(true);
 
     try {
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
@@ -72,7 +58,6 @@ export function CopilotChatPanel({ activeFile, initialMessages, discussionContex
       const stream = await copilotChat({
         messages: historyForApi,
         projectContext,
-        discussionContext,
       });
 
       const reader = stream.getReader();
@@ -88,11 +73,11 @@ export function CopilotChatPanel({ activeFile, initialMessages, discussionContex
           if (chunkValue) {
             if (isFirstChunk) {
                 // On the first chunk, create a new message bubble for the model's response.
-                setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
+                onMessagesChange(prev => [...prev, { role: 'model', content: chunkValue }]);
                 isFirstChunk = false;
             } else {
                 // For subsequent chunks, append the text to the last message.
-                setMessages(prev => {
+                onMessagesChange(prev => {
                     const updatedMessages = [...prev];
                     const lastMessage = updatedMessages[updatedMessages.length - 1];
                     if (lastMessage?.role === 'model') {
@@ -116,19 +101,11 @@ export function CopilotChatPanel({ activeFile, initialMessages, discussionContex
         description: 'The chat feature failed. Please try again.',
       });
        const errorMessage: Message = { role: 'model', content: "Sorry, I encountered an error. Please try again." };
-       setMessages(prev => [...prev, errorMessage]);
+       onMessagesChange([...newMessages, errorMessage]);
     } finally {
-      setIsLoading(false);
-      isInitialConversation.current = false;
+      setIsChatLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (isInitialConversation.current) {
-      handleSubmit();
-    }
-     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
@@ -162,7 +139,7 @@ export function CopilotChatPanel({ activeFile, initialMessages, discussionContex
               </div>
             ))}
             {/* Show a loading spinner only when waiting for the first chunk of a new response. */}
-            {isLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
+            {isChatLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
               <div className="flex items-start gap-3">
                  <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
                     <AvatarFallback className="bg-transparent"><LogoMark /></AvatarFallback>
@@ -180,9 +157,9 @@ export function CopilotChatPanel({ activeFile, initialMessages, discussionContex
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask me anything about your code..."
-              disabled={isLoading}
+              disabled={isChatLoading}
             />
-            <Button type="submit" disabled={isLoading || !input.trim()} size="icon">
+            <Button type="submit" disabled={isChatLoading || !input.trim()} size="icon">
               <Send className="h-4 w-4" />
               <span className="sr-only">Send</span>
             </Button>

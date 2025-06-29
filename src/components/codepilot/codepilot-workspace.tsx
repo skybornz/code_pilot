@@ -18,7 +18,7 @@ import { generateCodeDocs } from '@/ai/flows/generate-code-docs';
 import { generateSdd } from '@/ai/flows/generate-sdd';
 import { analyzeDiff } from '@/ai/flows/analyze-diff';
 import { Menu } from 'lucide-react';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
 import type { Project } from '@/lib/project-database';
@@ -33,9 +33,20 @@ export function SemCoPilotWorkspace() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadedProjectInfo, setLoadedProjectInfo] = useState<{ project: Project; branch: string } | null>(null);
   const [rightPanelView, setRightPanelView] = useState<'ai-output' | 'copilot-chat'>('copilot-chat');
-  const [chatMessages, setChatMessages] = useState<Message[] | undefined>(undefined);
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  const resetChat = useCallback(() => {
+    setChatMessages([
+      { role: 'model', content: "Hello! I'm SemCo-Pilot. How can I help you with your code today?" }
+    ]);
+  }, []);
+
+  useEffect(() => {
+    resetChat();
+  }, [resetChat]);
 
   const handleFilesLoaded = useCallback((loadedFiles: CodeFile[], project: Project, branch: string) => {
     setFiles(loadedFiles);
@@ -46,8 +57,9 @@ export function SemCoPilotWorkspace() {
       setActiveFileId(null);
     }
     setAiOutput(null);
+    resetChat();
     setRightPanelView('copilot-chat');
-  }, []);
+  }, [resetChat]);
 
   const handleFileSelect = useCallback(async (fileId: string) => {
     setActiveFileId(fileId);
@@ -159,7 +171,6 @@ export function SemCoPilotWorkspace() {
     setIsLoading(true);
     setAiOutput(null);
     setRightPanelView('ai-output');
-    setChatMessages(undefined);
     try {
       let result: AIOutput | null = null;
       if (action === 'analyze-diff' && originalCode !== undefined) {
@@ -214,14 +225,12 @@ export function SemCoPilotWorkspace() {
     setActiveFileId(null);
     setLoadedProjectInfo(null);
     setAiOutput(null);
-    setChatMessages(undefined);
+    resetChat();
     setRightPanelView('copilot-chat');
   };
   
   const handleShowCopilotChat = () => {
     setRightPanelView('copilot-chat');
-    setChatMessages(undefined);
-    setAiOutput(null);
   };
   
   const editor = activeFile ? (
@@ -252,11 +261,31 @@ export function SemCoPilotWorkspace() {
   const rightPanelContent = () => {
     switch (rightPanelView) {
       case 'copilot-chat':
-        return <CopilotChatPanel activeFile={activeFile} initialMessages={chatMessages} />;
+        return <CopilotChatPanel 
+            activeFile={activeFile} 
+            messages={chatMessages}
+            onMessagesChange={setChatMessages}
+            isChatLoading={isChatLoading}
+            setIsChatLoading={setIsChatLoading}
+        />;
       case 'ai-output':
-        return <AIOutputPanel output={aiOutput} isLoading={isLoading} activeFile={activeFile} />;
+        return <AIOutputPanel 
+            output={aiOutput} 
+            isLoading={isLoading} 
+            activeFile={activeFile}
+            messages={chatMessages}
+            onMessagesChange={setChatMessages}
+            isChatLoading={isChatLoading}
+            setIsChatLoading={setIsChatLoading}
+        />;
       default:
-        return <CopilotChatPanel activeFile={activeFile} initialMessages={chatMessages}/>;
+        return <CopilotChatPanel 
+            activeFile={activeFile} 
+            messages={chatMessages}
+            onMessagesChange={setChatMessages}
+            isChatLoading={isChatLoading}
+            setIsChatLoading={setIsChatLoading}
+        />;
     }
   };
   
