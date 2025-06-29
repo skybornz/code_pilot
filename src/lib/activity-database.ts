@@ -25,10 +25,10 @@ export type UserActivity = {
 };
 
 export type UsageStatistics = {
+    totalUsers: number;
     totalActions: number;
     avgActionsPerUser: number;
     mostUsedFeature: string;
-    filesAnalyzed: number;
     features: { name: string; actions: number }[];
     trend: { name:string; actions: number }[];
 };
@@ -72,10 +72,10 @@ export async function dbGetUsageStatistics(period: 'daily' | 'weekly' | 'monthly
     const trend = result.recordsets[2];
 
     return {
+        totalUsers: mainStats?.TotalUsers || 0,
         totalActions: mainStats?.TotalActions || 0,
         avgActionsPerUser: mainStats?.AvgActionsPerUser || 0,
         mostUsedFeature: mainStats?.MostUsedFeature || 'N/A',
-        filesAnalyzed: mainStats?.FilesAnalyzed || 0,
         features: features.map(f => ({ name: f.Name, actions: f.Actions })),
         trend: trend.map(t => ({ name: t.Name, actions: t.Actions })),
     };
