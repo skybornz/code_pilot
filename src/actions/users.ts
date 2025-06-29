@@ -73,12 +73,20 @@ export async function changePassword({ userId, currentPassword, newPassword }: {
     }
 
     if (currentPassword) {
-        // If the user has no password set in the database, any "current password" check will fail.
         if (!userWithPassword.password) {
             return { success: false, message: 'Current password is incorrect.' };
         }
         
-        const passwordMatch = await bcrypt.compare(currentPassword, userWithPassword.password);
+        let passwordMatch = false;
+        try {
+            // First, try to compare as a bcrypt hash
+            passwordMatch = await bcrypt.compare(currentPassword, userWithPassword.password);
+        } catch (e) {
+            // If bcrypt fails, it's likely a plaintext password from before encryption was added.
+            // As a fallback, do a simple string comparison. This provides a migration path for old users.
+            passwordMatch = currentPassword === userWithPassword.password;
+        }
+
         if (!passwordMatch) {
             return { success: false, message: 'Current password is incorrect.' };
         }
