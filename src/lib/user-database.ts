@@ -8,7 +8,10 @@ import type { User } from './schemas';
 export async function dbGetUsers(): Promise<Omit<User, 'password'>[]> {
   const pool = await getPool();
   const result = await pool.request().execute('sp_GetUsers');
-  return result.recordset;
+  return result.recordset.map(record => ({
+    ...record,
+    id: String(record.UserID)
+  }));
 }
 
 export async function dbGetUserByEmail(email: string): Promise<User | undefined> {
@@ -38,7 +41,11 @@ export async function dbGetUserById(id: string): Promise<Omit<User, 'password'> 
         .execute('sp_GetUserByID');
 
     if (result.recordset.length > 0) {
-        return result.recordset[0];
+        const record = result.recordset[0];
+        return {
+            ...record,
+            id: String(record.UserID)
+        };
     }
     return undefined;
 }
