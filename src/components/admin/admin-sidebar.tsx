@@ -11,7 +11,7 @@ import {
     SidebarMenuButton,
     SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Users, Settings, Link as LinkIcon, LogOut, UserCircle, LayoutDashboard } from 'lucide-react';
+import { Users, Settings, BarChart2, LogOut, UserCircle, LayoutDashboard } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -25,7 +25,7 @@ export function AdminSidebar() {
     const menuItems = [
         { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/admin/user-management', label: 'Users', icon: Users },
-        { href: '/admin/connections', label: 'Connections', icon: LinkIcon },
+        { href: '/admin/connections', label: 'Usage Statistics', icon: BarChart2 },
         { href: '/admin/model-settings', label: 'Model Settings', icon: Settings },
     ];
 

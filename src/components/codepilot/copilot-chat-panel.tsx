@@ -110,7 +110,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 border-b p-4 flex flex-row items-center">
-        <CardTitle className="text-lg flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Wand2 className="h-5 w-5 text-accent" />
           <span>Co-Pilot Chat</span>
         </CardTitle>

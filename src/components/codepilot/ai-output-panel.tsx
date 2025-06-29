@@ -253,7 +253,7 @@ export function AIOutputPanel({
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 border-b p-4">
-        <CardTitle className="text-lg flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Wand2 className="h-5 w-5 text-accent" />
           <span>AI Assistant</span>
         </CardTitle>
@@ -282,7 +282,7 @@ export function AIOutputPanel({
             )}
             {!isLoading && output && output.type !== 'completion' && (
               <div>
-                <h3 className="font-semibold text-lg mb-4 text-accent">{output.title}</h3>
+                <h3 className="font-medium mb-3 text-accent">{output.title}</h3>
                 {renderOutput(output)}
               </div>
             )}

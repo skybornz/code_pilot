@@ -4,8 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { User } from '@/lib/schemas';
 import { getUsers } from '@/actions/users';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { Users, UserCheck } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line } from 'recharts';
+import { Users, UserCheck, Wand2, FileScan } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +20,13 @@ const chartConfig = {
   },
   admins: {
     label: "Admins",
+    color: "hsl(var(--chart-2))",
+  },
+} satisfies ChartConfig
+
+const usageChartConfig = {
+  actions: {
+    label: "AI Actions",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig
@@ -56,6 +63,8 @@ export default function AdminDashboardPage() {
             total: usersData.length,
             admins: adminCount,
             users: userCount,
+            aiActions: 124,
+            filesAnalyzed: 42,
         };
     }, [usersData]);
     
@@ -64,11 +73,21 @@ export default function AdminDashboardPage() {
         { name: 'Admins', count: stats.admins, fill: "var(--color-admins)" }
     ], [stats]);
 
+    const usageChartData = useMemo(() => [
+        { date: 'Mon', actions: 86 },
+        { date: 'Tue', actions: 92 },
+        { date: 'Wed', actions: 105 },
+        { date: 'Thu', actions: 80 },
+        { date: 'Fri', actions: 110 },
+        { date: 'Sat', actions: 130 },
+        { date: 'Sun', actions: stats.aiActions },
+    ], [stats.aiActions]);
+
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -96,35 +115,83 @@ export default function AdminDashboardPage() {
                         {isLoading ? <Skeleton className="h-8 w-1/4 mt-1" /> : <div className="text-2xl font-bold">{stats.users}</div>}
                     </CardContent>
                 </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">AI Actions (Today)</CardTitle>
+                        <Wand2 className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                         {isLoading ? <Skeleton className="h-8 w-1/4 mt-1" /> : <div className="text-2xl font-bold">{stats.aiActions}</div>}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Files Analyzed</CardTitle>
+                        <FileScan className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? <Skeleton className="h-8 w-1/4 mt-1" /> : <div className="text-2xl font-bold">{stats.filesAnalyzed}</div>}
+                    </CardContent>
+                </Card>
             </div>
+            
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>User Role Distribution</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                        {isLoading ? (
+                            <div className="h-[300px] w-full flex items-center justify-center">
+                                <Skeleton className="h-full w-full" />
+                            </div>
+                        ) : (
+                            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                                        <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                                        <Tooltip
+                                            cursor={false}
+                                            content={<ChartTooltipContent indicator="dot" />}
+                                        />
+                                        <Bar dataKey="count" radius={4} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </ChartContainer>
+                        )}
+                    </CardContent>
+                </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>User Role Distribution</CardTitle>
-                </CardHeader>
-                <CardContent className="pl-2">
-                    {isLoading ? (
-                        <div className="h-[300px] w-full flex items-center justify-center">
-                            <Skeleton className="h-full w-full" />
-                        </div>
-                    ) : (
-                        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
-                                    <CartesianGrid vertical={false} />
-                                    <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-                                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
-                                    <Tooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent indicator="dot" />}
-                                    />
-                                    <Bar dataKey="count" radius={4} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
-                    )}
-                </CardContent>
-            </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Daily AI Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                        {isLoading ? (
+                            <div className="h-[300px] w-full flex items-center justify-center">
+                                <Skeleton className="h-full w-full" />
+                            </div>
+                        ) : (
+                            <ChartContainer config={usageChartConfig} className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart accessibilityLayer data={usageChartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis dataKey="date" tickLine={false} tickMargin={10} axisLine={false} />
+                                        <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                                        <Tooltip
+                                            cursor={false}
+                                            content={<ChartTooltipContent indicator="dot" />}
+                                        />
+                                        <Bar dataKey="actions" fill="var(--color-actions)" radius={4} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </ChartContainer>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
