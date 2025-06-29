@@ -73,25 +73,50 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
+    const messagesForApi = [...messages, userMessage];
+
+    setMessages(messagesForApi);
     setInput('');
     setIsLoading(true);
 
     try {
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
       
-      const fullHistory = [...messages, userMessage];
-      // The API requires the conversation to start with a user message.
-      // We find the first user message and slice the array from there to create a valid history for the API.
-      const firstUserMessageIndex = fullHistory.findIndex(m => m.role === 'user');
-      const messagesForApi = firstUserMessageIndex !== -1 ? fullHistory.slice(firstUserMessageIndex) : [];
+      const firstUserMessageIndex = messagesForApi.findIndex(m => m.role === 'user');
+      const slicedApiMessages = firstUserMessageIndex !== -1 ? messagesForApi.slice(firstUserMessageIndex) : [];
       
-      const { response } = await copilotChat({
-        messages: messagesForApi,
+      const stream = await copilotChat({
+        messages: slicedApiMessages,
         projectContext,
       });
-      const modelMessage: Message = { role: 'model', content: response };
-      setMessages(prev => [...prev, modelMessage]);
+
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let isFirstChunk = true;
+      let done = false;
+      
+      while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          const chunkValue = decoder.decode(value);
+
+          if (isFirstChunk && chunkValue) {
+              // On first chunk, add a new model message to start streaming into
+              setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
+              isFirstChunk = false;
+          } else {
+              // On subsequent chunks, append to the last message
+              setMessages(prev => {
+                  const updatedMessages = [...prev];
+                  const lastMessage = updatedMessages[updatedMessages.length - 1];
+                  if (lastMessage?.role === 'model') {
+                      lastMessage.content += chunkValue;
+                  }
+                  return updatedMessages;
+              });
+          }
+      }
+
     } catch (error) {
       console.error('Chat failed:', error);
       toast({

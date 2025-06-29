@@ -3,9 +3,8 @@
 /**
  * @fileOverview A conversational AI agent for the SemCo-Pilot.
  *
- * - copilotChat - A function that handles the chat conversation.
+ * - copilotChat - A function that handles the chat conversation and streams the response.
  * - CopilotChatInput - The input type for the copilotChat function.
- * - CopilotChatOutput - The return type for the copilotChat function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -25,40 +24,33 @@ const CopilotChatInputSchema = z.object({
 });
 export type CopilotChatInput = z.infer<typeof CopilotChatInputSchema>;
 
-const CopilotChatOutputSchema = z.object({
-  response: z.string().describe("The AI Co-Pilot's response."),
-});
-export type CopilotChatOutput = z.infer<typeof CopilotChatOutputSchema>;
 
+// This function now returns a stream for real-time chat.
 export async function copilotChat(
   input: CopilotChatInput
-): Promise<CopilotChatOutput> {
-  return copilotChatFlow(input);
-}
-
-const copilotChatFlow = ai.defineFlow(
-  {
-    name: 'copilotChatFlow',
-    inputSchema: CopilotChatInputSchema,
-    outputSchema: CopilotChatOutputSchema,
-  },
-  async (input) => {
-    const systemPrompt = `You are SemCo-Pilot, an expert software development assistant. Your role is to help users with their coding questions, explain concepts, and provide solutions. Be friendly and helpful.
+): Promise<ReadableStream<Uint8Array>> {
+  const systemPrompt = `You are SemCo-Pilot, an expert software development assistant. Your role is to help users with their coding questions, explain concepts, and provide solutions. Be friendly and helpful.
 
 You have access to the following context about the user's project:
 ${input.projectContext || 'No context provided.'}`;
 
-    const {output} = await ai.generate({
+    const {stream} = ai.generateStream({
       system: systemPrompt,
       messages: input.messages.map((m) => ({...m, content: [{text: m.content}]})),
-      output: {
-        schema: CopilotChatOutputSchema,
-      },
     });
 
-    if (!output) {
-      throw new Error('AI model did not return a valid response.');
-    }
-    return output;
-  }
-);
+    // Convert Genkit's stream to a web ReadableStream
+    const encoder = new TextEncoder();
+    const readableStream = new ReadableStream({
+        async start(controller) {
+            for await (const chunk of stream) {
+                if (chunk.text) {
+                    controller.enqueue(encoder.encode(chunk.text));
+                }
+            }
+            controller.close();
+        }
+    });
+
+    return readableStream;
+}
