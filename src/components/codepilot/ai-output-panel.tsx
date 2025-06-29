@@ -22,6 +22,7 @@ import { LogoMark } from './logo-mark';
 import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { Separator } from '../ui/separator';
+import { getDefaultModel } from '@/actions/models';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -196,6 +197,18 @@ export function AIOutputPanel({
     setIsChatLoading(true);
 
     try {
+      const modelConfig = await getDefaultModel();
+      if (!modelConfig) {
+        toast({
+          variant: 'destructive',
+          title: 'No Default Model Set',
+          description: 'An administrator needs to set a default AI model in the settings.',
+        });
+        setIsChatLoading(false);
+        return;
+      }
+      const model = `googleai/${modelConfig.name}`;
+
       const projectContext = output.fileContext ? `The user is discussing an analysis on the file "${output.fileContext.name}".` : 'No file context provided.';
       const discussionContext = formatAiOutputForChat(output);
       
@@ -203,6 +216,7 @@ export function AIOutputPanel({
       const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
 
       const stream = await copilotChat({
+        model,
         messages: historyForApi,
         projectContext,
         discussionContext,

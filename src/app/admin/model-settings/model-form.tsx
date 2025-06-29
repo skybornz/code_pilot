@@ -52,11 +52,11 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
   async function onSubmit(data: ModelFormValues) {
     setIsSubmitting(true);
     
-    const modelPayload = { ...data, type: 'online' as const };
-
+    const modelData = { ...data, type: 'online' as const };
+    
     const result = model
-      ? await updateModel({ ...modelPayload, id: model.id })
-      : await addModel(modelPayload);
+      ? await updateModel({ ...modelData, id: model.id })
+      : await addModel(modelData);
 
     setIsSubmitting(false);
 
@@ -88,7 +88,7 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
                 <Input placeholder="gemini-1.5-flash" {...field} />
               </FormControl>
               <FormDescription>
-                This must be the exact model ID from the provider (e.g., gemini-1.5-flash).
+                This must be the exact model ID from Google AI (e.g., gemini-1.5-flash).
               </FormDescription>
               <FormMessage />
             </FormItem>
