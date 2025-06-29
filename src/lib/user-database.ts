@@ -86,10 +86,10 @@ export async function dbUpdateUser(userData: Partial<User> & { id: string }): Pr
     const pool = await getPool();
     const result = await pool.request()
         .input('UserID', sql.Int, userData.id)
-        .input('Email', sql.NVarChar, userData.email)
-        .input('PasswordHash', sql.NVarChar, userData.password || null) // Pass null if not provided
-        .input('Role', sql.NVarChar, userData.role)
-        .input('IsActive', sql.Bit, userData.isActive)
+        .input('Email', sql.NVarChar, userData.email ?? null)
+        .input('PasswordHash', sql.NVarChar, userData.password ?? null)
+        .input('Role', sql.NVarChar, userData.role ?? null)
+        .input('IsActive', sql.Bit, userData.isActive ?? null)
         .execute('sp_UpdateUser');
 
     if (result.recordset[0].Result === 1) {
