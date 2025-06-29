@@ -20,6 +20,7 @@ import { addModel, updateModel } from '@/actions/models';
 import { Loader2 } from 'lucide-react';
 import React, { useEffect } from 'react';
 import type { Model, NewModel } from '@/lib/model-schema';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Model name is required.'),
@@ -123,12 +124,27 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Model Name</FormLabel>
-              <FormControl>
-                <Input placeholder={selectedType === 'online' ? 'gemini-1.5-flash' : 'llama3'} {...field} />
-              </FormControl>
+              {selectedType === 'online' ? (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a Google AI model" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="gemini-1.5-flash-latest">gemini-1.5-flash-latest</SelectItem>
+                    <SelectItem value="gemini-1.5-pro-latest">gemini-1.5-pro-latest</SelectItem>
+                    <SelectItem value="gemini-pro">gemini-pro</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <FormControl>
+                  <Input placeholder="llama3" {...field} />
+                </FormControl>
+              )}
               <FormDescription>
                 {selectedType === 'online'
-                  ? "This must be the exact model ID from Google AI."
+                  ? "Select a supported Google AI model."
                   : "This must be the exact model name from your local Ollama instance."
                 }
               </FormDescription>
