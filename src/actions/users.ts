@@ -1,7 +1,8 @@
 'use server';
 
 import type { User } from '@/lib/schemas';
-import { dbGetUsers, dbAddUser, dbUpdateUser, dbGetUserByEmail, dbGetUserById } from '@/lib/user-database';
+import { dbGetUsers, dbAddUser, dbUpdateUser, dbGetUserByEmail, dbGetUserById, dbUpdateUserLastActive } from '@/lib/user-database';
+import { logUserActivity } from './activity';
 
 export async function getUsers(): Promise<Omit<User, 'password'>[]> {
   return dbGetUsers();
@@ -20,7 +21,9 @@ export async function addUser(userData: Omit<User, 'id' | 'lastActive'>): Promis
 }
 
 export async function loginUser(credentials: Pick<User, 'email' | 'password'>): Promise<{ success: boolean; message?: string; user?: Omit<User, 'password'> }> {
-    const user = dbGetUserByEmail(credentials.email);
+    const user = await dbGetUserByEmail(credentials.email);
+    
+    // In a real app, use bcrypt.compare to check passwords securely
     if (!user || user.password !== credentials.password) {
         return { success: false, message: 'Invalid email or password' };
     }
@@ -29,7 +32,8 @@ export async function loginUser(credentials: Pick<User, 'email' | 'password'>): 
     }
     
     // Update last active time
-    dbUpdateUser({ id: user.id, lastActive: new Date() });
+    await dbUpdateUserLastActive(user.id);
+    await logUserActivity(user.id, 'Login', 'User logged in successfully.');
     
     const updatedUser = { ...user, lastActive: new Date() };
 

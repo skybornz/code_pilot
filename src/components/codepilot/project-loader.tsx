@@ -1,40 +1,59 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import type { CodeFile } from './types';
-import type { Project } from '@/lib/project-database';
-import { dbGetProjects, dbAddProject, dbDeleteProject } from '@/lib/project-database';
+import type { Project, NewProject } from '@/lib/project-database';
+import { getProjects, addProject, deleteProject } from '@/actions/projects';
 import { fetchBitbucketBranches, loadBitbucketFiles } from '@/actions/github';
 import { Loader2, PlusCircle, Trash2, FolderGit2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
 
 interface ProjectLoaderProps {
   onFilesLoaded: (files: CodeFile[], project: Project, branch: string) => void;
 }
 
 export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
+  const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
 
-  useEffect(() => {
-    setProjects(dbGetProjects());
+  const fetchProjects = useCallback(async () => {
+    if (!user) return;
+    setIsLoading(true);
+    const userProjects = await getProjects(user.id);
+    setProjects(userProjects);
     setIsLoading(false);
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleAddProject = (project: Project) => {
     setProjects(prev => [...prev, project]);
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    dbDeleteProject(projectId);
+  const handleDeleteProject = async (projectId: string) => {
+    if (!user) return;
+    await deleteProject(projectId, user.id);
     setProjects(prev => prev.filter(p => p.id !== projectId));
   };
+
+  if (!user) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="ml-2">Waiting for user session...</p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -101,8 +120,13 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleValidateAndAdd = async () => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to add a project.' });
+      return;
+    }
     if (!url.trim()) {
       toast({ variant: 'destructive', title: 'URL Required' });
       return;
@@ -110,13 +134,14 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
     
     setIsLoading(true);
     const result = await fetchBitbucketBranches(url);
-    setIsLoading(false);
 
     if (result.success && result.branches) {
       const repoNameMatch = url.match(/bitbucket.org\/[^/]+\/([^/.]+)/);
       const name = repoNameMatch ? repoNameMatch[1] : 'New Project';
       
-      const addResult = dbAddProject({ name, url });
+      const newProjectData: NewProject = { name, url, userId: user.id };
+      const addResult = await addProject(newProjectData);
+
       if (addResult.success && addResult.project) {
         toast({ title: 'Project Added!', description: `Successfully added "${name}".` });
         onProjectAdded(addResult.project);
@@ -126,6 +151,7 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
     } else {
       toast({ variant: 'destructive', title: 'Invalid Repository', description: result.error || 'Could not validate the repository URL.' });
     }
+    setIsLoading(false);
   };
 
   return (

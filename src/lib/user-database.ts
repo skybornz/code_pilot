@@ -1,49 +1,85 @@
+import sql from 'mssql';
+import { getPool } from './database/db';
 import type { User } from './schemas';
 
-// For this prototype, we'll store users in-memory.
-// In a real app, this would be a database.
-let users: User[] = [
-  { id: '1', email: 'admin@example.com', password: 'password', role: 'admin', isActive: true, lastActive: new Date(Date.now() - 1000 * 60 * 5) },
-  { id: '2', email: 'user@example.com', password: 'password', role: 'user', isActive: true, lastActive: new Date(Date.now() - 1000 * 60 * 60 * 25) },
-];
+// In a real app, you would use a proper hashing library like bcrypt
+// For this prototype, we'll continue with plaintext for simplicity.
 
-// These are simple functions, not server actions.
-export function dbGetUsers(): Omit<User, 'password'>[] {
-  return users.map(({ password, ...user }) => user);
+export async function dbGetUsers(): Promise<Omit<User, 'password'>[]> {
+  const pool = await getPool();
+  const result = await pool.request().execute('sp_GetUsers');
+  return result.recordset;
 }
 
-export function dbGetUserByEmail(email: string): User | undefined {
-  return users.find((u) => u.email === email);
+export async function dbGetUserByEmail(email: string): Promise<User | undefined> {
+  const pool = await getPool();
+  const result = await pool.request()
+      .input('Email', sql.NVarChar, email)
+      .execute('sp_GetUserByEmail');
+  
+  if (result.recordset.length > 0) {
+      const userRecord = result.recordset[0];
+      return {
+          id: String(userRecord.UserID),
+          email: userRecord.Email,
+          password: userRecord.PasswordHash, // This is not hashed in our prototype
+          role: userRecord.Role,
+          isActive: userRecord.IsActive,
+          lastActive: userRecord.LastActive
+      };
+  }
+  return undefined;
 }
 
-export function dbGetUserById(id: string): Omit<User, 'password'> | undefined {
-    const user = users.find((u) => u.id === id);
-    if (user) {
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
+export async function dbGetUserById(id: string): Promise<Omit<User, 'password'> | undefined> {
+    const pool = await getPool();
+    const result = await pool.request()
+        .input('UserID', sql.Int, id)
+        .execute('sp_GetUserByID');
+
+    if (result.recordset.length > 0) {
+        return result.recordset[0];
     }
     return undefined;
 }
 
-export function dbUpdateUser(userData: Partial<User> & { id: string }): { success: boolean; message?: string } {
-    const userIndex = users.findIndex((u) => u.id === userData.id);
-    if (userIndex === -1) {
-        return { success: false, message: 'User not found.' };
-    }
-    const existingUser = users[userIndex];
-    users[userIndex] = {
-        ...existingUser,
-        ...userData,
-    };
-    return { success: true };
+export async function dbUpdateUserLastActive(userId: string): Promise<void> {
+    const pool = await getPool();
+    await pool.request()
+        .input('UserID', sql.Int, userId)
+        .execute('sp_UpdateUserLastActive');
 }
 
-export function dbAddUser(userData: Omit<User, 'id' | 'lastActive'>): { success: boolean; message?: string; user?: Omit<User, 'password'> } {
-  if (users.some(u => u.email === userData.email)) {
-    return { success: false, message: 'User with this email already exists.' };
-  }
-  const newUser: User = { ...userData, id: String(Date.now()), lastActive: new Date() };
-  users.push(newUser);
-  const { password, ...userWithoutPassword } = newUser;
-  return { success: true, user: userWithoutPassword };
+
+export async function dbUpdateUser(userData: Partial<User> & { id: string }): Promise<{ success: boolean; message?: string }> {
+    const pool = await getPool();
+    const result = await pool.request()
+        .input('UserID', sql.Int, userData.id)
+        .input('Email', sql.NVarChar, userData.email)
+        .input('PasswordHash', sql.NVarChar, userData.password || null) // Pass null if not provided
+        .input('Role', sql.NVarChar, userData.role)
+        .input('IsActive', sql.Bit, userData.isActive)
+        .execute('sp_UpdateUser');
+
+    if (result.recordset[0].Result === 1) {
+        return { success: true };
+    }
+    return { success: false, message: 'User not found or update failed.' };
+}
+
+export async function dbAddUser(userData: Omit<User, 'id' | 'lastActive'>): Promise<{ success: boolean; message?: string; user?: Omit<User, 'password'> }> {
+    const pool = await getPool();
+    const result = await pool.request()
+        .input('Email', sql.NVarChar, userData.email)
+        .input('PasswordHash', sql.NVarChar, userData.password)
+        .input('Role', sql.NVarChar, userData.role)
+        .input('IsActive', sql.Bit, userData.isActive)
+        .execute('sp_AddUser');
+    
+    if (result.recordset[0].UserID > 0) {
+        const newUser = await dbGetUserById(String(result.recordset[0].UserID));
+        return { success: true, user: newUser };
+    } else {
+        return { success: false, message: 'User with this email already exists.' };
+    }
 }

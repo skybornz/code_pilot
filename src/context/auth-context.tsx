@@ -3,11 +3,14 @@
 import type { User } from '@/lib/schemas';
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { loginUser } from '@/actions/users';
+import { loginUser, getUserById } from '@/actions/users';
+import { Loader2 } from 'lucide-react';
 
-// For prototype purposes, we'll store the user in localStorage.
-// In a real app, you'd use secure, httpOnly cookies with a session token.
-const FAKE_SESSION_KEY = 'semco_pilot_session';
+const SESSION_STORAGE_KEY = 'semco_pilot_session';
+
+interface Session {
+  userId: string;
+}
 
 interface AuthContextType {
   user: Omit<User, 'password'> | null;
@@ -26,24 +29,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const session = localStorage.getItem(FAKE_SESSION_KEY);
-      if (session) {
-        setUser(JSON.parse(session));
+    const checkSession = async () => {
+      try {
+        const sessionJson = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (sessionJson) {
+          const session: Session = JSON.parse(sessionJson);
+          const fetchedUser = await getUserById(session.userId);
+          if (fetchedUser) {
+            setUser(fetchedUser);
+          } else {
+            // User not found in DB, clear session
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to process session from localStorage", error);
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+      } finally {
+          setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem(FAKE_SESSION_KEY);
-    } finally {
-        setIsLoading(false);
-    }
+    };
+    checkSession();
   }, []);
 
   const login = async (email: string, password_input: string) => {
     const result = await loginUser({ email, password: password_input });
     if (result.success && result.user) {
       setUser(result.user);
-      localStorage.setItem(FAKE_SESSION_KEY, JSON.stringify(result.user));
+      const session: Session = { userId: result.user.id };
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
       return { success: true, user: result.user };
     }
     return { success: false, message: result.message };
@@ -51,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem(FAKE_SESSION_KEY);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
     router.push('/login');
   }, [router]);
 
@@ -64,7 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         isLoading,
     }}>
-      {children}
+      {isLoading ? (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

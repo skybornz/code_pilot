@@ -25,10 +25,13 @@ import type { Project } from '@/lib/project-database';
 import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit, loadBitbucketFiles } from '@/actions/github';
 import { CopilotChatPanel } from './copilot-chat-panel';
 import type { Message } from '@/ai/flows/copilot-chat';
+import { useAuth } from '@/context/auth-context';
+import { logUserActivity } from '@/actions/activity';
 
-const ACTIVE_PROJECT_KEY = 'semco_active_project_info';
+const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
 
 export function SemCoPilotWorkspace() {
+  const { user } = useAuth();
   const [files, setFiles] = useState<CodeFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
@@ -45,6 +48,8 @@ export function SemCoPilotWorkspace() {
   const [editorViewMode, setEditorViewMode] = useState<'edit' | 'diff'>('edit');
   
   const activeFile = files.find((f) => f.id === activeFileId);
+  const activeProjectKey = user ? `${ACTIVE_PROJECT_KEY_PREFIX}${user.id}` : null;
+
 
   const resetCopilotChat = useCallback(() => {
     setCopilotChatMessages([
@@ -55,10 +60,12 @@ export function SemCoPilotWorkspace() {
   const handleFilesLoaded = useCallback((loadedFiles: CodeFile[], project: Project, branch: string) => {
     setFiles(loadedFiles);
     setLoadedProjectInfo({ project, branch });
-    try {
-        localStorage.setItem(ACTIVE_PROJECT_KEY, JSON.stringify({ project, branch }));
-    } catch (e) {
-        console.error("Could not save project info to localStorage", e);
+    if (activeProjectKey) {
+        try {
+            localStorage.setItem(activeProjectKey, JSON.stringify({ project, branch }));
+        } catch (e) {
+            console.error("Could not save project info to localStorage", e);
+        }
     }
     if (loadedFiles.length > 0) {
       setActiveFileId(loadedFiles[0].id);
@@ -69,7 +76,7 @@ export function SemCoPilotWorkspace() {
     resetCopilotChat();
     setAnalysisChatMessages([]);
     setRightPanelView('copilot-chat');
-  }, [resetCopilotChat]);
+  }, [resetCopilotChat, activeProjectKey]);
 
   useEffect(() => {
     resetCopilotChat();
@@ -77,8 +84,12 @@ export function SemCoPilotWorkspace() {
 
   useEffect(() => {
     const loadProjectFromStorage = async () => {
+      if (!activeProjectKey) {
+        setIsInitializing(false);
+        return;
+      }
       try {
-        const storedInfo = localStorage.getItem(ACTIVE_PROJECT_KEY);
+        const storedInfo = localStorage.getItem(activeProjectKey);
         if (storedInfo) {
           const { project, branch } = JSON.parse(storedInfo);
           const result = await loadBitbucketFiles(project.url, branch);
@@ -86,19 +97,21 @@ export function SemCoPilotWorkspace() {
             handleFilesLoaded(result.files, project, branch);
           } else {
             toast({ variant: 'destructive', title: 'Failed to auto-reload project', description: result.error });
-            localStorage.removeItem(ACTIVE_PROJECT_KEY);
+            localStorage.removeItem(activeProjectKey);
           }
         }
       } catch (error) {
         console.error('Failed to load project from storage:', error);
-        localStorage.removeItem(ACTIVE_PROJECT_KEY);
+        localStorage.removeItem(activeProjectKey);
       } finally {
         setIsInitializing(false);
       }
     };
 
-    loadProjectFromStorage();
-  }, [handleFilesLoaded, toast]);
+    if (user) {
+      loadProjectFromStorage();
+    }
+  }, [handleFilesLoaded, toast, user, activeProjectKey]);
 
   const handleFileSelect = useCallback(async (fileId: string) => {
     setActiveFileId(fileId);
@@ -204,30 +217,40 @@ export function SemCoPilotWorkspace() {
   };
 
   const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string) => {
+    if (!user) return;
     setIsLoading(true);
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
+    
+    let result: Omit<AIOutput, 'fileContext'> | null = null;
+    let actionName: string = 'Unknown AI Action';
     try {
-      let result: Omit<AIOutput, 'fileContext'> | null = null;
       if (action === 'analyze-diff' && originalCode !== undefined) {
+        actionName = 'Analyze Diff';
         const analysis = await analyzeDiff({ oldCode: originalCode, newCode: code, language });
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
       } else if (action === 'explain') {
+        actionName = 'Explain Code';
         const explanationData = await explainCode({ code });
         result = { type: 'explain', data: explanationData, title: 'Code Explanation' };
       } else if (action === 'bugs') {
+        actionName = 'Find Bugs';
         const bugReport = await findBugs({ code });
         result = { type: 'bugs', data: bugReport, title: 'Bug Report' };
       } else if (action === 'test') {
+        actionName = 'Generate Test';
         const unitTest = await generateUnitTest({ code, language });
         result = { type: 'test', data: unitTest, title: 'Generated Unit Test', language };
       } else if (action === 'refactor') {
+        actionName = 'Refactor Code';
         const refactored = await refactorCode({ code, language });
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'docs') {
+        actionName = 'Generate Docs';
         const { documentation } = await generateCodeDocs({ code });
         result = { type: 'docs', data: { documentation }, title: 'Generated Comments', language };
       } else if (action === 'sdd') {
+        actionName = 'Generate SDD';
         const sdd = await generateSdd({ code });
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
       }
@@ -240,6 +263,8 @@ export function SemCoPilotWorkspace() {
       } else if (result) {
         setAiOutput(result as AIOutput);
       }
+      
+      await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
 
     } catch (error) {
       console.error('AI action failed:', error);
@@ -252,7 +277,7 @@ export function SemCoPilotWorkspace() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, activeFile]);
+  }, [toast, activeFile, user]);
 
   const handleCompletion = useCallback(async (code: string, language: string) => {
     try {
@@ -275,10 +300,12 @@ export function SemCoPilotWorkspace() {
     setActiveFileId(null);
     setLoadedProjectInfo(null);
     setAiOutput(null);
-    try {
-        localStorage.removeItem(ACTIVE_PROJECT_KEY);
-    } catch (e) {
-        console.error("Could not remove project info from localStorage", e);
+    if (activeProjectKey) {
+        try {
+            localStorage.removeItem(activeProjectKey);
+        } catch (e) {
+            console.error("Could not remove project info from localStorage", e);
+        }
     }
     resetCopilotChat();
     setAnalysisChatMessages([]);

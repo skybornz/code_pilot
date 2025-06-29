@@ -1,107 +1,64 @@
-'use client';
+import sql from 'mssql';
+import { getPool } from './database/db';
+import type { Model, NewModel } from './model-schema';
 
-import { Model, ModelSchema, NewModel } from './model-schema';
+export async function dbGetModels(): Promise<Model[]> {
+  const pool = await getPool();
+  const result = await pool.request().execute('sp_GetModels');
+  return result.recordset;
+}
 
-const MODELS_KEY = 'semco_pilot_models';
-
-function getModelsFromStorage(): Model[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
+export async function dbAddModel(modelData: NewModel): Promise<{ success: boolean; message?: string; model?: Model }> {
   try {
-    const modelsJson = localStorage.getItem(MODELS_KEY);
-    const parsed = modelsJson ? JSON.parse(modelsJson) : [];
+    const pool = await getPool();
+    const result = await pool.request()
+        .input('Name', sql.NVarChar, modelData.name)
+        .input('Type', sql.NVarChar, modelData.type)
+        .execute('sp_AddModel');
     
-    // Pre-populate with a single default if storage is empty
-    if (parsed.length === 0) {
-        const geminiModel: Model = {
-            id: 'gemini-default-online',
-            type: 'online',
-            name: 'Gemini (Cloud)',
-            isDefault: true,
-        };
-        const defaultModels: Model[] = [geminiModel];
-        saveModelsToStorage(defaultModels);
-        return defaultModels;
+    if (result.returnValue === 0 && result.recordset.length > 0) {
+      return { success: true, model: result.recordset[0] };
+    } else {
+      // Assuming SP returns a specific value for duplicate name
+      return { success: false, message: 'A model with this name already exists.' };
     }
-    return ModelSchema.array().parse(parsed);
-  } catch (error) {
-    console.error("Failed to parse models from localStorage, resetting.", error);
-    if (typeof window !== 'undefined') {
-        localStorage.removeItem(MODELS_KEY);
-    }
-    // Repopulate after error
-    const defaultModels: Model[] = [
-        {
-            id: 'gemini-default-online',
-            type: 'online',
-            name: 'Gemini (Cloud)',
-            isDefault: true,
-        }
-    ];
-    saveModelsToStorage(defaultModels);
-    return defaultModels;
+  } catch(error) {
+    console.error(error);
+    return { success: false, message: 'Database error occurred.' };
   }
 }
 
-function saveModelsToStorage(models: Model[]): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(MODELS_KEY, JSON.stringify(models));
-  }
-}
+export async function dbUpdateModel(modelData: Omit<Model, 'isDefault'>): Promise<{ success: boolean; message?: string }> {
+    const pool = await getPool();
+    const result = await pool.request()
+        .input('ModelID', sql.Int, modelData.id)
+        .input('Name', sql.NVarChar, modelData.name)
+        .input('Type', sql.NVarChar, modelData.type)
+        .execute('sp_UpdateModel');
 
-export function dbGetModels(): Model[] {
-  let models = getModelsFromStorage();
-  
-  const hasDefault = models.some(m => m.isDefault);
-  if (!hasDefault && models.length > 0) {
-      models[0].isDefault = true;
-      saveModelsToStorage(models);
-  }
-  return models;
-}
-
-export function dbAddModel(modelData: NewModel): { success: boolean; message?: string; model?: Model } {
-  const models = getModelsFromStorage();
-  const newModel: Model = { ...modelData, id: String(Date.now()), isDefault: models.length === 0 };
-  const updatedModels = [...models, newModel];
-  saveModelsToStorage(updatedModels);
-  return { success: true, model: newModel };
-}
-
-export function dbUpdateModel(modelData: Omit<Model, 'isDefault'>): { success: boolean; message?: string } {
-    const models = getModelsFromStorage();
-    const modelIndex = models.findIndex(m => m.id === modelData.id);
-
-    if (modelIndex === -1) {
-        return { success: false, message: 'Model not found.' };
+    if (result.returnValue === 0) {
+        return { success: true };
     }
-
-    // Preserve the isDefault status from the original model, as this is handled separately
-    models[modelIndex] = { ...modelData, isDefault: models[modelIndex].isDefault };
-    saveModelsToStorage(models);
-    return { success: true };
+    return { success: false, message: 'Model not found or update failed.' };
 }
 
-export function dbSetDefaultModel(modelId: string): { success: boolean } {
-  let models = getModelsFromStorage();
-  models = models.map(m => ({
-    ...m,
-    isDefault: m.id === modelId,
-  }));
-  saveModelsToStorage(models);
+export async function dbSetDefaultModel(modelId: string): Promise<{ success: boolean }> {
+  const pool = await getPool();
+  await pool.request()
+      .input('ModelID', sql.Int, modelId)
+      .execute('sp_SetDefaultModel');
   return { success: true };
 }
 
-export function dbDeleteModel(modelId: string): { success: boolean } {
-  let models = getModelsFromStorage();
-  models = models.filter(m => m.id !== modelId);
+export async function dbDeleteModel(modelId: string): Promise<{ success: boolean }> {
+  const pool = await getPool();
+  const result = await pool.request()
+      .input('ModelID', sql.Int, modelId)
+      .execute('sp_DeleteModel');
   
-  const hasDefault = models.some(m => m.isDefault);
-  if (!hasDefault && models.length > 0) {
-      models[0].isDefault = true;
+  // Stored procedure returns 0 on success, -1 if model is default
+  if (result.returnValue === 0) {
+      return { success: true };
   }
-  
-  saveModelsToStorage(models);
-  return { success: true };
+  return { success: false };
 }
