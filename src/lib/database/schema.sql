@@ -1,68 +1,165 @@
--- Create Tables if they don't exist
+
+-- This script is idempotent and can be run safely multiple times.
+-- It will create tables if they don't exist and create or alter stored procedures.
+
+-- Create Users Table
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Users' and xtype='U')
-CREATE TABLE Users (
-    UserID INT PRIMARY KEY IDENTITY(1,1),
-    Email NVARCHAR(255) UNIQUE NOT NULL,
-    PasswordHash NVARCHAR(255) NOT NULL,
-    Role NVARCHAR(50) NOT NULL CHECK (Role IN ('admin', 'user')),
-    IsActive BIT NOT NULL DEFAULT 1,
-    LastActive DATETIME2 DEFAULT GETUTCDATE()
-);
+BEGIN
+    CREATE TABLE Users (
+        UserID INT PRIMARY KEY IDENTITY(1,1),
+        Email NVARCHAR(255) NOT NULL UNIQUE,
+        PasswordHash NVARCHAR(255) NOT NULL,
+        Role NVARCHAR(50) NOT NULL CHECK (Role IN ('admin', 'user')),
+        IsActive BIT NOT NULL DEFAULT 1,
+        LastActive DATETIME
+    );
+END
+GO
 
+-- Create Projects Table
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Projects' and xtype='U')
-CREATE TABLE Projects (
-    ProjectID INT PRIMARY KEY IDENTITY(1,1),
-    UserID INT NOT NULL,
-    Name NVARCHAR(255) NOT NULL,
-    URL NVARCHAR(2048) NOT NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
-    UNIQUE (UserID, URL)
-);
+BEGIN
+    CREATE TABLE Projects (
+        ProjectID INT PRIMARY KEY IDENTITY(1,1),
+        UserID INT NOT NULL,
+        Name NVARCHAR(255) NOT NULL,
+        URL NVARCHAR(2048) NOT NULL,
+        FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE
+    );
+    -- Add a unique constraint for UserID and URL
+    ALTER TABLE Projects ADD CONSTRAINT UQ_User_Project_URL UNIQUE (UserID, URL);
+END
+GO
 
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ModelSettings' and xtype='U')
-CREATE TABLE ModelSettings (
-    ModelID INT PRIMARY KEY IDENTITY(1,1),
-    Name NVARCHAR(255) UNIQUE NOT NULL,
-    Type NVARCHAR(50) NOT NULL CHECK (Type IN ('online', 'local')),
-    IsDefault BIT NOT NULL DEFAULT 0
-);
-
+-- Create Activities Table
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Activities' and xtype='U')
-CREATE TABLE Activities (
-    ActivityID INT PRIMARY KEY IDENTITY(1,1),
-    Name NVARCHAR(255) UNIQUE NOT NULL,
-    Type NVARCHAR(50) NOT NULL CHECK (Type IN ('AI Action', 'Authentication', 'File System'))
-);
+BEGIN
+    CREATE TABLE Activities (
+        ActivityID INT PRIMARY KEY IDENTITY(1,1),
+        Name NVARCHAR(100) NOT NULL UNIQUE,
+        Type NVARCHAR(50) NOT NULL -- e.g., 'AI Action', 'Authentication'
+    );
+END
+GO
 
+-- Create UserActivityLog Table
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='UserActivityLog' and xtype='U')
-CREATE TABLE UserActivityLog (
-    LogID INT PRIMARY KEY IDENTITY(1,1),
-    UserID INT NOT NULL,
-    ActivityID INT NOT NULL,
-    Details NVARCHAR(MAX),
-    Timestamp DATETIME2 DEFAULT GETUTCDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
-    FOREIGN KEY (ActivityID) REFERENCES Activities(ActivityID)
-);
+BEGIN
+    CREATE TABLE UserActivityLog (
+        LogID INT PRIMARY KEY IDENTITY(1,1),
+        UserID INT NOT NULL,
+        ActivityID INT NOT NULL,
+        Details NVARCHAR(1000),
+        Timestamp DATETIME NOT NULL DEFAULT GETUTCDATE(),
+        FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
+        FOREIGN KEY (ActivityID) REFERENCES Activities(ActivityID)
+    );
+END
 GO
 
+-- Create ModelSettings Table
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ModelSettings' and xtype='U')
+BEGIN
+    CREATE TABLE ModelSettings (
+        ModelID INT PRIMARY KEY IDENTITY(1,1),
+        Name NVARCHAR(100) NOT NULL UNIQUE,
+        Type NVARCHAR(50) NOT NULL,
+        IsDefault BIT NOT NULL DEFAULT 0
+    );
+END
+ELSE
+BEGIN
+    -- Add Type column if it doesn't exist
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'Type' AND Object_ID = Object_ID(N'ModelSettings'))
+    BEGIN
+        ALTER TABLE ModelSettings ADD Type NVARCHAR(50) NOT NULL DEFAULT 'online';
+    END
+    -- Add IsDefault column if it doesn't exist
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'IsDefault' AND Object_ID = Object_ID(N'ModelSettings'))
+    BEGIN
+        ALTER TABLE ModelSettings ADD IsDefault BIT NOT NULL DEFAULT 0;
+    END
+END
+GO
+
+
+--------------------------------------------------------------------------------
 -- Stored Procedures
--- Drop and Create to ensure they are up-to-date
+--------------------------------------------------------------------------------
 
--- User Management
-IF OBJECT_ID('sp_AddUser', 'P') IS NOT NULL DROP PROCEDURE sp_AddUser;
+-- =============================================
+-- Stored Procedure: sp_GetUsers
+-- Description: Retrieves all users without their passwords.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetUsers
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UserID, Email, Role, IsActive, LastActive FROM Users;
+END
 GO
-CREATE PROCEDURE sp_AddUser
+
+-- =============================================
+-- Stored Procedure: sp_GetUserByEmail
+-- Description: Retrieves a single user by their email, including password hash.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetUserByEmail
+    @Email NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UserID, Email, PasswordHash, Role, IsActive, LastActive
+    FROM Users
+    WHERE Email = @Email;
+END
+GO
+
+-- =============================================
+-- Stored Procedure: sp_GetUserByID
+-- Description: Retrieves a single user by their ID, including password hash.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetUserByID
+    @UserID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UserID, Email, PasswordHash, Role, IsActive, LastActive
+    FROM Users
+    WHERE UserID = @UserID;
+END
+GO
+
+-- =============================================
+-- Stored Procedure: sp_UpdateUserLastActive
+-- Description: Updates the LastActive timestamp for a user.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_UpdateUserLastActive
+    @UserID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE Users
+    SET LastActive = GETUTCDATE()
+    WHERE UserID = @UserID;
+END
+GO
+
+-- =============================================
+-- Stored Procedure: sp_AddUser
+-- Description: Adds a new user to the Users table.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_AddUser
     @Email NVARCHAR(255),
     @PasswordHash NVARCHAR(255),
     @Role NVARCHAR(50),
     @IsActive BIT
 AS
 BEGIN
+    SET NOCOUNT ON;
     IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = @Email)
     BEGIN
-        INSERT INTO Users (Email, PasswordHash, Role, IsActive)
-        VALUES (@Email, @PasswordHash, @Role, @IsActive);
+        INSERT INTO Users (Email, PasswordHash, Role, IsActive, LastActive)
+        VALUES (@Email, @PasswordHash, @Role, @IsActive, GETUTCDATE());
         SELECT SCOPE_IDENTITY() AS UserID;
     END
     ELSE
@@ -72,40 +169,12 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID('sp_GetUsers', 'P') IS NOT NULL DROP PROCEDURE sp_GetUsers;
-GO
-CREATE PROCEDURE sp_GetUsers
-AS
-BEGIN
-    SELECT UserID, Email, Role, IsActive, LastActive FROM Users;
-END
-GO
-
-IF OBJECT_ID('sp_GetUserByEmail', 'P') IS NOT NULL DROP PROCEDURE sp_GetUserByEmail;
-GO
-CREATE PROCEDURE sp_GetUserByEmail
-    @Email NVARCHAR(255)
-AS
-BEGIN
-    SELECT UserID, Email, PasswordHash, Role, IsActive, LastActive
-    FROM Users WHERE Email = @Email;
-END
-GO
-
-IF OBJECT_ID('sp_GetUserByID', 'P') IS NOT NULL DROP PROCEDURE sp_GetUserByID;
-GO
-CREATE PROCEDURE sp_GetUserByID
-    @UserID INT
-AS
-BEGIN
-    SELECT UserID, Email, PasswordHash, Role, IsActive, LastActive
-    FROM Users WHERE UserID = @UserID;
-END
-GO
-
-IF OBJECT_ID('sp_UpdateUser', 'P') IS NOT NULL DROP PROCEDURE sp_UpdateUser;
-GO
-CREATE PROCEDURE sp_UpdateUser
+-- =============================================
+-- Stored Procedure: sp_UpdateUser
+-- Description: Updates an existing user's information.
+-- Parameters are nullable to allow for partial updates.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_UpdateUser
     @UserID INT,
     @Email NVARCHAR(255) = NULL,
     @PasswordHash NVARCHAR(255) = NULL,
@@ -113,6 +182,14 @@ CREATE PROCEDURE sp_UpdateUser
     @IsActive BIT = NULL
 AS
 BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Result;
+        RETURN;
+    END
+
     UPDATE Users
     SET
         Email = ISNULL(@Email, Email),
@@ -120,286 +197,367 @@ BEGIN
         Role = ISNULL(@Role, Role),
         IsActive = ISNULL(@IsActive, IsActive)
     WHERE UserID = @UserID;
-    SELECT CAST(@@ROWCOUNT AS BIT) as Result;
+    
+    SELECT CAST(1 AS BIT) AS Result;
 END
 GO
 
-IF OBJECT_ID('sp_UpdateUserLastActive', 'P') IS NOT NULL DROP PROCEDURE sp_UpdateUserLastActive;
-GO
-CREATE PROCEDURE sp_UpdateUserLastActive
+-- =============================================
+-- Stored Procedure: sp_GetProjectsByUser
+-- Description: Retrieves all projects for a given user.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetProjectsByUser
     @UserID INT
 AS
 BEGIN
-    UPDATE Users SET LastActive = GETUTCDATE() WHERE UserID = @UserID;
+    SET NOCOUNT ON;
+    SELECT ProjectID, UserID, Name, URL
+    FROM Projects
+    WHERE UserID = @UserID;
 END
 GO
 
-
--- Project Management
-IF OBJECT_ID('sp_GetProjectsByUser', 'P') IS NOT NULL DROP PROCEDURE sp_GetProjectsByUser;
-GO
-CREATE PROCEDURE sp_GetProjectsByUser
-    @UserID INT
-AS
-BEGIN
-    SELECT ProjectID, UserID, Name, URL FROM Projects WHERE UserID = @UserID;
-END
-GO
-
-IF OBJECT_ID('sp_AddProject', 'P') IS NOT NULL DROP PROCEDURE sp_AddProject;
-GO
-CREATE PROCEDURE sp_AddProject
+-- =============================================
+-- Stored Procedure: sp_AddProject
+-- Description: Adds a new project for a user.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_AddProject
     @UserID INT,
     @Name NVARCHAR(255),
     @URL NVARCHAR(2048)
 AS
 BEGIN
+    SET NOCOUNT ON;
     IF NOT EXISTS (SELECT 1 FROM Projects WHERE UserID = @UserID AND URL = @URL)
     BEGIN
-        INSERT INTO Projects (UserID, Name, URL) VALUES (@UserID, @Name, @URL);
-        SELECT * FROM Projects WHERE ProjectID = SCOPE_IDENTITY();
+        INSERT INTO Projects (UserID, Name, URL)
+        VALUES (@UserID, @Name, @URL);
+        
+        SELECT 
+            ProjectID,
+            UserID,
+            Name,
+            URL
+        FROM Projects
+        WHERE ProjectID = SCOPE_IDENTITY();
+        
         RETURN 0;
     END
     ELSE
     BEGIN
-        RETURN 1; -- Already exists
+        RETURN 1; -- Indicates project already exists
     END
 END
 GO
 
-IF OBJECT_ID('sp_DeleteProject', 'P') IS NOT NULL DROP PROCEDURE sp_DeleteProject;
-GO
-CREATE PROCEDURE sp_DeleteProject
+-- =============================================
+-- Stored Procedure: sp_DeleteProject
+-- Description: Deletes a project for a user.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_DeleteProject
     @ProjectID INT,
     @UserID INT
 AS
 BEGIN
-    DELETE FROM Projects WHERE ProjectID = @ProjectID AND UserID = @UserID;
+    SET NOCOUNT ON;
+    DELETE FROM Projects
+    WHERE ProjectID = @ProjectID AND UserID = @UserID;
 END
 GO
 
 
--- Model Management
-IF OBJECT_ID('sp_GetModels', 'P') IS NOT NULL DROP PROCEDURE sp_GetModels;
-GO
-CREATE PROCEDURE sp_GetModels
+-- =============================================
+-- Stored Procedure: sp_GetUserActivity
+-- Description: Retrieves all activity logs for a specific user.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetUserActivity
+    @UserID INT
 AS
 BEGIN
-    SELECT ModelID, Name, Type, IsDefault FROM ModelSettings ORDER BY IsDefault DESC, Name ASC;
+    SET NOCOUNT ON;
+    SELECT
+        ual.LogID,
+        a.Name AS ActivityName,
+        a.Type AS ActivityType,
+        ual.Details,
+        ual.Timestamp
+    FROM UserActivityLog ual
+    JOIN Activities a ON ual.ActivityID = a.ActivityID
+    WHERE ual.UserID = @UserID
+    ORDER BY ual.Timestamp DESC;
 END
 GO
 
-IF OBJECT_ID('sp_GetDefaultModel', 'P') IS NOT NULL DROP PROCEDURE sp_GetDefaultModel;
-GO
-CREATE PROCEDURE sp_GetDefaultModel
-AS
-BEGIN
-    SELECT TOP 1 ModelID, Name, Type, IsDefault FROM ModelSettings WHERE IsDefault = 1;
-END
-GO
-
-IF OBJECT_ID('sp_AddModel', 'P') IS NOT NULL DROP PROCEDURE sp_AddModel;
-GO
-CREATE PROCEDURE sp_AddModel
-    @Name NVARCHAR(255),
-    @Type NVARCHAR(50)
-AS
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM ModelSettings WHERE Name = @Name)
-    BEGIN
-        INSERT INTO ModelSettings (Name, Type, IsDefault) VALUES (@Name, @Type, 0);
-        SELECT * FROM ModelSettings WHERE ModelID = SCOPE_IDENTITY();
-        RETURN 0;
-    END
-    ELSE
-    BEGIN
-        RETURN 1;
-    END
-END
-GO
-
-IF OBJECT_ID('sp_UpdateModel', 'P') IS NOT NULL DROP PROCEDURE sp_UpdateModel;
-GO
-CREATE PROCEDURE sp_UpdateModel
-    @ModelID INT,
-    @Name NVARCHAR(255),
-    @Type NVARCHAR(50)
-AS
-BEGIN
-    IF EXISTS (SELECT 1 FROM ModelSettings WHERE Name = @Name AND ModelID != @ModelID)
-    BEGIN
-        RETURN 1; -- Name already exists for another model
-    END
-    UPDATE ModelSettings SET Name = @Name, Type = @Type WHERE ModelID = @ModelID;
-    IF @@ROWCOUNT > 0 RETURN 0;
-    ELSE RETURN 2; -- Not found
-END
-GO
-
-IF OBJECT_ID('sp_SetDefaultModel', 'P') IS NOT NULL DROP PROCEDURE sp_SetDefaultModel;
-GO
-CREATE PROCEDURE sp_SetDefaultModel
-    @ModelID INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    UPDATE ModelSettings SET IsDefault = 0;
-    UPDATE ModelSettings SET IsDefault = 1 WHERE ModelID = @ModelID;
-    COMMIT TRANSACTION;
-END
-GO
-
-IF OBJECT_ID('sp_DeleteModel', 'P') IS NOT NULL DROP PROCEDURE sp_DeleteModel;
-GO
-CREATE PROCEDURE sp_DeleteModel
-    @ModelID INT
-AS
-BEGIN
-    IF EXISTS (SELECT 1 FROM ModelSettings WHERE ModelID = @ModelID AND IsDefault = 1)
-    BEGIN
-        RETURN 1; -- Cannot delete default model
-    END
-    DELETE FROM ModelSettings WHERE ModelID = @ModelID;
-    IF @@ROWCOUNT > 0 RETURN 0;
-    ELSE RETURN 2;
-END
-GO
-
-
--- Activity Logging & Reporting
-IF OBJECT_ID('sp_LogActivity', 'P') IS NOT NULL DROP PROCEDURE sp_LogActivity;
-GO
-CREATE PROCEDURE sp_LogActivity
+-- =============================================
+-- Stored Procedure: sp_LogActivity
+-- Description: Logs a user's activity. Creates the activity type if it doesn't exist.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_LogActivity
     @UserID INT,
-    @ActivityName NVARCHAR(255),
-    @Details NVARCHAR(MAX)
+    @ActivityName NVARCHAR(100),
+    @Details NVARCHAR(1000)
 AS
 BEGIN
+    SET NOCOUNT ON;
     DECLARE @ActivityID INT;
     DECLARE @ActivityType NVARCHAR(50);
 
-    -- Determine ActivityType based on Name
-    SET @ActivityType = 
-        CASE 
-            WHEN @ActivityName IN ('Login', 'Logout', 'Password Change') THEN 'Authentication'
-            WHEN @ActivityName IN ('Explain Code', 'Find Bugs', 'Refactor Code', 'Generate Test', 'Generate Docs', 'Generate SDD', 'Analyze Diff', 'Copilot Chat') THEN 'AI Action'
-            ELSE 'File System'
-        END;
+    -- Determine activity type based on name
+    IF @ActivityName IN ('Login', 'Logout', 'Password Change')
+        SET @ActivityType = 'Authentication';
+    ELSE IF @ActivityName LIKE '%Analyze%' OR @ActivityName LIKE '%Explain%' OR @ActivityName LIKE '%Bug%' OR @ActivityName LIKE '%Refactor%' OR @ActivityName LIKE '%Test%' OR @ActivityName LIKE '%Doc%' OR @ActivityName LIKE '%SDD%'
+        SET @ActivityType = 'AI Action';
+    ELSE
+        SET @ActivityType = 'General';
 
     -- Find or create the activity
     SELECT @ActivityID = ActivityID FROM Activities WHERE Name = @ActivityName;
+
     IF @ActivityID IS NULL
     BEGIN
         INSERT INTO Activities (Name, Type) VALUES (@ActivityName, @ActivityType);
         SET @ActivityID = SCOPE_IDENTITY();
     END
 
-    -- Log the activity
-    INSERT INTO UserActivityLog (UserID, ActivityID, Details)
-    VALUES (@UserID, @ActivityID, @Details);
+    -- Insert the log entry
+    INSERT INTO UserActivityLog (UserID, ActivityID, Details, Timestamp)
+    VALUES (@UserID, @ActivityID, @Details, GETUTCDATE());
 END
 GO
 
-IF OBJECT_ID('sp_GetUserActivity', 'P') IS NOT NULL DROP PROCEDURE sp_GetUserActivity;
-GO
-CREATE PROCEDURE sp_GetUserActivity
-    @UserID INT
+
+-- =============================================
+-- Stored Procedure: sp_GetModels
+-- Description: Retrieves all configured models.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetModels
 AS
 BEGIN
-    SELECT
-        l.LogID,
-        a.Name AS ActivityName,
-        a.Type AS ActivityType,
-        l.Details,
-        l.Timestamp
-    FROM UserActivityLog l
-    JOIN Activities a ON l.ActivityID = a.ActivityID
-    WHERE l.UserID = @UserID
-    ORDER BY l.Timestamp DESC;
+    SET NOCOUNT ON;
+    SELECT ModelID, Name, Type, IsDefault
+    FROM ModelSettings
+    ORDER BY Name;
 END
 GO
 
-IF OBJECT_ID('sp_GetUsageStatistics', 'P') IS NOT NULL DROP PROCEDURE sp_GetUsageStatistics;
+-- =============================================
+-- Stored Procedure: sp_GetDefaultModel
+-- Description: Retrieves the default model.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetDefaultModel
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT TOP 1 ModelID, Name, Type, IsDefault
+    FROM ModelSettings
+    WHERE IsDefault = 1;
+END
 GO
-CREATE PROCEDURE [dbo].[sp_GetUsageStatistics]
-    @Period NVARCHAR(10) -- 'daily', 'weekly', 'monthly', 'yearly'
+
+-- =============================================
+-- Stored Procedure: sp_AddModel
+-- Description: Adds a new model configuration.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_AddModel
+    @Name NVARCHAR(100),
+    @Type NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (SELECT 1 FROM ModelSettings WHERE Name = @Name)
+    BEGIN
+        RETURN 1; -- Name must be unique
+    END
+
+    -- If this is the first model, make it the default
+    DECLARE @IsDefault BIT = 0;
+    IF (SELECT COUNT(*) FROM ModelSettings) = 0
+    BEGIN
+        SET @IsDefault = 1;
+    END
+
+    INSERT INTO ModelSettings (Name, Type, IsDefault)
+    VALUES (@Name, @Type, @IsDefault);
+
+    SELECT ModelID, Name, Type, IsDefault
+    FROM ModelSettings
+    WHERE ModelID = SCOPE_IDENTITY();
+
+    RETURN 0;
+END
+GO
+
+
+-- =============================================
+-- Stored Procedure: sp_UpdateModel
+-- Description: Updates an existing model configuration.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_UpdateModel
+    @ModelID INT,
+    @Name NVARCHAR(100),
+    @Type NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Check if another model already has the new name
+    IF EXISTS (SELECT 1 FROM ModelSettings WHERE Name = @Name AND ModelID != @ModelID)
+    BEGIN
+        RETURN 1; -- Name must be unique
+    END
+
+    UPDATE ModelSettings
+    SET Name = @Name,
+        Type = @Type
+    WHERE ModelID = @ModelID;
+    
+    IF @@ROWCOUNT = 0
+        RETURN 2; -- Model not found
+    
+    RETURN 0;
+END
+GO
+
+-- =============================================
+-- Stored Procedure: sp_DeleteModel
+-- Description: Deletes a model configuration.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_DeleteModel
+    @ModelID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Prevent deleting the default model
+    IF EXISTS (SELECT 1 FROM ModelSettings WHERE ModelID = @ModelID AND IsDefault = 1)
+    BEGIN
+        RETURN 1; -- Cannot delete default model
+    END
+
+    DELETE FROM ModelSettings WHERE ModelID = @ModelID;
+    RETURN 0;
+END
+GO
+
+-- =============================================
+-- Stored Procedure: sp_SetDefaultModel
+-- Description: Sets a specific model as the default.
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_SetDefaultModel
+    @ModelID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- First, unset the current default
+    UPDATE ModelSettings
+    SET IsDefault = 0
+    WHERE IsDefault = 1;
+
+    -- Then, set the new default
+    UPDATE ModelSettings
+    SET IsDefault = 1
+    WHERE ModelID = @ModelID;
+END
+GO
+
+-- =============================================
+-- Stored Procedure: sp_GetUsageStatistics
+-- Description: Gathers usage statistics for a specified period.
+-- Parameters:
+--   @Period: 'daily', 'weekly', 'monthly', 'yearly'
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetUsageStatistics
+    @Period NVARCHAR(10)
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @StartDate DATETIME;
-    DECLARE @EndDate DATETIME = GETUTCDATE();
 
+    -- Determine the start date based on the period
     IF @Period = 'daily'
-        SET @StartDate = DATEADD(day, -1, @EndDate);
+        SET @StartDate = DATEADD(day, -1, GETUTCDATE());
     ELSE IF @Period = 'weekly'
-        SET @StartDate = DATEADD(week, -1, @EndDate);
+        SET @StartDate = DATEADD(week, -1, GETUTCDATE());
     ELSE IF @Period = 'monthly'
-        SET @StartDate = DATEADD(month, -1, @EndDate);
+        SET @StartDate = DATEADD(month, -1, GETUTCDATE());
     ELSE IF @Period = 'yearly'
-        SET @StartDate = DATEADD(year, -1, @EndDate);
+        SET @StartDate = DATEADD(year, -1, GETUTCDATE());
     ELSE
-        SET @StartDate = DATEADD(week, -1, @EndDate);
-    
-    SELECT l.LogID, l.UserID, l.ActivityID, l.Details, l.Timestamp, a.Name as ActivityName, a.Type as ActivityType
-    INTO #FilteredLogs
-    FROM UserActivityLog l
-    JOIN Activities a ON l.ActivityID = a.ActivityID
-    WHERE l.Timestamp BETWEEN @StartDate AND @EndDate AND a.Type = 'AI Action';
+        -- Default to weekly if an invalid period is provided
+        SET @StartDate = DATEADD(week, -1, GETUTCDATE());
 
-    -- Result 1: Main Stats
+    -- Main statistics
     SELECT
-        (SELECT COUNT(*) FROM #FilteredLogs) AS TotalActions,
-        (SELECT COUNT(DISTINCT Details) FROM #FilteredLogs WHERE Details NOT LIKE '%unknown%') AS FilesAnalyzed,
+        (SELECT COUNT(DISTINCT UserID) FROM UserActivityLog WHERE Timestamp >= @StartDate) AS TotalUsers,
+        (SELECT COUNT(*) FROM UserActivityLog WHERE ActivityID IN (SELECT ActivityID FROM Activities WHERE Type = 'AI Action') AND Timestamp >= @StartDate) AS TotalActions,
         (
-            SELECT TOP 1 ActivityName
-            FROM #FilteredLogs
-            GROUP BY ActivityName
-            ORDER BY COUNT(*) DESC
-        ) AS MostUsedFeature,
+            CAST(
+                (SELECT COUNT(*) FROM UserActivityLog WHERE ActivityID IN (SELECT ActivityID FROM Activities WHERE Type = 'AI Action') AND Timestamp >= @StartDate) AS FLOAT
+            ) / 
+            NULLIF((SELECT COUNT(DISTINCT UserID) FROM UserActivityLog WHERE Timestamp >= @StartDate), 0)
+        ) AS AvgActionsPerUser,
         (
-            SELECT CAST(COUNT(*) AS FLOAT) / NULLIF(COUNT(DISTINCT UserID), 0)
-            FROM #FilteredLogs
-        ) AS AvgActionsPerUser;
+            SELECT TOP 1 Name 
+            FROM Activities 
+            WHERE ActivityID = (
+                SELECT TOP 1 ActivityID 
+                FROM UserActivityLog 
+                WHERE Timestamp >= @StartDate AND ActivityID IN (SELECT ActivityID FROM Activities WHERE Type = 'AI Action')
+                GROUP BY ActivityID 
+                ORDER BY COUNT(*) DESC
+            )
+        ) AS MostUsedFeature;
 
-    -- Result 2: Feature Breakdown
-    SELECT
-        ActivityName AS Name,
-        COUNT(*) AS Actions
-    FROM #FilteredLogs
-    GROUP BY ActivityName
+    -- Feature breakdown
+    SELECT 
+        a.Name,
+        COUNT(ual.ActivityID) AS Actions
+    FROM UserActivityLog ual
+    JOIN Activities a ON ual.ActivityID = a.ActivityID
+    WHERE a.Type = 'AI Action' AND ual.Timestamp >= @StartDate
+    GROUP BY a.Name
     ORDER BY Actions DESC;
 
-    -- Result 3: Trend Data
+    -- Trend data
     IF @Period = 'daily'
-        SELECT
-            FORMAT(Timestamp, 'HH:00') AS Name,
-            COUNT(*) AS Actions
-        FROM #FilteredLogs
-        GROUP BY FORMAT(Timestamp, 'HH:00'), DATEPART(hour, Timestamp)
-        ORDER BY DATEPART(hour, Timestamp);
+        -- Last 7 days, grouped by day
+        SELECT 
+            CONVERT(NVARCHAR(10), ual.Timestamp, 23) AS Name, -- YYYY-MM-DD
+            COUNT(*) as Actions
+        FROM UserActivityLog ual
+        WHERE ual.Timestamp >= DATEADD(day, -7, GETUTCDATE()) AND ual.ActivityID IN (SELECT ActivityID FROM Activities WHERE Type = 'AI Action')
+        GROUP BY CONVERT(NVARCHAR(10), ual.Timestamp, 23)
+        ORDER BY Name;
     ELSE IF @Period = 'weekly'
-        SELECT
-            FORMAT(Timestamp, 'ddd') AS Name,
-            COUNT(*) AS Actions
-        FROM #FilteredLogs
-        GROUP BY FORMAT(Timestamp, 'ddd'), DATEPART(weekday, Timestamp)
-        ORDER BY DATEPART(weekday, Timestamp);
+        -- Last 8 weeks, grouped by the start of the week
+        SELECT 
+            CONVERT(NVARCHAR(10), DATEADD(wk, DATEDIFF(wk, 0, ual.Timestamp), 0), 23) AS Name, -- Start of week date (YYYY-MM-DD)
+            COUNT(*) as Actions
+        FROM UserActivityLog ual
+        WHERE ual.Timestamp >= DATEADD(week, -8, GETUTCDATE()) AND ual.ActivityID IN (SELECT ActivityID FROM Activities WHERE Type = 'AI Action')
+        GROUP BY DATEADD(wk, DATEDIFF(wk, 0, ual.Timestamp), 0)
+        ORDER BY Name;
     ELSE IF @Period = 'monthly'
+        -- Last 12 months, grouped by month
         SELECT
-            'Day ' + CAST(DATEPART(day, Timestamp) AS NVARCHAR) AS Name,
+            FORMAT(ual.Timestamp, 'yyyy-MM') AS Name,
             COUNT(*) AS Actions
-        FROM #FilteredLogs
-        GROUP BY DATEPART(day, Timestamp)
-        ORDER BY DATEPART(day, Timestamp);
+        FROM UserActivityLog ual
+        WHERE ual.Timestamp >= DATEADD(month, -12, GETUTCDATE()) AND ual.ActivityID IN (SELECT ActivityID FROM Activities WHERE Type = 'AI Action')
+        GROUP BY FORMAT(ual.Timestamp, 'yyyy-MM')
+        ORDER BY Name;
     ELSE IF @Period = 'yearly'
+        -- Last 5 years, grouped by year
         SELECT
-            FORMAT(Timestamp, 'MMM') AS Name,
+            CAST(YEAR(ual.Timestamp) AS NVARCHAR(4)) AS Name,
             COUNT(*) AS Actions
-        FROM #FilteredLogs
-        GROUP BY FORMAT(Timestamp, 'MMM'), DATEPART(month, Timestamp)
-        ORDER BY DATEPART(month, Timestamp);
-    
-    DROP TABLE #FilteredLogs;
+        FROM UserActivityLog ual
+        WHERE ual.Timestamp >= DATEADD(year, -5, GETUTCDATE()) AND ual.ActivityID IN (SELECT ActivityID FROM Activities WHERE Type = 'AI Action')
+        GROUP BY YEAR(ual.Timestamp)
+        ORDER BY Name;
+
 END
 GO
