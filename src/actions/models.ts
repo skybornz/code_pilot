@@ -1,5 +1,3 @@
-'use server';
-
 import { dbGetModels, dbAddModel, dbDeleteModel, type Model, type NewModel } from '@/lib/model-database';
 
 export async function getModels(): Promise<Model[]> {
