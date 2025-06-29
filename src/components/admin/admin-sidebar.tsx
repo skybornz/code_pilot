@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Logo } from '@/components/codepilot/logo';
 import { 
@@ -11,16 +12,18 @@ import {
     SidebarMenuButton,
     SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Users, Settings, BarChart2, LogOut, UserCircle } from 'lucide-react';
+import { Users, Settings, BarChart2, LogOut, UserCircle, KeyRound, MoreVertical } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChangePasswordDialog } from '../profile/change-password-dialog';
 
 export function AdminSidebar() {
     const pathname = usePathname();
     const { user, isAdmin, logout } = useAuth();
+    const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
 
     const menuItems = [
         { href: '/admin/connections', label: 'Usage Statistics', icon: BarChart2 },
@@ -29,7 +32,7 @@ export function AdminSidebar() {
     ];
 
     return (
-        <TooltipProvider>
+        <>
             <SidebarHeader>
                 <Logo />
             </SidebarHeader>
@@ -60,32 +63,39 @@ export function AdminSidebar() {
                                   <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                               </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                              {isAdmin && (
-                                  <Tooltip>
-                                      <TooltipTrigger asChild>
-                                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                              <Link href="/admin/user-management">
-                                                  <Settings className="w-4 h-4" />
-                                              </Link>
-                                          </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>Admin Settings</p></TooltipContent>
-                                  </Tooltip>
-                              )}
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout}>
-                                          <LogOut className="w-4 h-4" />
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent><p>Logout</p></TooltipContent>
-                              </Tooltip>
-                      </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    {isAdmin && (
+                                        <>
+                                            <DropdownMenuItem asChild>
+                                                <Link href="/admin">
+                                                    <Settings className="mr-2 h-4 w-4" />
+                                                    <span>Admin Dashboard</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                        </>
+                                    )}
+                                    <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
+                                        <KeyRound className="mr-2 h-4 w-4" />
+                                        <span>Change Password</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={logout}>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <span>Logout</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                       </CardHeader>
                   </Card>
               )}
             </SidebarFooter>
-        </TooltipProvider>
+            {user && <ChangePasswordDialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen} userId={user.id} />}
+        </>
     )
 }

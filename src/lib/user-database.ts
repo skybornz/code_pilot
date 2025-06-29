@@ -2,9 +2,6 @@ import sql from 'mssql';
 import { getPool } from './database/db';
 import type { User } from './schemas';
 
-// In a real app, you would use a proper hashing library like bcrypt
-// For this prototype, we'll continue with plaintext for simplicity.
-
 export async function dbGetUsers(): Promise<Omit<User, 'password'>[]> {
   const pool = await getPool();
   const result = await pool.request().execute('sp_GetUsers');
@@ -28,7 +25,7 @@ export async function dbGetUserByEmail(email: string): Promise<User | undefined>
       return {
           id: String(userRecord.UserID),
           email: userRecord.Email,
-          password: userRecord.PasswordHash, // This is not hashed in our prototype
+          password: userRecord.PasswordHash,
           role: userRecord.Role,
           isActive: userRecord.IsActive,
           lastActive: userRecord.LastActive
@@ -36,6 +33,27 @@ export async function dbGetUserByEmail(email: string): Promise<User | undefined>
   }
   return undefined;
 }
+
+export async function dbGetUserWithPassword(id: string): Promise<User | undefined> {
+    const pool = await getPool();
+    const result = await pool.request()
+        .input('UserID', sql.Int, id)
+        .execute('sp_GetUserByID'); // This SP returns the password hash
+
+    if (result.recordset.length > 0) {
+        const record = result.recordset[0];
+        return {
+            id: String(record.UserID),
+            email: record.Email,
+            password: record.PasswordHash,
+            role: record.Role,
+            isActive: record.IsActive,
+            lastActive: record.LastActive
+        };
+    }
+    return undefined;
+}
+
 
 export async function dbGetUserById(id: string): Promise<Omit<User, 'password'> | undefined> {
     const pool = await getPool();

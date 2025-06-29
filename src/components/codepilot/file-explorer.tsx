@@ -1,7 +1,8 @@
 'use client';
 
+import React from 'react';
 import type { CodeFile } from '@/components/codepilot/types';
-import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings } from 'lucide-react';
+import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Logo } from './logo';
 import { Button } from '../ui/button';
@@ -11,6 +12,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 import type { Project } from '@/lib/project-database';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChangePasswordDialog } from '../profile/change-password-dialog';
 
 interface FileExplorerProps {
   files: CodeFile[];
@@ -119,9 +122,10 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeV
 export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProject, project, branch }: FileExplorerProps) {
     const fileTree = useMemo(() => buildFileTree(files), [files]);
     const { user, isAdmin, logout } = useAuth();
+    const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
   
     return (
-    <TooltipProvider>
+    <>
       <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
         <div className="p-4 border-b border-sidebar-border">
           <Logo />
@@ -139,16 +143,18 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                     <span>Project Files</span>
                 </h2>
               )}
-              <Tooltip>
-                  <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" onClick={onSwitchProject} aria-label="Switch project">
-                          <Upload className="w-4 h-4" />
-                      </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                      <p>Switch project</p>
-                  </TooltipContent>
-              </Tooltip>
+              <TooltipProvider>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={onSwitchProject} aria-label="Switch project">
+                              <Upload className="w-4 h-4" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Switch project</p>
+                      </TooltipContent>
+                  </Tooltip>
+              </TooltipProvider>
           </div>
           <div className="w-max min-w-full mt-4">
             <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} />
@@ -165,33 +171,40 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                               <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                           </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                          {isAdmin && (
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                  <MoreVertical className="h-4 w-4" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              {isAdmin && (
+                                  <>
+                                      <DropdownMenuItem asChild>
                                           <Link href="/admin">
-                                              <Settings className="w-4 h-4" />
+                                              <Settings className="mr-2 h-4 w-4" />
+                                              <span>Admin Dashboard</span>
                                           </Link>
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent><p>Admin Settings</p></TooltipContent>
-                              </Tooltip>
-                          )}
-                          <Tooltip>
-                              <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout}>
-                                      <LogOut className="w-4 h-4" />
-                                  </Button>
-                              </TooltipTrigger>
-                              <TooltipContent><p>Logout</p></TooltipContent>
-                          </Tooltip>
-                  </div>
-              </CardHeader>
-          </Card>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                  </>
+                              )}
+                              <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
+                                  <KeyRound className="mr-2 h-4 w-4" />
+                                  <span>Change Password</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={logout}>
+                                  <LogOut className="mr-2 h-4 w-4" />
+                                  <span>Logout</span>
+                              </DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                  </CardHeader>
+              </Card>
           )}
         </div>
       </aside>
-    </TooltipProvider>
+      {user && <ChangePasswordDialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen} userId={user.id} />}
+    </>
   );
 }

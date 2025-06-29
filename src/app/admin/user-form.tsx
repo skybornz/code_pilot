@@ -110,8 +110,11 @@ export function UserForm({ user, onSubmitSuccess }: UserFormProps) {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder={user ? 'Leave blank to keep current' : '••••••••'} {...field} />
+                <Input type="password" placeholder={user ? 'Leave blank to keep current password' : '••••••••'} {...field} />
               </FormControl>
+              <FormDescription>
+                {user ? 'Leave this field blank to keep the current password.' : 'Password must be at least 8 characters.'}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
