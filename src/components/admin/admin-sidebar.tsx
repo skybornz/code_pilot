@@ -36,7 +36,7 @@ export function AdminSidebar() {
             </SidebarHeader>
             <SidebarSeparator />
             <SidebarContent>
-                <SidebarMenu>
+                <SidebarMenu className="mt-4">
                     {menuItems.map((item) => (
                         <SidebarMenuItem key={item.href}>
                              <SidebarMenuButton asChild isActive={item.href === '/admin' ? pathname === item.href : pathname.startsWith(item.href)} tooltip={item.label}>
@@ -62,6 +62,18 @@ export function AdminSidebar() {
                               </div>
                           </div>
                           <div className="flex items-center gap-1">
+                              {isAdmin && (
+                                  <Tooltip>
+                                      <TooltipTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                              <Link href="/admin">
+                                                  <Settings className="w-4 h-4" />
+                                              </Link>
+                                          </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>Admin Settings</p></TooltipContent>
+                                  </Tooltip>
+                              )}
                               <Tooltip>
                                   <TooltipTrigger asChild>
                                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout}>
