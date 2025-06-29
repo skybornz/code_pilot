@@ -1,4 +1,3 @@
-// Use server directive.
 'use server';
 
 /**
@@ -12,11 +11,11 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const RefactorCodeInputSchema = z.object({
+const RefactorCodeFlowInputSchema = z.object({
   code: z.string().describe('The block of code to refactor.'),
   language: z.string().describe('The programming language of the code.'),
 });
-export type RefactorCodeInput = z.infer<typeof RefactorCodeInputSchema>;
+export type RefactorCodeInput = z.infer<typeof RefactorCodeFlowInputSchema>;
 
 const RefactorCodeOutputSchema = z.object({
   refactoredCode: z.string().describe('The refactored code with improvements.'),
@@ -28,29 +27,26 @@ export async function refactorCode(input: RefactorCodeInput): Promise<RefactorCo
   return refactorCodeFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'refactorCodePrompt',
-  input: {schema: RefactorCodeInputSchema},
-  output: {schema: RefactorCodeOutputSchema},
-  prompt: `You are an AI code assistant that refactors code to improve its quality and maintainability.
+const refactorCodeFlow = ai.defineFlow(
+  {
+    name: 'refactorCodeFlow',
+    inputSchema: RefactorCodeFlowInputSchema,
+    outputSchema: RefactorCodeOutputSchema,
+  },
+  async (input) => {
+    const {output} = await ai.generate({
+        model: 'googleai/gemini-2.0-flash',
+        prompt: `You are an AI code assistant that refactors code to improve its quality and maintainability.
 
   Given the following code block and its programming language, suggest refactoring improvements.
   Return the refactored code and an explanation of the changes.
 
-  Language: {{{language}}}
+  Language: ${input.language}
   Code:
-  {{code}}
+  ${input.code}
   `,
-});
-
-const refactorCodeFlow = ai.defineFlow(
-  {
-    name: 'refactorCodeFlow',
-    inputSchema: RefactorCodeInputSchema,
-    outputSchema: RefactorCodeOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
+        output: { schema: RefactorCodeOutputSchema },
+    });
     return output!;
   }
 );

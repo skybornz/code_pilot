@@ -5,8 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Globe, Server, Pencil, Star } from 'lucide-react';
-import type { Model } from '@/lib/model-database';
+import { Loader2, PlusCircle, Trash2, Globe, Pencil, Star } from 'lucide-react';
+import type { Model } from '@/lib/model-schema';
 import { getModels, deleteModel, setDefaultModel } from '@/actions/models';
 import { ModelForm } from './model-form';
 import {
@@ -92,7 +92,7 @@ export default function ModelSettingsPage() {
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-xl font-semibold text-primary">Model Configuration</CardTitle>
-                    <CardDescription>Add, remove, and manage your AI models.</CardDescription>
+                    <CardDescription>Add, remove, and manage your cloud-based AI models.</CardDescription>
                 </div>
                  <Dialog open={isFormOpen} onOpenChange={(open) => {
                      setIsFormOpen(open);
@@ -124,23 +124,15 @@ export default function ModelSettingsPage() {
                                 <CardHeader>
                                     <CardTitle className="flex items-center justify-between gap-2 text-lg">
                                         <div className="flex items-center gap-2">
-                                            {model.type === 'local' ? <Server className="h-5 w-5" /> : <Globe className="h-5 w-5" />}
+                                            <Globe className="h-5 w-5" />
                                             {model.name}
                                         </div>
                                         {model.isDefault && <Badge>Default</Badge>}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2 text-sm text-muted-foreground">
-                                    {model.type === 'local' ? (
-                                        <>
-                                            <p><span className="font-semibold text-foreground">API URL:</span> {model.apiUrl}</p>
-                                            <p><span className="font-semibold text-foreground">Model:</span> {model.modelName}</p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <p><span className="font-semibold text-foreground">API Key:</span> ••••••••{model.apiKey.slice(-4)}</p>
-                                        </>
-                                    )}
+                                    <p><span className="font-semibold text-foreground">Provider:</span> Google</p>
+                                    <p><span className="font-semibold text-foreground">API Key:</span> Set in .env file</p>
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
                                      {!model.isDefault && (

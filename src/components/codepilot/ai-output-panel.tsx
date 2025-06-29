@@ -185,7 +185,9 @@ export function AIOutputPanel({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !output) return;
+    if (!input.trim() || !output) {
+        return;
+    }
 
     const userMessage: Message = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];

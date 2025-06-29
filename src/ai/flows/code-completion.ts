@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const CodeCompletionInputSchema = z.object({
+const CodeCompletionFlowInputSchema = z.object({
   codeSnippet: z
     .string()
     .describe('The current code snippet the user is typing.'),
@@ -21,7 +21,7 @@ const CodeCompletionInputSchema = z.object({
     .optional()
     .describe('Optional context about the project, such as file structure or dependencies.'),
 });
-export type CodeCompletionInput = z.infer<typeof CodeCompletionInputSchema>;
+export type CodeCompletionInput = z.infer<typeof CodeCompletionFlowInputSchema>;
 
 const CodeCompletionOutputSchema = z.object({
   completion: z.string().describe('The AI-powered code completion suggestion.'),
@@ -32,31 +32,28 @@ export async function codeCompletion(input: CodeCompletionInput): Promise<CodeCo
   return codeCompletionFlow(input);
 }
 
-const codeCompletionPrompt = ai.definePrompt({
-  name: 'codeCompletionPrompt',
-  input: {schema: CodeCompletionInputSchema},
-  output: {schema: CodeCompletionOutputSchema},
-  prompt: `You are an AI code completion assistant. You will receive a code snippet and you will generate a code completion suggestion based on the code, language, and project context.
-
-  Language: {{{language}}}
-  Code Snippet:
-  \`\`\`{{{language}}}
-  {{{codeSnippet}}}
-  \`\`\`
-
-  Project Context: {{{projectContext}}}
-
-  Completion:`, 
-});
-
 const codeCompletionFlow = ai.defineFlow(
   {
     name: 'codeCompletionFlow',
-    inputSchema: CodeCompletionInputSchema,
+    inputSchema: CodeCompletionFlowInputSchema,
     outputSchema: CodeCompletionOutputSchema,
   },
-  async input => {
-    const {output} = await codeCompletionPrompt(input);
+  async (input) => {
+    const { output } = await ai.generate({
+        model: 'googleai/gemini-2.0-flash',
+        prompt: `You are an AI code completion assistant. You will receive a code snippet and you will generate a code completion suggestion based on the code, language, and project context.
+
+Language: ${input.language}
+Code Snippet:
+\`\`\`${input.language}
+${input.codeSnippet}
+\`\`\`
+
+Project Context: ${input.projectContext}
+
+Completion:`,
+        output: { schema: CodeCompletionOutputSchema },
+    });
     return output!;
   }
 );

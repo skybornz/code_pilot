@@ -1,31 +1,6 @@
 'use client';
 
-import { z } from 'zod';
-
-const OnlineModelSchema = z.object({
-  id: z.string(),
-  type: z.literal('online'),
-  name: z.string().min(1, 'Name is required'),
-  apiKey: z.string().min(1, 'API Key is required'),
-  isDefault: z.boolean().optional(),
-});
-
-const LocalModelSchema = z.object({
-  id: z.string(),
-  type: z.literal('local'),
-  name: z.string().min(1, 'Connection name is required'),
-  apiUrl: z.string().url('Invalid API URL'),
-  modelName: z.string().min(1, 'Model name is required'),
-  isDefault: z.boolean().optional(),
-});
-
-export const ModelSchema = z.discriminatedUnion('type', [
-  OnlineModelSchema,
-  LocalModelSchema,
-]);
-
-export type Model = z.infer<typeof ModelSchema>;
-export type NewModel = Omit<Model, 'id'>;
+import { Model, ModelSchema, NewModel } from './model-schema';
 
 const MODELS_KEY = 'semco_pilot_models';
 
@@ -36,25 +11,16 @@ function getModelsFromStorage(): Model[] {
   try {
     const modelsJson = localStorage.getItem(MODELS_KEY);
     const parsed = modelsJson ? JSON.parse(modelsJson) : [];
-    // Pre-populate with defaults if storage is empty
+    
+    // Pre-populate with a single default if storage is empty
     if (parsed.length === 0) {
-        const defaultModels: Model[] = [];
-
-        const geminiApiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-        if (geminiApiKey) {
-            defaultModels.push({
-                id: 'gemini-default-online',
-                type: 'online',
-                name: 'Default Gemini',
-                apiKey: geminiApiKey,
-                isDefault: true,
-            });
-        }
-        
-        defaultModels.push(
-            { id: 'ollama-default', type: 'local', name: 'Default Llama3', apiUrl: 'http://localhost:11434', modelName: 'llama3', isDefault: defaultModels.length === 0 }
-        );
-
+        const geminiModel: Model = {
+            id: 'gemini-default-online',
+            type: 'online',
+            name: 'Gemini (Cloud)',
+            isDefault: true,
+        };
+        const defaultModels: Model[] = [geminiModel];
         saveModelsToStorage(defaultModels);
         return defaultModels;
     }
@@ -64,7 +30,17 @@ function getModelsFromStorage(): Model[] {
     if (typeof window !== 'undefined') {
         localStorage.removeItem(MODELS_KEY);
     }
-    return [];
+    // Repopulate after error
+    const defaultModels: Model[] = [
+        {
+            id: 'gemini-default-online',
+            type: 'online',
+            name: 'Gemini (Cloud)',
+            isDefault: true,
+        }
+    ];
+    saveModelsToStorage(defaultModels);
+    return defaultModels;
   }
 }
 
@@ -93,7 +69,7 @@ export function dbAddModel(modelData: NewModel): { success: boolean; message?: s
   return { success: true, model: newModel };
 }
 
-export function dbUpdateModel(modelData: Model): { success: boolean; message?: string } {
+export function dbUpdateModel(modelData: Omit<Model, 'isDefault'>): { success: boolean; message?: string } {
     const models = getModelsFromStorage();
     const modelIndex = models.findIndex(m => m.id === modelData.id);
 

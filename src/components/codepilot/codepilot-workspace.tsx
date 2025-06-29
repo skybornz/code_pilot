@@ -51,7 +51,7 @@ export function SemCoPilotWorkspace() {
       { role: 'model', content: "Hello! I'm SemCo-Pilot. How can I help you with your code today?" }
     ]);
   }, []);
-
+  
   const handleFilesLoaded = useCallback((loadedFiles: CodeFile[], project: Project, branch: string) => {
     setFiles(loadedFiles);
     setLoadedProjectInfo({ project, branch });

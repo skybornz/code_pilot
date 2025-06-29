@@ -11,11 +11,11 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateUnitTestInputSchema = z.object({
+const GenerateUnitTestFlowInputSchema = z.object({
   code: z.string().describe('The code block to generate a unit test for.'),
   language: z.string().describe('The programming language of the code.'),
 });
-export type GenerateUnitTestInput = z.infer<typeof GenerateUnitTestInputSchema>;
+export type GenerateUnitTestInput = z.infer<typeof GenerateUnitTestFlowInputSchema>;
 
 const GenerateUnitTestOutputSchema = z.object({
   unitTest: z.string().describe('The generated unit test for the code block.'),
@@ -27,25 +27,22 @@ export async function generateUnitTest(input: GenerateUnitTestInput): Promise<Ge
   return generateUnitTestFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateUnitTestPrompt',
-  input: {schema: GenerateUnitTestInputSchema},
-  output: {schema: GenerateUnitTestOutputSchema},
-  prompt: `You are a software quality assurance expert. Generate a unit test for the following code block. Also provide an explanation of what the test covers.
-
-Language: {{{language}}}
-Code:
-{{code}}`,
-});
-
 const generateUnitTestFlow = ai.defineFlow(
   {
     name: 'generateUnitTestFlow',
-    inputSchema: GenerateUnitTestInputSchema,
+    inputSchema: GenerateUnitTestFlowInputSchema,
     outputSchema: GenerateUnitTestOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input) => {
+    const {output} = await ai.generate({
+        model: 'googleai/gemini-2.0-flash',
+        prompt: `You are a software quality assurance expert. Generate a unit test for the following code block. Also provide an explanation of what the test covers.
+
+Language: ${input.language}
+Code:
+${input.code}`,
+        output: { schema: GenerateUnitTestOutputSchema },
+    });
     return output!;
   }
 );

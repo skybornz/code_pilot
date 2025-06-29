@@ -42,7 +42,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
     e?.preventDefault();
     const currentInput = input;
     if (!currentInput.trim()) return;
-    
+
     const userMessage: Message = { role: 'user', content: currentInput };
     const newMessages: Message[] = [...messages, userMessage];
     onMessagesChange(newMessages);

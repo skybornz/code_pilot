@@ -11,10 +11,10 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateSddInputSchema = z.object({
+const GenerateSddFlowInputSchema = z.object({
   code: z.string().describe('The code block to generate an SDD for.'),
 });
-export type GenerateSddInput = z.infer<typeof GenerateSddInputSchema>;
+export type GenerateSddInput = z.infer<typeof GenerateSddFlowInputSchema>;
 
 const GenerateSddOutputSchema = z.object({
   sdd: z.string().describe('The generated Software Design Document in Markdown format.'),
@@ -25,11 +25,16 @@ export async function generateSdd(input: GenerateSddInput): Promise<GenerateSddO
   return generateSddFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateSddPrompt',
-  input: {schema: GenerateSddInputSchema},
-  output: {schema: GenerateSddOutputSchema},
-  prompt: `You are an expert software architect. Generate a comprehensive Software Design Document (SDD) in Markdown format for the following code block.
+const generateSddFlow = ai.defineFlow(
+  {
+    name: 'generateSddFlow',
+    inputSchema: GenerateSddFlowInputSchema,
+    outputSchema: GenerateSddOutputSchema,
+  },
+  async (input) => {
+    const {output} = await ai.generate({
+        model: 'googleai/gemini-2.0-flash',
+        prompt: `You are an expert software architect. Generate a comprehensive Software Design Document (SDD) in Markdown format for the following code block.
 
 The SDD should include the following sections:
 1.  **Overview**: A high-level summary of the code's purpose and functionality.
@@ -40,19 +45,11 @@ The SDD should include the following sections:
 
 Code:
 \`\`\`
-{{{code}}}
+${input.code}
 \`\`\`
 `,
-});
-
-const generateSddFlow = ai.defineFlow(
-  {
-    name: 'generateSddFlow',
-    inputSchema: GenerateSddInputSchema,
-    outputSchema: GenerateSddOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
+        output: { schema: GenerateSddOutputSchema },
+    });
     return output!;
   }
 );
