@@ -43,7 +43,7 @@ export default function AdminLayout({
       <Sidebar>
         <AdminSidebar />
       </Sidebar>
-      <SidebarInset className="p-4 md:p-8">
+      <SidebarInset className="p-8">
         {children}
       </SidebarInset>
     </SidebarProvider>
