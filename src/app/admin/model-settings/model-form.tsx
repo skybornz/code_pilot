@@ -14,14 +14,16 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { addModel, updateModel } from '@/actions/models';
 import { Loader2 } from 'lucide-react';
 import React, { useEffect } from 'react';
-import type { Model } from '@/lib/model-schema';
+import type { Model, NewModel } from '@/lib/model-schema';
 
 const formSchema = z.object({
-    name: z.string().min(1, 'Model name is required.'),
+  name: z.string().min(1, 'Model name is required.'),
+  type: z.enum(['online', 'local']),
 });
 
 type ModelFormValues = z.infer<typeof formSchema>;
@@ -39,12 +41,14 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: model?.name || '',
+      type: model?.type || 'online',
     },
   });
 
   useEffect(() => {
     form.reset({
       name: model?.name || '',
+      type: model?.type || 'online',
     });
   }, [model, form]);
 
@@ -52,11 +56,9 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
   async function onSubmit(data: ModelFormValues) {
     setIsSubmitting(true);
     
-    const modelData = { ...data, type: 'online' as const };
-    
     const result = model
-      ? await updateModel({ ...modelData, id: model.id })
-      : await addModel(modelData);
+      ? await updateModel({ ...data, id: model.id })
+      : await addModel(data as NewModel);
 
     setIsSubmitting(false);
 
@@ -75,9 +77,46 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
     }
   }
 
+  const selectedType = form.watch('type');
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Model Type</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex gap-4"
+                >
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="online" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      Online
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="local" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      Local
+                    </FormLabel>
+                  </FormItem>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="name"
@@ -85,10 +124,13 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
             <FormItem>
               <FormLabel>Model Name</FormLabel>
               <FormControl>
-                <Input placeholder="gemini-1.5-flash" {...field} />
+                <Input placeholder={selectedType === 'online' ? 'gemini-1.5-flash' : 'llama3'} {...field} />
               </FormControl>
               <FormDescription>
-                This must be the exact model ID from Google AI (e.g., gemini-1.5-flash).
+                {selectedType === 'online'
+                  ? "This must be the exact model ID from Google AI."
+                  : "This must be the exact model name from your local Ollama instance."
+                }
               </FormDescription>
               <FormMessage />
             </FormItem>

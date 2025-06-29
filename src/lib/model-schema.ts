@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const ModelSchema = z.object({
   id: z.string(),
   name: z.string().min(1, 'Name is required'),
-  type: z.literal('online'),
+  type: z.enum(['online', 'local']),
   isDefault: z.boolean().optional(),
 });
 

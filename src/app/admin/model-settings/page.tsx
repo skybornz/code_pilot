@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Globe, Pencil, Star } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Globe, Pencil, Star, Server } from 'lucide-react';
 import type { Model } from '@/lib/model-schema';
 import { getModels, deleteModel, setDefaultModel } from '@/actions/models';
 import { ModelForm } from './model-form';
@@ -124,7 +124,7 @@ export default function ModelSettingsPage() {
                                 <CardHeader>
                                     <CardTitle className="flex items-center justify-between gap-2 text-lg">
                                         <div className="flex items-center gap-2">
-                                            <Globe className="h-5 w-5" />
+                                            {model.type === 'online' ? <Globe className="h-5 w-5" /> : <Server className="h-5 w-5" />}
                                             {model.name}
                                         </div>
                                         {model.isDefault && <Badge>Default</Badge>}
@@ -132,7 +132,7 @@ export default function ModelSettingsPage() {
                                 </CardHeader>
                                 <CardContent className="space-y-2 text-sm text-muted-foreground">
                                     <p><span className="font-semibold text-foreground">Type:</span> <span className="capitalize">{model.type}</span></p>
-                                    <p><span className="font-semibold text-foreground">Provider:</span> Google</p>
+                                    <p><span className="font-semibold text-foreground">Provider:</span> {model.type === 'online' ? 'Google' : 'Ollama (Local)'}</p>
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
                                      {!model.isDefault && (
