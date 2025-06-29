@@ -73,6 +73,11 @@ export async function changePassword({ userId, currentPassword, newPassword }: {
     }
 
     if (currentPassword) {
+        // If the user has no password set in the database, any "current password" check will fail.
+        if (!userWithPassword.password) {
+            return { success: false, message: 'Current password is incorrect.' };
+        }
+        
         const passwordMatch = await bcrypt.compare(currentPassword, userWithPassword.password);
         if (!passwordMatch) {
             return { success: false, message: 'Current password is incorrect.' };
