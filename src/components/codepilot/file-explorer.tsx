@@ -81,7 +81,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeV
                             >
                                 <ChevronRight className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                                 <Folder className="w-4 h-4 text-accent flex-shrink-0" />
-                                <span className="truncate">{name}</span>
+                                <span>{name}</span>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                                 <FileTreeView
@@ -106,7 +106,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeV
                             style={{ paddingLeft: `${level * 1.25 + 1.25}rem` }}
                         >
                             <FileCode className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate" title={node.file.name}>{node.file.name}</span>
+                            <span title={node.file.name}>{node.file.name}</span>
                         </button>
                     );
                 }
@@ -126,7 +126,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
         <div className="p-4 border-b border-sidebar-border">
           <Logo />
         </div>
-        <div className="flex-1 overflow-y-auto p-2 min-h-0">
+        <div className="flex-1 overflow-auto p-2 min-h-0">
           <div className="flex justify-between items-center mb-2 px-2">
               {project && branch ? (
                 <div className="overflow-hidden mr-2">
@@ -150,8 +150,9 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                   </TooltipContent>
               </Tooltip>
           </div>
-          
-          <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} />
+          <div className="w-max min-w-full">
+            <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} />
+          </div>
         </div>
         <div className="p-2 border-t border-sidebar-border">
           {user && (
