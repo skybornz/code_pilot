@@ -65,9 +65,6 @@ export function SemCoPilotWorkspace() {
 
   const handleFileSelect = useCallback(async (fileId: string) => {
     setActiveFileId(fileId);
-    setAiOutput(null);
-    setAnalysisChatMessages([]);
-    setRightPanelView('copilot-chat');
 
     const file = files.find(f => f.id === fileId);
     if (file && !file.commits && loadedProjectInfo) {
