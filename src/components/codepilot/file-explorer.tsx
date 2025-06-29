@@ -126,8 +126,8 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
         <div className="p-4 border-b border-sidebar-border">
           <Logo />
         </div>
-        <div className="flex-1 overflow-auto p-2 min-h-0">
-          <div className="flex justify-between items-center mb-2 px-2">
+        <div className="flex-1 overflow-auto p-4 min-h-0">
+          <div className="flex justify-between items-center mb-2">
               {project && branch ? (
                 <div className="overflow-hidden mr-2">
                   <h2 className="text-lg font-semibold truncate" title={project.name}>{project.name}</h2>
