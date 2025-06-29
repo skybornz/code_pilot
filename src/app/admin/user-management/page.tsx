@@ -53,30 +53,26 @@ export default function UserManagementPage() {
 
   return (
     <>
-        <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold">User Management</h1>
-            <Dialog open={isFormOpen} onOpenChange={(open) => {
-                setIsFormOpen(open);
-                if (!open) setSelectedUser(null);
-            }}>
-                <DialogTrigger asChild>
-                    <Button onClick={() => setSelectedUser(null)}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add User
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>{selectedUser ? 'Edit User' : 'Add New User'}</DialogTitle>
-                    </DialogHeader>
-                    <UserForm user={selectedUser} onSubmitSuccess={onFormSubmit} />
-                </DialogContent>
-            </Dialog>
-        </div>
-        
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>User Accounts</CardTitle>
+                <Dialog open={isFormOpen} onOpenChange={(open) => {
+                    setIsFormOpen(open);
+                    if (!open) setSelectedUser(null);
+                }}>
+                    <DialogTrigger asChild>
+                        <Button onClick={() => setSelectedUser(null)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add User
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>{selectedUser ? 'Edit User' : 'Add New User'}</DialogTitle>
+                        </DialogHeader>
+                        <UserForm user={selectedUser} onSubmitSuccess={onFormSubmit} />
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
