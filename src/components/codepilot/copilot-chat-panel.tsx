@@ -97,8 +97,8 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
       console.error('Chat failed:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'The chat feature failed. Please try again.',
+        title: 'Chat Error',
+        description: 'Could not get a response from the AI model. Please check your model configuration and try again.',
       });
        const errorMessage: Message = { role: 'model', content: "Sorry, I encountered an error. Please try again." };
        onMessagesChange([...newMessages, errorMessage]);

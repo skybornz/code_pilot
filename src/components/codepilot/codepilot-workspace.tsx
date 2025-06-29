@@ -245,8 +245,9 @@ export function SemCoPilotWorkspace() {
       console.error('AI action failed:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'The AI action failed. Please try again.',
+        title: 'AI Action Failed',
+        description:
+          'Could not get a response from the AI model. Please check your model configuration and try again.',
       });
     } finally {
       setIsLoading(false);
@@ -261,9 +262,13 @@ export function SemCoPilotWorkspace() {
       }
     } catch (error) {
       console.error('Code completion failed:', error);
-      // Do not show toast for completion to avoid being noisy
+      toast({
+        variant: 'destructive',
+        title: 'Code Completion Failed',
+        description: 'The AI model could not provide a suggestion.',
+      });
     }
-  }, []);
+  }, [toast]);
 
   const handleSwitchProject = () => {
     setFiles([]);
