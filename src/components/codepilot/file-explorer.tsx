@@ -150,7 +150,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                   </TooltipContent>
               </Tooltip>
           </div>
-          <div className="w-max min-w-full">
+          <div className="w-max min-w-full mt-4">
             <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} />
           </div>
         </div>
