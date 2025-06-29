@@ -20,29 +20,35 @@ interface CopilotChatPanelProps {
   activeFile: CodeFile | null;
 }
 
+/**
+ * A component that intelligently renders chat message content.
+ * It detects markdown code blocks and renders them with proper styling,
+ * while displaying regular text normally.
+ */
 const MessageContent = ({ content }: { content: string }) => {
-    // Regex to split content by markdown-style code blocks, keeping the delimiters
+    // Regex to split content by markdown-style code blocks, keeping the delimiters.
     const parts = content.split(/(```[\w-]*\n[\s\S]*?\n```)/g);
 
-    // If no code blocks or only empty parts, render as simple text to preserve formatting
+    // If no code blocks are found, render as a single block of text.
     if (parts.length <= 1) {
         return <p className="whitespace-pre-wrap">{content}</p>;
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-4">
             {parts.map((part, index) => {
-                if (!part.trim()) return null; // Don't render empty strings
+                // Don't render empty strings that can result from the split.
+                if (!part.trim()) return null;
 
                 const codeBlockMatch = part.match(/```([\w-]*)\n([\s\S]*?)\n```/);
 
                 if (codeBlockMatch) {
                     const language = codeBlockMatch[1] || 'text';
                     const code = codeBlockMatch[2].trim();
-                    // Render using the existing CodeBlock component
+                    // Use the dedicated CodeBlock component for syntax highlighting and styling.
                     return <CodeBlock key={index} code={code} language={language} />;
                 } else {
-                    // Render plain text parts, with whitespace preserved
+                    // Render plain text parts, preserving whitespace.
                     return <p key={index} className="whitespace-pre-wrap">{part}</p>;
                 }
             })}
@@ -59,6 +65,7 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to the bottom when new messages are added.
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -73,20 +80,21 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    const messagesForApi = [...messages, userMessage];
-
-    setMessages(messagesForApi);
+    const newMessages = [...messages, userMessage];
+    
+    // Add user message to UI immediately for better UX.
+    setMessages(newMessages);
     setInput('');
     setIsLoading(true);
 
     try {
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
       
-      const firstUserMessageIndex = messagesForApi.findIndex(m => m.role === 'user');
-      const slicedApiMessages = firstUserMessageIndex !== -1 ? messagesForApi.slice(firstUserMessageIndex) : [];
+      const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
+      const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
       
       const stream = await copilotChat({
-        messages: slicedApiMessages,
+        messages: historyForApi,
         projectContext,
       });
 
@@ -101,11 +109,11 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
           const chunkValue = decoder.decode(value);
 
           if (isFirstChunk && chunkValue) {
-              // On first chunk, add a new model message to start streaming into
+              // On the first chunk, create a new message bubble for the model's response.
               setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
               isFirstChunk = false;
-          } else {
-              // On subsequent chunks, append to the last message
+          } else if (chunkValue) {
+              // For subsequent chunks, append the text to the last message.
               setMessages(prev => {
                   const updatedMessages = [...prev];
                   const lastMessage = updatedMessages[updatedMessages.length - 1];
@@ -140,31 +148,32 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-          <div className="space-y-6">
+        <ScrollArea className="flex-1" ref={scrollAreaRef}>
+          <div className="space-y-6 p-4">
             {messages.map((message, index) => (
-              <div key={index} className={cn('flex items-start gap-3', message.role === 'user' && 'justify-end')}>
+              <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
                 {message.role === 'model' && (
-                  <Avatar className="h-8 w-8 border bg-background">
+                  <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
                     <AvatarFallback className="bg-transparent"><LogoMark /></AvatarFallback>
                   </Avatar>
                 )}
                 <div className={cn(
-                    'p-3 rounded-lg max-w-[80%] text-sm', 
+                    'p-3 rounded-lg max-w-[85%] text-sm', 
                     message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 )}>
                   {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
                 </div>
                 {message.role === 'user' && (
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
                   </Avatar>
                 )}
               </div>
             ))}
-            {isLoading && (
+            {/* Show a loading spinner only when waiting for the first chunk of a new response. */}
+            {isLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
               <div className="flex items-start gap-3">
-                 <Avatar className="h-8 w-8 border bg-background">
+                 <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
                     <AvatarFallback className="bg-transparent"><LogoMark /></AvatarFallback>
                   </Avatar>
                 <div className="p-3 rounded-lg bg-muted flex items-center">
