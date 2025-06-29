@@ -26,7 +26,8 @@ import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit, loadBitbuc
 import { CopilotChatPanel } from './copilot-chat-panel';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { useAuth } from '@/context/auth-context';
-import { logUserActivity, updateUserLastActive } from '@/actions/activity';
+import { logUserActivity } from '@/actions/activity';
+import { updateUserLastActive } from '@/actions/users';
 import { getDefaultModel } from '@/actions/models';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
