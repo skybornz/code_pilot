@@ -7,6 +7,6 @@ export const ai = genkit({
     googleAI({apiKey: process.env.GEMINI_API_KEY}),
     ollama({
       host: process.env.OLLAMA_HOST || 'http://127.0.0.1:11434',
-    }),
+    }) as any,
   ],
 });
