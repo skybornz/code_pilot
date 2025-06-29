@@ -1,4 +1,4 @@
-'use server';
+'use client';
 
 import { dbGetModels, dbAddModel, dbDeleteModel, dbUpdateModel, type Model, type NewModel } from '@/lib/model-database';
 
