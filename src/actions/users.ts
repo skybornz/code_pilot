@@ -46,11 +46,17 @@ export async function loginUser(credentials: Pick<User, 'email' | 'password'>): 
     const isPotentiallyHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$');
     let passwordMatch = false;
 
-    if (isPotentiallyHashed) {
-        passwordMatch = await bcrypt.compare(credentials.password, user.password);
-    } else {
-        passwordMatch = credentials.password === user.password;
+    try {
+        if (isPotentiallyHashed) {
+            passwordMatch = await bcrypt.compare(credentials.password, user.password);
+        } else {
+            passwordMatch = credentials.password === user.password;
+        }
+    } catch (error) {
+        console.error('Password comparison failed:', error);
+        passwordMatch = false;
     }
+
 
     if (!passwordMatch) {
         return { success: false, message: 'Invalid email or password' };
