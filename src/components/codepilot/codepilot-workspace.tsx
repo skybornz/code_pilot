@@ -10,13 +10,13 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { codeCompletion } from '@/ai/flows/code-completion';
-import { explainCode } from '@/ai/flows/explain-code';
-import { findBugs } from '@/ai/flows/find-bugs';
-import { generateUnitTest } from '@/ai/flows/generate-unit-test';
-import { refactorCode } from '@/ai/flows/refactor-code';
-import { generateCodeDocs } from '@/ai/flows/generate-code-docs';
-import { generateSdd } from '@/ai/flows/generate-sdd';
-import { analyzeDiff } from '@/ai/flows/analyze-diff';
+import { explainCode, type ExplainCodeOutput } from '@/ai/flows/explain-code';
+import { findBugs, type FindBugsOutput } from '@/ai/flows/find-bugs';
+import { generateUnitTest, type GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
+import { refactorCode, type RefactorCodeOutput } from '@/ai/flows/refactor-code';
+import { generateCodeDocs, type GenerateCodeDocsOutput } from '@/ai/flows/generate-code-docs';
+import { generateSdd, type GenerateSddOutput } from '@/ai/flows/generate-sdd';
+import { analyzeDiff, type AnalyzeDiffOutput } from '@/ai/flows/analyze-diff';
 import { Menu } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
@@ -24,6 +24,7 @@ import { Card } from '@/components/ui/card';
 import type { Project } from '@/lib/project-database';
 import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit } from '@/actions/github';
 import { CopilotChatPanel } from './copilot-chat-panel';
+import type { Message } from '@/ai/flows/copilot-chat';
 
 export function SemCoPilotWorkspace() {
   const [files, setFiles] = useState<CodeFile[]>([]);
@@ -32,6 +33,8 @@ export function SemCoPilotWorkspace() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadedProjectInfo, setLoadedProjectInfo] = useState<{ project: Project; branch: string } | null>(null);
   const [rightPanelView, setRightPanelView] = useState<'ai-output' | 'copilot-chat'>('copilot-chat');
+  const [chatMessages, setChatMessages] = useState<Message[] | undefined>(undefined);
+  const [discussionContext, setDiscussionContext] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -157,6 +160,8 @@ export function SemCoPilotWorkspace() {
     setIsLoading(true);
     setAiOutput(null);
     setRightPanelView('ai-output');
+    setChatMessages(undefined);
+    setDiscussionContext(undefined);
     try {
       let result: AIOutput | null = null;
       if (action === 'analyze-diff' && originalCode !== undefined) {
@@ -211,11 +216,54 @@ export function SemCoPilotWorkspace() {
     setActiveFileId(null);
     setLoadedProjectInfo(null);
     setAiOutput(null);
+    setChatMessages(undefined);
+    setDiscussionContext(undefined);
     setRightPanelView('copilot-chat');
   };
   
   const handleShowCopilotChat = () => {
     setRightPanelView('copilot-chat');
+    setChatMessages(undefined);
+    setDiscussionContext(undefined);
+    setAiOutput(null);
+  };
+
+  const formatAiOutputForChat = (output: AIOutput): string => {
+    const { data, type, language } = output;
+    let content = `Regarding your previous analysis on "${output.title}":\n\n`;
+
+    if (type === 'explain') {
+      const explanation = data as ExplainCodeOutput;
+      content += `**Summary**\n${explanation.summary}\n\n**Breakdown**\n${explanation.breakdown.map((b) => `- ${b}`).join('\n')}`;
+    } else if (type === 'analyze-diff') {
+      const analysis = data as AnalyzeDiffOutput;
+      content += `**Summary of Changes:**\n${analysis.summary}\n\n**Detailed Analysis:**\n${analysis.detailedAnalysis.map((p) => `- ${p}`).join('\n')}`;
+    } else if (type === 'bugs') {
+      const bugReport = data as FindBugsOutput;
+      content += `**Bugs Found:**\n${bugReport.bugs.map((b) => `- ${b}`).join('\n')}\n\n**Explanation & Fixes:**\n${bugReport.explanation}`;
+    } else if (type === 'refactor') {
+      const refactorData = data as RefactorCodeOutput;
+      content += `**Refactored Code:**\n\`\`\`${language}\n${refactorData.refactoredCode}\n\`\`\`\n\n**Explanation:**\n${refactorData.explanation}`;
+    } else if (type === 'test') {
+      const testData = data as GenerateUnitTestOutput;
+      content += `**Generated Unit Test:**\n\`\`\`${language}\n${testData.unitTest}\n\`\`\``;
+    } else if (type === 'docs') {
+      const docsData = data as GenerateCodeDocsOutput;
+      content += `**Generated Comments:**\n\`\`\`${language}\n${docsData.documentation}\n\`\`\``;
+    } else if (type === 'sdd') {
+      const sddData = data as GenerateSddOutput;
+      content += `**Software Design Document:**\n${sddData.sdd}`;
+    }
+    return content;
+  };
+  
+  const handleSendMessage = (message: string) => {
+    if (!aiOutput) return;
+
+    setDiscussionContext(formatAiOutputForChat(aiOutput));
+    setChatMessages([{ role: 'user', content: message }]);
+    setRightPanelView('copilot-chat');
+    setAiOutput(null);
   };
 
   const editor = activeFile ? (
@@ -246,11 +294,11 @@ export function SemCoPilotWorkspace() {
   const rightPanelContent = () => {
     switch (rightPanelView) {
       case 'copilot-chat':
-        return <CopilotChatPanel activeFile={activeFile} />;
+        return <CopilotChatPanel activeFile={activeFile} initialMessages={chatMessages} discussionContext={discussionContext} />;
       case 'ai-output':
-        return <AIOutputPanel output={aiOutput} isLoading={isLoading} />;
+        return <AIOutputPanel output={aiOutput} isLoading={isLoading} onSendMessage={handleSendMessage} />;
       default:
-        return <CopilotChatPanel activeFile={activeFile} />;
+        return <CopilotChatPanel activeFile={activeFile} initialMessages={chatMessages} discussionContext={discussionContext}/>;
     }
   };
   

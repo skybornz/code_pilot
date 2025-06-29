@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wand2 } from 'lucide-react';
+import { Wand2, Send } from 'lucide-react';
 import type { AIOutput } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
@@ -11,10 +11,14 @@ import type { GenerateCodeDocsOutput } from '@/ai/flows/generate-code-docs';
 import type { GenerateSddOutput } from '@/ai/flows/generate-sdd';
 import { CodeBlock } from './code-block';
 import type { AnalyzeDiffOutput, ExplainCodeOutput } from './types';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { useState } from 'react';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
   isLoading: boolean;
+  onSendMessage: (message: string) => void;
 }
 
 const renderOutput = (output: AIOutput) => {
@@ -118,7 +122,16 @@ const renderOutput = (output: AIOutput) => {
   return <p className="whitespace-pre-wrap">{String(data)}</p>;
 };
 
-export function AIOutputPanel({ output, isLoading }: AIOutputPanelProps) {
+export function AIOutputPanel({ output, isLoading, onSendMessage }: AIOutputPanelProps) {
+  const [input, setInput] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    onSendMessage(input);
+    setInput('');
+  };
+  
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 border-b p-4 flex flex-row items-center">
@@ -149,6 +162,21 @@ export function AIOutputPanel({ output, isLoading }: AIOutputPanelProps) {
           </div>
         )}
       </CardContent>
+       {output && !isLoading && (
+        <CardFooter className="p-4 border-t">
+          <form onSubmit={handleSubmit} className="flex gap-2 w-full">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask a follow-up about the result..."
+            />
+            <Button type="submit" disabled={!input.trim()} size="icon">
+              <Send className="h-4 w-4" />
+              <span className="sr-only">Send</span>
+            </Button>
+          </form>
+        </CardFooter>
+      )}
     </Card>
   );
 }

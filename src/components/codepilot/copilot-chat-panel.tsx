@@ -7,18 +7,12 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Send, User, Loader2, Wand2 } from 'lucide-react';
-import { copilotChat, type CopilotChatInput } from '@/ai/flows/copilot-chat';
+import { copilotChat, type CopilotChatInput, type Message } from '@/ai/flows/copilot-chat';
 import type { CodeFile } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { LogoMark } from './logo-mark';
 import { cn } from '@/lib/utils';
 import { CodeBlock } from './code-block';
-
-type Message = CopilotChatInput['messages'][0];
-
-interface CopilotChatPanelProps {
-  activeFile: CodeFile | null;
-}
 
 /**
  * A component that intelligently renders chat message content.
@@ -56,14 +50,23 @@ const MessageContent = ({ content }: { content: string }) => {
     );
 };
 
-export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', content: "Hello! I'm SemCo-Pilot. How can I help you with your code today?" }
-  ]);
+interface CopilotChatPanelProps {
+  activeFile: CodeFile | null;
+  initialMessages?: Message[];
+  discussionContext?: string;
+}
+
+export function CopilotChatPanel({ activeFile, initialMessages, discussionContext }: CopilotChatPanelProps) {
+  const [messages, setMessages] = useState<Message[]>(
+    initialMessages || [
+      { role: 'model', content: "Hello! I'm SemCo-Pilot. How can I help you with your code today?" }
+    ]
+  );
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const isInitialConversation = useRef(!!initialMessages);
 
   // Auto-scroll to the bottom when new messages are added.
   useEffect(() => {
@@ -75,15 +78,24 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
     }
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const currentInput = input;
+    if (!currentInput.trim() && !isInitialConversation.current) return;
     
-    setMessages(newMessages);
-    setInput('');
+    let userMessage: Message | null = null;
+    let newMessages: Message[];
+
+    if (isInitialConversation.current) {
+      // For the first message in a follow-up, the messages are already set
+      newMessages = messages;
+    } else {
+      userMessage = { role: 'user', content: currentInput };
+      newMessages = [...messages, userMessage];
+      setMessages(newMessages);
+      setInput('');
+    }
+
     setIsLoading(true);
 
     try {
@@ -95,6 +107,7 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
       const stream = await copilotChat({
         messages: historyForApi,
         projectContext,
+        discussionContext,
       });
 
       const reader = stream.getReader();
@@ -141,8 +154,16 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
        setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      isInitialConversation.current = false;
     }
   };
+
+  useEffect(() => {
+    if (isInitialConversation.current) {
+      handleSubmit();
+    }
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
