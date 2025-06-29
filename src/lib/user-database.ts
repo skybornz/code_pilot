@@ -112,7 +112,6 @@ export async function dbAddUser(userData: Omit<User, 'id' | 'lastActive'>): Prom
         .input('Email', sql.NVarChar, userData.email)
         .input('PasswordHash', sql.NVarChar, userData.password)
         .input('Role', sql.NVarChar, userData.role)
-        .input('IsActive', sql.Bit, userData.isActive)
         .execute('sp_AddUser');
     
     if (result.recordset && result.recordset.length > 0 && result.recordset[0].UserID > 0) {
