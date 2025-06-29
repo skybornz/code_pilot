@@ -98,7 +98,6 @@ export function UserDetailsDashboard({ userId }: { userId: string }) {
                     <ChevronLeft />
                 </Link>
             </Button>
-            <h1 className="text-2xl font-bold">User Details</h1>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

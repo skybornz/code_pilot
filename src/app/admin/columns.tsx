@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import type { User } from '@/lib/schemas';
-import { MoreHorizontal, Eye, Edit } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,11 +23,31 @@ type ColumnsProps = {
 export const columns = ({ onEdit }: ColumnsProps): ColumnDef<Omit<User, 'password'>>[] => [
   {
     accessorKey: 'email',
-    header: 'Email',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Email
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
     accessorKey: 'role',
-    header: 'Role',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Role
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const role = row.getValue('role') as string;
       return <Badge variant={role === 'admin' ? 'default' : 'secondary'}>{role}</Badge>;
@@ -35,7 +55,17 @@ export const columns = ({ onEdit }: ColumnsProps): ColumnDef<Omit<User, 'passwor
   },
   {
     accessorKey: 'isActive',
-    header: 'Status',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const isActive = row.getValue('isActive');
       return (
@@ -47,7 +77,17 @@ export const columns = ({ onEdit }: ColumnsProps): ColumnDef<Omit<User, 'passwor
   },
   {
     accessorKey: 'lastActive',
-    header: 'Last Active',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Last Active
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const lastActive = row.getValue('lastActive') as string;
       if (!lastActive) return <span>-</span>;
