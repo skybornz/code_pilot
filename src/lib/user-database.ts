@@ -1,4 +1,5 @@
 
+
 import sql from 'mssql';
 import { getPool } from './database/db';
 import type { User } from './schemas';
@@ -114,10 +115,12 @@ export async function dbAddUser(userData: Omit<User, 'id' | 'lastActive'>): Prom
         .input('IsActive', sql.Bit, userData.isActive)
         .execute('sp_AddUser');
     
-    if (result.recordset[0].UserID > 0) {
+    if (result.recordset && result.recordset.length > 0 && result.recordset[0].UserID > 0) {
         const newUser = await dbGetUserById(String(result.recordset[0].UserID));
-        return { success: true, user: newUser };
-    } else {
-        return { success: false, message: 'User with this email already exists.' };
+        if (newUser) {
+          return { success: true, user: newUser };
+        }
     }
+    
+    return { success: false, message: 'User with this email already exists.' };
 }
