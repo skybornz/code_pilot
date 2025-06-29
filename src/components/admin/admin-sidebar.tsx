@@ -20,7 +20,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 
 export function AdminSidebar() {
     const pathname = usePathname();
-    const { user, logout } = useAuth();
+    const { user, isAdmin, logout } = useAuth();
 
     const menuItems = [
         { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
