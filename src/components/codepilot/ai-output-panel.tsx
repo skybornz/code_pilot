@@ -214,7 +214,8 @@ export function AIOutputPanel({
         setIsChatLoading(false);
         return;
       }
-      const model = `googleai/${modelConfig.name}`;
+      const prefix = modelConfig.type === 'online' ? 'googleai/' : 'ollama/';
+      const model = `${prefix}${modelConfig.name}`;
 
       const projectContext = output.fileContext ? `The user is discussing an analysis on the file "${output.fileContext.name}".` : 'No file context provided.';
       const discussionContext = formatAiOutputForChat(output);

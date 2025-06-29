@@ -238,7 +238,8 @@ export function SemCoPilotWorkspace() {
       setIsLoading(false);
       return;
     }
-    const model = `googleai/${modelConfig.name}`;
+    const prefix = modelConfig.type === 'online' ? 'googleai/' : 'ollama/';
+    const model = `${prefix}${modelConfig.name}`;
     
     let result: Omit<AIOutput, 'fileContext'> | null = null;
     let actionName: string = 'Unknown AI Action';
@@ -301,7 +302,8 @@ export function SemCoPilotWorkspace() {
     try {
       const modelConfig = await getDefaultModel();
       if (!modelConfig) return;
-      const model = `googleai/${modelConfig.name}`;
+      const prefix = modelConfig.type === 'online' ? 'googleai/' : 'ollama/';
+      const model = `${prefix}${modelConfig.name}`;
 
       const { completion } = await codeCompletion({ model, codeSnippet: code, language });
       if (completion) {

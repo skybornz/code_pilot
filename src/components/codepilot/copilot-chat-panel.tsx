@@ -68,7 +68,8 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
         setIsChatLoading(false);
         return;
       }
-      const model = `googleai/${modelConfig.name}`;
+      const prefix = modelConfig.type === 'online' ? 'googleai/' : 'ollama/';
+      const model = `${prefix}${modelConfig.name}`;
 
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
       
