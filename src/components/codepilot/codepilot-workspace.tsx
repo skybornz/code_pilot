@@ -89,7 +89,7 @@ export function SemCoPilotWorkspace() {
 
   useEffect(() => {
     const loadProjectFromStorage = async () => {
-      if (!activeProjectKey) {
+      if (!activeProjectKey || !user) {
         setIsInitializing(false);
         return;
       }
@@ -97,7 +97,7 @@ export function SemCoPilotWorkspace() {
         const storedInfo = localStorage.getItem(activeProjectKey);
         if (storedInfo) {
           const { project, branch } = JSON.parse(storedInfo);
-          const result = await loadBitbucketFiles(project.url, branch);
+          const result = await loadBitbucketFiles(project.url, branch, user.id);
           if (result.success && result.files) {
             await handleFilesLoaded(result.files, project, branch);
           } else {
@@ -107,7 +107,9 @@ export function SemCoPilotWorkspace() {
         }
       } catch (error) {
         console.error('Failed to load project from storage:', error);
-        localStorage.removeItem(activeProjectKey);
+        if (activeProjectKey) {
+          localStorage.removeItem(activeProjectKey);
+        }
       } finally {
         setIsInitializing(false);
       }
@@ -115,26 +117,29 @@ export function SemCoPilotWorkspace() {
 
     if (user) {
       loadProjectFromStorage();
+    } else {
+      setIsInitializing(false);
     }
   }, [handleFilesLoaded, toast, user, activeProjectKey]);
 
   const handleFileSelect = useCallback(async (fileId: string) => {
+    if (!user) return;
     setActiveFileId(fileId);
     setEditorViewMode('edit');
 
     const file = files.find(f => f.id === fileId);
     if (file && !file.commits && loadedProjectInfo) {
         setIsFileLoading(true);
-        const result = await fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, file.id);
+        const result = await fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, file.id, user.id);
         
         if (result.success && result.commits && result.commits.length > 0) {
             const latestCommitHash = result.commits[0].hash;
             const previousCommitHash = result.commits.length > 1 ? result.commits[1].hash : null;
 
             const [latestContentResult, previousContentResult] = await Promise.all([
-                getBitbucketFileContentForCommit(loadedProjectInfo.project.url, latestCommitHash, file.id),
+                getBitbucketFileContentForCommit(loadedProjectInfo.project.url, latestCommitHash, file.id, user.id),
                 previousCommitHash 
-                    ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id) 
+                    ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id, user.id) 
                     : Promise.resolve({ success: false })
             ]);
 
@@ -172,9 +177,10 @@ export function SemCoPilotWorkspace() {
             setFiles(prevFiles => prevFiles.map(f => f.id === fileId ? { ...f, commits: [] } : f));
         }
     }
-  }, [files, loadedProjectInfo, toast]);
+  }, [files, loadedProjectInfo, toast, user]);
 
   const handleCommitChange = useCallback(async (fileId: string, commitHash: string) => {
+    if (!user) return;
     const file = files.find(f => f.id === fileId);
     if (!file || !file.commits || !loadedProjectInfo) return;
 
@@ -185,9 +191,9 @@ export function SemCoPilotWorkspace() {
 
     setIsFileLoading(true);
     const [currentContentResult, previousContentResult] = await Promise.all([
-        getBitbucketFileContentForCommit(loadedProjectInfo.project.url, commitHash, file.id),
+        getBitbucketFileContentForCommit(loadedProjectInfo.project.url, commitHash, file.id, user.id),
         previousCommitHash
-            ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id)
+            ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id, user.id)
             : Promise.resolve({ success: false })
     ]);
     setIsFileLoading(false);
@@ -211,7 +217,7 @@ export function SemCoPilotWorkspace() {
             description: currentContentResult.error || 'Could not load file content for this commit.',
         });
     }
-  }, [files, loadedProjectInfo, toast]);
+  }, [files, loadedProjectInfo, toast, user]);
 
   const handleCodeChange = (fileId: string, newContent: string) => {
     setFiles((prevFiles) =>

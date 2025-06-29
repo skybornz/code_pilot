@@ -12,18 +12,20 @@ import {
     SidebarMenuButton,
     SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Users, Settings, BarChart2, LogOut, UserCircle, KeyRound, MoreVertical } from 'lucide-react';
+import { Users, Settings, BarChart2, LogOut, UserCircle, KeyRound, MoreVertical, GitBranch } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
+import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
 
 export function AdminSidebar() {
     const pathname = usePathname();
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
+    const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = React.useState(false);
 
     const menuItems = [
         { href: '/admin/connections', label: 'Usage Statistics', icon: BarChart2 },
@@ -70,10 +72,15 @@ export function AdminSidebar() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setIsBitbucketDialogOpen(true)}>
+                                        <GitBranch className="mr-2 h-4 w-4" />
+                                        <span>Bitbucket Credentials</span>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
                                         <KeyRound className="mr-2 h-4 w-4" />
                                         <span>Change Password</span>
                                     </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={logout}>
                                         <LogOut className="mr-2 h-4 w-4" />
                                         <span>Logout</span>
@@ -85,6 +92,7 @@ export function AdminSidebar() {
               )}
             </SidebarFooter>
             {user && <ChangePasswordDialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen} userId={user.id} />}
+            {user && <BitbucketCredsDialog open={isBitbucketDialogOpen} onOpenChange={setIsBitbucketDialogOpen} />}
         </>
     )
 }

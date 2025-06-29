@@ -1,7 +1,7 @@
 'use server';
 
 import type { User, NewUser } from '@/lib/schemas';
-import { dbGetUsers, dbAddUser, dbUpdateUser, dbGetUserByEmail, dbGetUserById, dbUpdateUserLastActive, dbGetUserWithPassword } from '@/lib/user-database';
+import { dbGetUsers, dbAddUser, dbUpdateUser, dbGetUserByEmail, dbGetUserById, dbUpdateUserLastActive, dbGetUserWithPassword, dbUpdateUserBitbucketCreds } from '@/lib/user-database';
 import { logUserActivity } from './activity';
 import bcrypt from 'bcrypt';
 
@@ -131,4 +131,17 @@ export async function changePassword({ userId, currentPassword, newPassword }: {
 
 export async function updateUserLastActive(userId: string) {
     await dbUpdateUserLastActive(userId);
+}
+
+export async function updateUserBitbucketCreds({ userId, username, token }: { userId: string, username: string, token: string }): Promise<{ success: boolean; message: string }> {
+    if (!username || !token) {
+        return { success: false, message: 'Username and App Password are required.' };
+    }
+    const result = await dbUpdateUserBitbucketCreds(userId, username, token);
+    if (result.success) {
+        await logUserActivity(userId, 'Update Profile', 'User updated their Bitbucket credentials.');
+        return { success: true, message: 'Bitbucket credentials updated successfully.' };
+    } else {
+        return { success: false, message: 'Failed to update credentials due to a database error.' };
+    }
 }

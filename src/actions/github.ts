@@ -2,6 +2,8 @@
 
 import type { CodeFile, Commit } from '@/components/codepilot/types';
 import { z } from 'zod';
+import { dbGetUserById } from '@/lib/user-database';
+import { Buffer } from 'buffer';
 
 // A list of common files/directories to ignore
 const IGNORE_LIST = [
@@ -30,6 +32,23 @@ function shouldIgnore(path: string): boolean {
 
 // ====== Bitbucket Specific ======
 const BITBUCKET_API_BASE = 'https://api.bitbucket.org/2.0';
+
+async function getAuthHeaders(userId?: string): Promise<HeadersInit> {
+    const headers: HeadersInit = { 'Accept': 'application/json' };
+    if (!userId) return headers;
+    
+    try {
+        const user = await dbGetUserById(userId);
+        if (user && user.bitbucketUsername && user.bitbucketAppPassword) {
+            const credentials = `${user.bitbucketUsername}:${user.bitbucketAppPassword}`;
+            const encodedCredentials = Buffer.from(credentials).toString('base64');
+            headers['Authorization'] = `Basic ${encodedCredentials}`;
+        }
+    } catch (e) {
+        console.error("Failed to get user credentials for Bitbucket auth", e);
+    }
+    return headers;
+}
 
 const BitbucketEntrySchema = z.object({
     type: z.enum(['commit_file', 'commit_directory']),
@@ -63,12 +82,13 @@ const BitbucketBranchesResponseSchema = z.object({
     next: z.string().optional(),
 });
 
-export async function fetchBitbucketBranches(url: string): Promise<{ success: boolean; branches?: string[]; error?: string }> {
+export async function fetchBitbucketBranches(url: string, userId: string): Promise<{ success: boolean; branches?: string[]; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);
     if (!bitbucketInfo) {
         return { success: false, error: 'Invalid Bitbucket repository URL.' };
     }
     const { workspace, repo } = bitbucketInfo;
+    const authHeaders = await getAuthHeaders(userId);
 
     const branchesUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/refs/branches`;
     try {
@@ -76,11 +96,14 @@ export async function fetchBitbucketBranches(url: string): Promise<{ success: bo
         const branches: string[] = [];
 
         while (currentUrl) {
-            const response = await fetch(currentUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+            const response = await fetch(currentUrl, { headers: authHeaders, cache: 'no-store' });
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 const errorMessage = errorData?.error?.message || response.statusText;
-                return { success: false, error: `Failed to fetch branches: ${errorMessage}` };
+                const errorDetail = (response.status === 401 || response.status === 403) 
+                    ? 'Access denied. The repository may be private. Please check your credentials.'
+                    : `Failed to fetch branches: ${errorMessage}`;
+                return { success: false, error: errorDetail };
             }
             const data = await response.json();
             const parsedData = BitbucketBranchesResponseSchema.parse(data);
@@ -89,7 +112,7 @@ export async function fetchBitbucketBranches(url: string): Promise<{ success: bo
         }
         
         if (branches.length === 0) {
-            return { success: false, error: 'No branches found. The repository might be private or empty.' };
+            return { success: false, error: 'No branches found. The repository might be private, empty, or you may lack permissions.' };
         }
         return { success: true, branches };
     } catch (error) {
@@ -101,9 +124,9 @@ export async function fetchBitbucketBranches(url: string): Promise<{ success: bo
     }
 }
 
-async function getBitbucketFileContent(workspace: string, repo: string, branchOrCommit: string, path: string): Promise<string | null> {
+async function getBitbucketFileContent(workspace: string, repo: string, branchOrCommit: string, path: string, headers: HeadersInit): Promise<string | null> {
     const url = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/src/${branchOrCommit}/${path}`;
-    const response = await fetch(url, { cache: 'no-store' });
+    const response = await fetch(url, { headers, cache: 'no-store' });
 
     if (!response.ok) {
         return null;
@@ -126,6 +149,7 @@ async function getBitbucketFilesRecursively(
     repo: string,
     branch: string,
     mainBranch: string,
+    headers: HeadersInit,
     path: string = ''
 ): Promise<CodeFile[]> {
     if (shouldIgnore(path)) {
@@ -134,7 +158,7 @@ async function getBitbucketFilesRecursively(
 
     const url = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/src/${branch}/${path}`;
 
-    const response = await fetch(url, { cache: 'no-store' });
+    const response = await fetch(url, { headers, cache: 'no-store' });
     if (!response.ok) {
         console.warn(`Could not fetch Bitbucket path: ${url}`);
         return [];
@@ -147,7 +171,7 @@ async function getBitbucketFilesRecursively(
         let currentUrl: string | undefined = url;
 
         while (currentUrl) {
-            const pageResponse = await fetch(currentUrl, { cache: 'no-store' });
+            const pageResponse = await fetch(currentUrl, { headers, cache: 'no-store' });
             if (!pageResponse.ok) {
                 console.warn(`Could not fetch Bitbucket page: ${currentUrl}`);
                 break;
@@ -157,7 +181,7 @@ async function getBitbucketFilesRecursively(
             const parsedData = BitbucketSrcResponseSchema.parse(data);
 
             const promises = parsedData.values.map(item => 
-                getBitbucketFilesRecursively(workspace, repo, branch, mainBranch, item.path)
+                getBitbucketFilesRecursively(workspace, repo, branch, mainBranch, headers, item.path)
             );
             const nestedFilesArray = await Promise.all(promises);
             for (const nestedFiles of nestedFilesArray) {
@@ -178,7 +202,7 @@ async function getBitbucketFilesRecursively(
             let originalContent = content;
             // Only fetch from main branch if the selected branch is different
             if (branch !== mainBranch) {
-                originalContent = await getBitbucketFileContent(workspace, repo, mainBranch, path) ?? '';
+                originalContent = await getBitbucketFileContent(workspace, repo, mainBranch, path, headers) ?? '';
             }
 
             return [{ id: path, name, language, content, originalContent }];
@@ -188,19 +212,20 @@ async function getBitbucketFilesRecursively(
     return []; // Return empty for binary files or other unhandled cases
 }
 
-export async function loadBitbucketFiles(url: string, branch: string): Promise<{ success: boolean; files?: CodeFile[]; error?: string }> {
+export async function loadBitbucketFiles(url: string, branch: string, userId: string): Promise<{ success: boolean; files?: CodeFile[]; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);
     if (!bitbucketInfo) {
         return { success: false, error: 'Invalid Bitbucket repository URL.' };
     }
     const { workspace, repo } = bitbucketInfo;
+    const authHeaders = await getAuthHeaders(userId);
 
     try {
         // 1. Get main branch name
         const repoDetailsUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}`;
-        const repoDetailsResponse = await fetch(repoDetailsUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        const repoDetailsResponse = await fetch(repoDetailsUrl, { headers: authHeaders, cache: 'no-store' });
         if (!repoDetailsResponse.ok) {
-            return { success: false, error: 'Could not fetch repository details to determine the main branch.' };
+            return { success: false, error: 'Could not fetch repository details to determine the main branch. Check repository URL and credentials.' };
         }
         const repoData = await repoDetailsResponse.json();
         const mainBranch = repoData?.mainbranch?.name;
@@ -210,7 +235,7 @@ export async function loadBitbucketFiles(url: string, branch: string): Promise<{
         }
 
 
-        const files = await getBitbucketFilesRecursively(workspace, repo, branch, mainBranch);
+        const files = await getBitbucketFilesRecursively(workspace, repo, branch, mainBranch, authHeaders);
         if (files.length === 0) {
             return {
                 success: false,
@@ -243,12 +268,13 @@ const BitbucketCommitsResponseSchema = z.object({
   next: z.string().optional(),
 });
 
-export async function fetchBitbucketFileCommits(url: string, branch: string, path: string): Promise<{ success: boolean; commits?: Commit[]; error?: string }> {
+export async function fetchBitbucketFileCommits(url: string, branch: string, path: string, userId: string): Promise<{ success: boolean; commits?: Commit[]; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);
     if (!bitbucketInfo) {
         return { success: false, error: 'Invalid Bitbucket repository URL.' };
     }
     const { workspace, repo } = bitbucketInfo;
+    const authHeaders = await getAuthHeaders(userId);
     
     const commitsUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repo}/commits/${branch}?path=${encodeURIComponent(path)}&fields=values.hash,values.message,values.date`;
     try {
@@ -256,7 +282,7 @@ export async function fetchBitbucketFileCommits(url: string, branch: string, pat
         let currentUrl: string | undefined = commitsUrl;
 
         while (currentUrl) {
-            const response = await fetch(currentUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+            const response = await fetch(currentUrl, { headers: authHeaders, cache: 'no-store' });
             if (!response.ok) {
                 const errorData = await response.json();
                 const errorMessage = errorData?.error?.message || response.statusText;
@@ -278,13 +304,14 @@ export async function fetchBitbucketFileCommits(url: string, branch: string, pat
     }
 }
 
-export async function getBitbucketFileContentForCommit(url: string, commitHash: string, path: string): Promise<{ success: boolean; content?: string; error?: string }> {
+export async function getBitbucketFileContentForCommit(url: string, commitHash: string, path: string, userId: string): Promise<{ success: boolean; content?: string; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);
     if (!bitbucketInfo) {
         return { success: false, error: 'Invalid Bitbucket repository URL.' };
     }
     const { workspace, repo } = bitbucketInfo;
-    const content = await getBitbucketFileContent(workspace, repo, commitHash, path);
+    const authHeaders = await getAuthHeaders(userId);
+    const content = await getBitbucketFileContent(workspace, repo, commitHash, path, authHeaders);
     if (content !== null) {
         return { success: true, content };
     }

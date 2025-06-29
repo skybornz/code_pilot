@@ -5,6 +5,7 @@
 
 
 
+
 import sql from 'mssql';
 import { getPool } from './database/db';
 import type { User, NewUser } from './schemas';
@@ -17,7 +18,9 @@ export async function dbGetUsers(): Promise<Omit<User, 'password'>[]> {
     email: record.Email,
     role: record.Role,
     isActive: record.IsActive,
-    lastActive: record.LastActive
+    lastActive: record.LastActive,
+    bitbucketUsername: record.BitbucketUsername,
+    bitbucketAppPassword: record.BitbucketAppPassword
   }));
 }
 
@@ -35,7 +38,9 @@ export async function dbGetUserByEmail(email: string): Promise<User | undefined>
           password: userRecord.PasswordHash,
           role: userRecord.Role,
           isActive: userRecord.IsActive,
-          lastActive: userRecord.LastActive
+          lastActive: userRecord.LastActive,
+          bitbucketUsername: userRecord.BitbucketUsername,
+          bitbucketAppPassword: userRecord.BitbucketAppPassword
       };
   }
   return undefined;
@@ -55,7 +60,9 @@ export async function dbGetUserWithPassword(id: string): Promise<User | undefine
             password: record.PasswordHash,
             role: record.Role,
             isActive: record.IsActive,
-            lastActive: record.LastActive
+            lastActive: record.LastActive,
+            bitbucketUsername: record.BitbucketUsername,
+            bitbucketAppPassword: record.BitbucketAppPassword
         };
     }
     return undefined;
@@ -75,7 +82,9 @@ export async function dbGetUserById(id: string): Promise<Omit<User, 'password'> 
             email: record.Email,
             role: record.Role,
             isActive: record.IsActive,
-            lastActive: record.LastActive
+            lastActive: record.LastActive,
+            bitbucketUsername: record.BitbucketUsername,
+            bitbucketAppPassword: record.BitbucketAppPassword
         };
     }
     return undefined;
@@ -128,4 +137,16 @@ export async function dbAddUser(userData: NewUser): Promise<{ success: boolean; 
     }
     
     return { success: false, message: 'User with this email already exists.' };
+}
+
+
+export async function dbUpdateUserBitbucketCreds(userId: string, username: string, token: string): Promise<{ success: boolean }> {
+  const pool = await getPool();
+  // In a production application, the token should be encrypted before being stored.
+  await pool.request()
+      .input('UserID', sql.Int, userId)
+      .input('BitbucketUsername', sql.NVarChar, username)
+      .input('BitbucketAppPassword', sql.NVarChar, token)
+      .execute('sp_UpdateUserBitbucketCreds');
+  return { success: true };
 }

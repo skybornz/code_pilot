@@ -133,7 +133,7 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
     }
     
     setIsLoading(true);
-    const result = await fetchBitbucketBranches(url);
+    const result = await fetchBitbucketBranches(url, user.id);
 
     if (result.success && result.branches) {
       const repoNameMatch = url.match(/bitbucket.org\/[^/]+\/([^/.]+)/);
@@ -181,10 +181,12 @@ function ProjectCard({ project, onDelete, onFilesLoaded }: { project: Project, o
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleFetchBranches = async () => {
+    if (!user) return;
     setIsLoadingBranches(true);
-    const result = await fetchBitbucketBranches(project.url);
+    const result = await fetchBitbucketBranches(project.url, user.id);
     setIsLoadingBranches(false);
 
     if (result.success && result.branches) {
@@ -193,17 +195,17 @@ function ProjectCard({ project, onDelete, onFilesLoaded }: { project: Project, o
         setSelectedBranch(result.branches[0]);
       }
     } else {
-      toast({ variant: 'destructive', title: 'Error', description: `Could not fetch branches for ${project.name}.` });
+      toast({ variant: 'destructive', title: 'Error', description: result.error || `Could not fetch branches for ${project.name}.` });
     }
   };
 
   const handleLoadProject = async () => {
-    if (!selectedBranch) return;
+    if (!selectedBranch || !user) return;
     
     setIsLoadingFiles(true);
     const { id, update } = toast({ title: 'Importing Repository...', description: 'Please wait while we fetch the project files.' });
     
-    const result = await loadBitbucketFiles(project.url, selectedBranch);
+    const result = await loadBitbucketFiles(project.url, selectedBranch, user.id);
     setIsLoadingFiles(false);
 
     if (result.success && result.files) {

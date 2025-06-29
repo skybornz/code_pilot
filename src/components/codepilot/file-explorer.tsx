@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { CodeFile } from '@/components/codepilot/types';
-import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical } from 'lucide-react';
+import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical, GitBranch } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Logo } from './logo';
 import { Button } from '../ui/button';
@@ -14,6 +14,7 @@ import Link from 'next/link';
 import type { Project } from '@/lib/project-database';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
+import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
 
 interface FileExplorerProps {
   files: CodeFile[];
@@ -123,6 +124,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
     const fileTree = useMemo(() => buildFileTree(files), [files]);
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
+    const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = React.useState(false);
   
     return (
     <>
@@ -189,6 +191,10 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                                       <DropdownMenuSeparator />
                                   </>
                               )}
+                              <DropdownMenuItem onClick={() => setIsBitbucketDialogOpen(true)}>
+                                  <GitBranch className="mr-2 h-4 w-4" />
+                                  <span>Bitbucket Credentials</span>
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
                                   <KeyRound className="mr-2 h-4 w-4" />
                                   <span>Change Password</span>
@@ -205,6 +211,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
         </div>
       </aside>
       {user && <ChangePasswordDialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen} userId={user.id} />}
+      {user && <BitbucketCredsDialog open={isBitbucketDialogOpen} onOpenChange={setIsBitbucketDialogOpen} />}
     </>
   );
 }
