@@ -27,7 +27,7 @@ interface BitbucketCredsDialogProps {
 
 const credsFormSchema = z.object({
   username: z.string().min(1, 'Bitbucket username is required.'),
-  token: z.string().min(1, 'Bitbucket App Password is required.'),
+  token: z.string().min(1, 'Bitbucket HTTP Access Token is required.'),
 });
 
 type CredsFormValues = z.infer<typeof credsFormSchema>;
@@ -89,7 +89,7 @@ export function BitbucketCredsDialog({ open, onOpenChange }: BitbucketCredsDialo
         <DialogHeader>
           <DialogTitle>Bitbucket Credentials</DialogTitle>
           <DialogDescription>
-            Provide your Bitbucket username and an App Password to access private repositories. Your App Password is not your login password.
+            Provide your Bitbucket username and an HTTP Access Token (App Password) to access private repositories.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -112,7 +112,7 @@ export function BitbucketCredsDialog({ open, onOpenChange }: BitbucketCredsDialo
               name="token"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bitbucket App Password</FormLabel>
+                  <FormLabel>Bitbucket HTTP Access Token</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••••••••••" {...field} />
                   </FormControl>
