@@ -11,7 +11,7 @@ import {
     SidebarMenuButton,
     SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Users, Settings, BarChart2, LogOut, UserCircle, LayoutDashboard } from 'lucide-react';
+import { Users, Settings, BarChart2, LogOut, UserCircle } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -23,9 +23,8 @@ export function AdminSidebar() {
     const { user, isAdmin, logout } = useAuth();
 
     const menuItems = [
-        { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/admin/user-management', label: 'Users', icon: Users },
         { href: '/admin/connections', label: 'Usage Statistics', icon: BarChart2 },
+        { href: '/admin/user-management', label: 'Users', icon: Users },
         { href: '/admin/model-settings', label: 'Model Settings', icon: Settings },
     ];
 
@@ -36,10 +35,10 @@ export function AdminSidebar() {
             </SidebarHeader>
             <SidebarSeparator />
             <SidebarContent className="p-2">
-                <SidebarMenu>
+                <SidebarMenu className="mt-4">
                     {menuItems.map((item) => (
                         <SidebarMenuItem key={item.href}>
-                             <SidebarMenuButton asChild isActive={item.href === '/admin' ? pathname === item.href : pathname.startsWith(item.href)} tooltip={item.label}>
+                             <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)} tooltip={item.label}>
                                 <Link href={item.href}>
                                     <item.icon className="h-5 w-5" />
                                     <span>{item.label}</span>
@@ -66,7 +65,7 @@ export function AdminSidebar() {
                                   <Tooltip>
                                       <TooltipTrigger asChild>
                                           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                              <Link href="/admin">
+                                              <Link href="/admin/user-management">
                                                   <Settings className="w-4 h-4" />
                                               </Link>
                                           </Button>
