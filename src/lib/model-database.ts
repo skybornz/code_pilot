@@ -34,11 +34,24 @@ function getModelsFromStorage(): Model[] {
   try {
     const modelsJson = localStorage.getItem(MODELS_KEY);
     const parsed = modelsJson ? JSON.parse(modelsJson) : [];
-    // Pre-populate with a default local model if storage is empty
+    // Pre-populate with defaults if storage is empty
     if (parsed.length === 0) {
-        const defaultModels: Model[] = [
+        const defaultModels: Model[] = [];
+
+        const geminiApiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        if (geminiApiKey) {
+            defaultModels.push({
+                id: 'gemini-default-online',
+                type: 'online',
+                name: 'Default Gemini',
+                apiKey: geminiApiKey,
+            });
+        }
+        
+        defaultModels.push(
             { id: 'ollama-default', type: 'local', name: 'Default Llama3', apiUrl: 'http://localhost:11434', modelName: 'llama3' }
-        ];
+        );
+
         saveModelsToStorage(defaultModels);
         return defaultModels;
     }
