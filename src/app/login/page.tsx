@@ -111,9 +111,6 @@ export default function LoginPage() {
               {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
-            <p className="text-xs text-muted-foreground text-center pt-2">
-                Hint: Use admin@example.com or user@example.com with password 'password'.
-            </p>
           </form>
         </CardContent>
       </Card>
