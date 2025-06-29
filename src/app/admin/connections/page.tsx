@@ -71,7 +71,7 @@ function UsageStatsContent({ period }: { period: 'daily' | 'weekly' | 'monthly' 
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{data.totalUsers.toLocaleString()}</div>
+                        <div className="text-xl font-bold">{data.totalUsers.toLocaleString()}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -80,7 +80,7 @@ function UsageStatsContent({ period }: { period: 'daily' | 'weekly' | 'monthly' 
                         <Wand2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{data.totalActions.toLocaleString()}</div>
+                        <div className="text-xl font-bold">{data.totalActions.toLocaleString()}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -89,7 +89,7 @@ function UsageStatsContent({ period }: { period: 'daily' | 'weekly' | 'monthly' 
                         <User className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{data.avgActionsPerUser.toFixed(1)}</div>
+                        <div className="text-xl font-bold">{data.avgActionsPerUser.toFixed(1)}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -98,7 +98,7 @@ function UsageStatsContent({ period }: { period: 'daily' | 'weekly' | 'monthly' 
                         <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{data.mostUsedFeature}</div>
+                        <div className="text-xl font-bold">{data.mostUsedFeature}</div>
                     </CardContent>
                 </Card>
             </div>

@@ -144,7 +144,7 @@ export function UserDetailsDashboard({ userId }: { userId: string }) {
                         <Wand2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalAiActions}</div>
+                        <div className="text-xl font-bold">{stats.totalAiActions}</div>
                         <p className="text-xs text-muted-foreground">in the last 7 days</p>
                     </CardContent>
                 </Card>
@@ -154,7 +154,7 @@ export function UserDetailsDashboard({ userId }: { userId: string }) {
                         <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.favoriteFeature}</div>
+                        <div className="text-xl font-bold">{stats.favoriteFeature}</div>
                         <p className="text-xs text-muted-foreground">Most used AI feature</p>
                     </CardContent>
                 </Card>
