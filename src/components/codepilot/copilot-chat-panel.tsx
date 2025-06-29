@@ -14,6 +14,8 @@ import { LogoMark } from './logo-mark';
 import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { getDefaultModel } from '@/actions/models';
+import { useAuth } from '@/context/auth-context';
+import { logUserActivity } from '@/actions/activity';
 
 
 interface CopilotChatPanelProps {
@@ -28,6 +30,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
   const [input, setInput] = useState('');
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   // Auto-scroll to the bottom when new messages are added.
   useEffect(() => {
@@ -43,6 +46,10 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
     e?.preventDefault();
     const currentInput = input;
     if (!currentInput.trim()) return;
+
+    if (user) {
+      await logUserActivity(user.id, 'Co-Pilot Chat', `User sent a message in the general chat.`);
+    }
 
     const userMessage: Message = { role: 'user', content: currentInput };
     const newMessages: Message[] = [...messages, userMessage];

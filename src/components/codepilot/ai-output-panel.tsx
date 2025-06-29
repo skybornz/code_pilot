@@ -23,6 +23,8 @@ import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { Separator } from '../ui/separator';
 import { getDefaultModel } from '@/actions/models';
+import { useAuth } from '@/context/auth-context';
+import { logUserActivity } from '@/actions/activity';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -174,6 +176,7 @@ export function AIOutputPanel({
   const [input, setInput] = useState('');
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -188,6 +191,10 @@ export function AIOutputPanel({
     e.preventDefault();
     if (!input.trim() || !output) {
         return;
+    }
+
+    if (user) {
+      await logUserActivity(user.id, 'AI Assistant Chat', `User asked a follow-up about "${output.title}".`);
     }
 
     const userMessage: Message = { role: 'user', content: input };
