@@ -50,7 +50,7 @@ ${input.projectContext || 'No context provided.'}`;
 
     const {output} = await ai.generate({
       system: systemPrompt,
-      messages: input.messages,
+      messages: input.messages.map((m) => ({...m, content: [{text: m.content}]})),
       output: {
         schema: CopilotChatOutputSchema,
       },
