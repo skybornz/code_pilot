@@ -135,6 +135,7 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
                     <SelectItem value="gemini-1.5-flash-latest">gemini-1.5-flash-latest</SelectItem>
                     <SelectItem value="gemini-1.5-pro-latest">gemini-1.5-pro-latest</SelectItem>
                     <SelectItem value="gemini-pro">gemini-pro</SelectItem>
+                    <SelectItem value="gemini-pro-vision">gemini-pro-vision</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (

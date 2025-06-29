@@ -223,7 +223,7 @@ function UsageStatsSkeleton() {
 
 export default function UsageStatisticsPage() {
     return (
-        <Tabs defaultValue="weekly" className="space-y-4">
+        <Tabs defaultValue="daily" className="space-y-4">
             <TabsList>
                 <TabsTrigger value="daily">Daily</TabsTrigger>
                 <TabsTrigger value="weekly">Weekly</TabsTrigger>
