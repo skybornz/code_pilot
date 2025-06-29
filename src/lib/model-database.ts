@@ -7,6 +7,7 @@ const OnlineModelSchema = z.object({
   type: z.literal('online'),
   name: z.string().min(1, 'Name is required'),
   apiKey: z.string().min(1, 'API Key is required'),
+  isDefault: z.boolean().optional(),
 });
 
 const LocalModelSchema = z.object({
@@ -15,6 +16,7 @@ const LocalModelSchema = z.object({
   name: z.string().min(1, 'Connection name is required'),
   apiUrl: z.string().url('Invalid API URL'),
   modelName: z.string().min(1, 'Model name is required'),
+  isDefault: z.boolean().optional(),
 });
 
 export const ModelSchema = z.discriminatedUnion('type', [
@@ -45,11 +47,12 @@ function getModelsFromStorage(): Model[] {
                 type: 'online',
                 name: 'Default Gemini',
                 apiKey: geminiApiKey,
+                isDefault: true,
             });
         }
         
         defaultModels.push(
-            { id: 'ollama-default', type: 'local', name: 'Default Llama3', apiUrl: 'http://localhost:11434', modelName: 'llama3' }
+            { id: 'ollama-default', type: 'local', name: 'Default Llama3', apiUrl: 'http://localhost:11434', modelName: 'llama3', isDefault: defaultModels.length === 0 }
         );
 
         saveModelsToStorage(defaultModels);
@@ -72,12 +75,19 @@ function saveModelsToStorage(models: Model[]): void {
 }
 
 export function dbGetModels(): Model[] {
-  return getModelsFromStorage();
+  let models = getModelsFromStorage();
+  
+  const hasDefault = models.some(m => m.isDefault);
+  if (!hasDefault && models.length > 0) {
+      models[0].isDefault = true;
+      saveModelsToStorage(models);
+  }
+  return models;
 }
 
 export function dbAddModel(modelData: NewModel): { success: boolean; message?: string; model?: Model } {
   const models = getModelsFromStorage();
-  const newModel: Model = { ...modelData, id: String(Date.now()) };
+  const newModel: Model = { ...modelData, id: String(Date.now()), isDefault: models.length === 0 };
   const updatedModels = [...models, newModel];
   saveModelsToStorage(updatedModels);
   return { success: true, model: newModel };
@@ -91,14 +101,31 @@ export function dbUpdateModel(modelData: Model): { success: boolean; message?: s
         return { success: false, message: 'Model not found.' };
     }
 
-    models[modelIndex] = modelData;
+    // Preserve the isDefault status from the original model, as this is handled separately
+    models[modelIndex] = { ...modelData, isDefault: models[modelIndex].isDefault };
     saveModelsToStorage(models);
     return { success: true };
+}
+
+export function dbSetDefaultModel(modelId: string): { success: boolean } {
+  let models = getModelsFromStorage();
+  models = models.map(m => ({
+    ...m,
+    isDefault: m.id === modelId,
+  }));
+  saveModelsToStorage(models);
+  return { success: true };
 }
 
 export function dbDeleteModel(modelId: string): { success: boolean } {
   let models = getModelsFromStorage();
   models = models.filter(m => m.id !== modelId);
+  
+  const hasDefault = models.some(m => m.isDefault);
+  if (!hasDefault && models.length > 0) {
+      models[0].isDefault = true;
+  }
+  
   saveModelsToStorage(models);
   return { success: true };
 }

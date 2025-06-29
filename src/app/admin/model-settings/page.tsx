@@ -5,9 +5,9 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Globe, Server, Pencil } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Globe, Server, Pencil, Star } from 'lucide-react';
 import type { Model } from '@/lib/model-database';
-import { getModels, deleteModel } from '@/actions/models';
+import { getModels, deleteModel, setDefaultModel } from '@/actions/models';
 import { ModelForm } from './model-form';
 import {
   AlertDialog,
@@ -20,6 +20,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function ModelSettingsPage() {
     const [models, setModels] = useState<Model[]>([]);
@@ -64,6 +66,16 @@ export default function ModelSettingsPage() {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete the model.' });
         }
     }
+
+    const handleSetDefault = async (modelId: string) => {
+        const result = await setDefaultModel(modelId);
+        if (result.success) {
+            toast({ title: "Default Model Updated", description: "The default model has been changed." });
+            fetchModels();
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to set the default model.' });
+        }
+    };
     
     const handleEdit = (model: Model) => {
         setSelectedModel(model);
@@ -108,11 +120,14 @@ export default function ModelSettingsPage() {
                 ) : models.length > 0 ? (
                     <div className="grid gap-4 md:grid-cols-2">
                         {models.map(model => (
-                            <Card key={model.id}>
+                            <Card key={model.id} className={cn(model.isDefault && "border-primary")}>
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2 text-lg">
-                                        {model.type === 'local' ? <Server className="h-5 w-5" /> : <Globe className="h-5 w-5" />}
-                                        {model.name}
+                                    <CardTitle className="flex items-center justify-between gap-2 text-lg">
+                                        <div className="flex items-center gap-2">
+                                            {model.type === 'local' ? <Server className="h-5 w-5" /> : <Globe className="h-5 w-5" />}
+                                            {model.name}
+                                        </div>
+                                        {model.isDefault && <Badge>Default</Badge>}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2 text-sm text-muted-foreground">
@@ -128,13 +143,19 @@ export default function ModelSettingsPage() {
                                     )}
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
+                                     {!model.isDefault && (
+                                        <Button variant="outline" size="sm" onClick={() => handleSetDefault(model.id)}>
+                                            <Star className="mr-2 h-4 w-4" />
+                                            Set as Default
+                                        </Button>
+                                    )}
                                     <Button variant="outline" size="sm" onClick={() => handleEdit(model)}>
                                         <Pencil className="mr-2 h-4 w-4" />
                                         Edit
                                     </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" size="sm">
+                                            <Button variant="destructive" size="sm" disabled={model.isDefault}>
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 Delete
                                             </Button>
@@ -143,7 +164,7 @@ export default function ModelSettingsPage() {
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete the model configuration.
+                                                    This action cannot be undone. This will permanently delete the model configuration. The default model cannot be deleted.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
