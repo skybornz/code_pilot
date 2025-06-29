@@ -4,23 +4,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { User } from '@/lib/schemas';
 import { getUsers } from '@/actions/users';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line } from 'recharts';
-import { Users, UserCheck, Wand2, FileScan } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { Users, Wand2, FileScan } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Skeleton } from '@/components/ui/skeleton';
 
-const chartConfig = {
-  count: {
-    label: "Count",
-  },
+const dailyActiveUsersChartConfig = {
   users: {
-    label: "Users",
+    label: "Active Users",
     color: "hsl(var(--chart-1))",
-  },
-  admins: {
-    label: "Admins",
-    color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig
 
@@ -57,21 +50,22 @@ export default function AdminDashboardPage() {
     }, [toast]);
 
     const stats = useMemo(() => {
-        const adminCount = usersData.filter(u => u.role === 'admin').length;
-        const userCount = usersData.filter(u => u.role === 'user').length;
         return {
             total: usersData.length,
-            admins: adminCount,
-            users: userCount,
             aiActions: 124,
             filesAnalyzed: 42,
         };
     }, [usersData]);
     
-    const chartData = useMemo(() => [
-        { name: 'Users', count: stats.users, fill: "var(--color-users)" },
-        { name: 'Admins', count: stats.admins, fill: "var(--color-admins)" }
-    ], [stats]);
+    const dailyActiveUsersData = useMemo(() => [
+        { date: 'Mon', users: 22 },
+        { date: 'Tue', users: 25 },
+        { date: 'Wed', users: 28 },
+        { date: 'Thu', users: 24 },
+        { date: 'Fri', users: 30 },
+        { date: 'Sat', users: 32 },
+        { date: 'Sun', users: Math.min(35, stats.total) },
+    ], [stats.total]);
 
     const usageChartData = useMemo(() => [
         { date: 'Mon', actions: 86 },
@@ -85,7 +79,7 @@ export default function AdminDashboardPage() {
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -93,24 +87,6 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent>
                         {isLoading ? <Skeleton className="h-8 w-1/4 mt-1" /> : <div className="text-2xl font-bold">{stats.total}</div>}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Admin Accounts</CardTitle>
-                        <UserCheck className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                         {isLoading ? <Skeleton className="h-8 w-1/4 mt-1" /> : <div className="text-2xl font-bold">{stats.admins}</div>}
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Regular Users</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? <Skeleton className="h-8 w-1/4 mt-1" /> : <div className="text-2xl font-bold">{stats.users}</div>}
                     </CardContent>
                 </Card>
                 <Card>
@@ -136,7 +112,7 @@ export default function AdminDashboardPage() {
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle>User Role Distribution</CardTitle>
+                        <CardTitle>Daily Active Users</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
                         {isLoading ? (
@@ -144,17 +120,17 @@ export default function AdminDashboardPage() {
                                 <Skeleton className="h-full w-full" />
                             </div>
                         ) : (
-                            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                            <ChartContainer config={dailyActiveUsersChartConfig} className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                                    <BarChart accessibilityLayer data={dailyActiveUsersData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
                                         <CartesianGrid vertical={false} />
-                                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                                        <XAxis dataKey="date" tickLine={false} tickMargin={10} axisLine={false} />
                                         <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
                                         <Tooltip
                                             cursor={false}
                                             content={<ChartTooltipContent indicator="dot" />}
                                         />
-                                        <Bar dataKey="count" radius={4} />
+                                        <Bar dataKey="users" fill="var(--color-users)" radius={4} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </ChartContainer>
