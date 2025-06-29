@@ -2,10 +2,12 @@
 
 import type { User } from '@/lib/schemas';
 import { useRouter } from 'next/navigation';
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { loginUser, getUserById } from '@/actions/users';
+import { useToast } from '@/hooks/use-toast';
 
 const SESSION_STORAGE_KEY = 'semco_pilot_session';
+const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 
 interface Session {
   userId: string;
@@ -26,6 +28,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
+
+  const logout = useCallback((isTimeout = false) => {
+    setUser(null);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    if (inactivityTimer.current) {
+      clearTimeout(inactivityTimer.current);
+    }
+    if (isTimeout) {
+        toast({
+            title: "Session Expired",
+            description: "You have been logged out due to inactivity.",
+        });
+    }
+    router.push('/login');
+  }, [router, toast]);
+
+
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimer.current) {
+      clearTimeout(inactivityTimer.current);
+    }
+    inactivityTimer.current = setTimeout(() => {
+      logout(true);
+    }, INACTIVITY_TIMEOUT_MS);
+  }, [logout]);
+
+
+  useEffect(() => {
+    const activityEvents = ['mousemove', 'keydown', 'click', 'scroll'];
+
+    if (!!user) {
+        resetInactivityTimer();
+        activityEvents.forEach(event => {
+            window.addEventListener(event, resetInactivityTimer);
+        });
+    }
+
+    return () => {
+        if (inactivityTimer.current) {
+            clearTimeout(inactivityTimer.current);
+        }
+        activityEvents.forEach(event => {
+            window.removeEventListener(event, resetInactivityTimer);
+        });
+    };
+  }, [user, resetInactivityTimer]);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -62,19 +112,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: false, message: result.message };
   };
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem(SESSION_STORAGE_KEY);
-    router.push('/login');
-  }, [router]);
-
   return (
     <AuthContext.Provider value={{ 
         user, 
         isAuthenticated: !!user, 
         isAdmin: user?.role === 'admin',
         login, 
-        logout,
+        logout: () => logout(false),
         isLoading,
     }}>
       {children}
