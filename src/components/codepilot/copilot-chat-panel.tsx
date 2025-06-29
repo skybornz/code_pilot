@@ -12,12 +12,43 @@ import type { CodeFile } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { LogoMark } from './logo-mark';
 import { cn } from '@/lib/utils';
+import { CodeBlock } from './code-block';
 
 type Message = CopilotChatInput['messages'][0];
 
 interface CopilotChatPanelProps {
   activeFile: CodeFile | null;
 }
+
+const MessageContent = ({ content }: { content: string }) => {
+    // Regex to split content by markdown-style code blocks, keeping the delimiters
+    const parts = content.split(/(```[\w-]*\n[\s\S]*?\n```)/g);
+
+    // If no code blocks or only empty parts, render as simple text to preserve formatting
+    if (parts.length <= 1) {
+        return <p className="whitespace-pre-wrap">{content}</p>;
+    }
+
+    return (
+        <div className="space-y-2">
+            {parts.map((part, index) => {
+                if (!part.trim()) return null; // Don't render empty strings
+
+                const codeBlockMatch = part.match(/```([\w-]*)\n([\s\S]*?)\n```/);
+
+                if (codeBlockMatch) {
+                    const language = codeBlockMatch[1] || 'text';
+                    const code = codeBlockMatch[2].trim();
+                    // Render using the existing CodeBlock component
+                    return <CodeBlock key={index} code={code} language={language} />;
+                } else {
+                    // Render plain text parts, with whitespace preserved
+                    return <p key={index} className="whitespace-pre-wrap">{part}</p>;
+                }
+            })}
+        </div>
+    );
+};
 
 export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([
@@ -94,10 +125,10 @@ export function CopilotChatPanel({ activeFile }: CopilotChatPanelProps) {
                   </Avatar>
                 )}
                 <div className={cn(
-                    'p-3 rounded-lg max-w-[80%] whitespace-pre-wrap text-sm', 
+                    'p-3 rounded-lg max-w-[80%] text-sm', 
                     message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 )}>
-                  {message.content}
+                  {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
                 </div>
                 {message.role === 'user' && (
                   <Avatar className="h-8 w-8">
