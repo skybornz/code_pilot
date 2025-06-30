@@ -132,14 +132,10 @@ async function fetchWithAuthFallback(url: string, userId: string, params: Reques
         if (authenticatedResponse.ok) {
             return authenticatedResponse;
         }
-        // If the authenticated request fails (e.g., 401 on a public repo),
-        // we will fall through and try an anonymous request.
     }
 
     // 2. Try anonymous request (if no token or if authenticated request failed).
-    const anonymousResponse = await fetch(url, { ...params, headers: baseHeaders, cache: 'no-store' });
-    
-    return anonymousResponse;
+    return await fetch(url, { ...params, headers: baseHeaders, cache: 'no-store' });
 }
 
 export async function fetchBitbucketBranches(url: string, userId: string): Promise<{ success: boolean; branches?: string[]; error?: string }> {
@@ -189,7 +185,10 @@ async function fetchBitbucketServerBranches(info: BitbucketServerInfo, userId: s
     return { success: true, branches };
 }
 
-async function getMainBranch(info: BitbucketServerInfo, userId: string): Promise<string | null> {
+export async function getMainBranch(url: string, userId: string): Promise<string | null> {
+    const info = parseBitbucketUrl(url);
+    if (!info) return null;
+    
     const { host, project, repo } = info;
     const defaultBranchUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/branches/default`;
     const response = await fetchWithAuthFallback(defaultBranchUrl, userId, { headers: { 'Accept': 'application/json' } });
@@ -199,23 +198,75 @@ async function getMainBranch(info: BitbucketServerInfo, userId: string): Promise
     return parsed.success ? parsed.data.displayId : null;
 }
 
-export async function loadBitbucketFiles(url: string, branch: string, userId: string): Promise<{ success: boolean; files?: CodeFile[]; error?: string }> {
-    const bitbucketInfo = parseBitbucketUrl(url);
-    if (!bitbucketInfo) {
-        return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
-    }
-    
-    try {
-        const mainBranch = await getMainBranch(bitbucketInfo, userId);
-        if (!mainBranch) return { success: false, error: 'Could not determine the main branch for this repository.' };
-        
-        const files: CodeFile[] = await getBitbucketServerFilesRecursively(bitbucketInfo, branch, mainBranch, userId, '');
+// New function to fetch directory contents (non-recursive)
+async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: string, userId: string, path: string): Promise<Partial<CodeFile>[]> {
+    const { host, project, repo } = info;
+    const items: Partial<CodeFile>[] = [];
+    let start = 0;
+    let isLastPage = false;
+    const fetchParams: RequestInit = { headers: { 'Accept': 'application/json' } };
 
-        if (files.length === 0) return { success: false, error: 'No readable files were found in this branch. Please check the repository permissions and that the branch is not empty.' };
+    while (!isLastPage) {
+        const browsePathSegment = path ? `/${path.split('/').map(encodeURIComponent).join('/')}` : '';
+        const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/browse${browsePathSegment}?at=${branch}&start=${start}&limit=100`;
+        const response = await fetchWithAuthFallback(url, userId, fetchParams);
+        if (!response.ok) break;
+
+        const data = await response.json();
+        const parsedData = BitbucketServerBrowseResponseSchema.parse(data);
+
+        for (const item of parsedData.children.values) {
+            const itemName = item.path.name;
+            const fullItemPath = path ? `${path}/${itemName}` : itemName;
+            if (shouldIgnore(fullItemPath)) continue;
+
+            if (item.type === 'DIRECTORY') {
+                items.push({
+                    id: fullItemPath,
+                    name: itemName,
+                    type: 'folder',
+                    language: 'folder',
+                    childrenLoaded: false,
+                });
+            } else {
+                items.push({
+                    id: fullItemPath,
+                    name: itemName,
+                    type: 'file',
+                    language: itemName.split('.').pop() || 'text',
+                });
+            }
+        }
+        isLastPage = parsedData.children.isLastPage;
+        if (parsedData.children.nextPageStart) start = parsedData.children.nextPageStart;
+        else isLastPage = true;
+    }
+    return items;
+}
+
+// Initial load action - only fetches root directory
+export async function loadBitbucketFiles(url: string, branch: string, userId: string): Promise<{ success: boolean; files?: Partial<CodeFile>[]; error?: string }> {
+    const bitbucketInfo = parseBitbucketUrl(url);
+    if (!bitbucketInfo) return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
+    try {
+        const files = await getBitbucketDirectoryContents(bitbucketInfo, branch, userId, '');
+        if (files.length === 0) return { success: false, error: 'No files or directories found at the root of this branch.' };
         return { success: true, files };
     } catch (error) {
         console.error('Failed to import from Bitbucket repository:', error);
-        return { success: false, error: `Could not fetch repository files. ${error instanceof Error ? error.message : 'Unknown error'}` };
+        return { success: false, error: `Could not fetch repository contents. ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+}
+
+// New action to fetch a specific directory's contents
+export async function fetchDirectory(url: string, branch: string, path: string, userId: string): Promise<{ success: boolean; files?: Partial<CodeFile>[]; error?: string }> {
+    const bitbucketInfo = parseBitbucketUrl(url);
+    if (!bitbucketInfo) return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
+    try {
+        const files = await getBitbucketDirectoryContents(bitbucketInfo, branch, userId, path);
+        return { success: true, files };
+    } catch (error) {
+        return { success: false, error: `Failed to fetch directory contents. ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
 }
 
@@ -228,51 +279,27 @@ async function getBitbucketServerFileContent(host: string, project: string, repo
     return content.includes('\uFFFD') ? null : content;
 }
 
-async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, branch: string, mainBranch: string, userId: string, path: string): Promise<CodeFile[]> {
-    if (shouldIgnore(path)) return [];
-
-    const { host, project, repo } = info;
-    const files: CodeFile[] = [];
-    let start = 0;
-    let isLastPage = false;
-    const fetchParams: RequestInit = { headers: { 'Accept': 'application/json' } };
+// New action to fetch a single file's content and its original version
+export async function fetchFileWithContent(url: string, branch: string, mainBranch: string, path: string, userId: string): Promise<{ success: boolean; content?: string; originalContent?: string; error?: string }> {
+    const bitbucketInfo = parseBitbucketUrl(url);
+    if (!bitbucketInfo) return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
+    const { host, project, repo } = bitbucketInfo;
     
-    while (!isLastPage) {
-        const browsePathSegment = path ? `/${path.split('/').map(encodeURIComponent).join('/')}` : '';
-        const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/browse${browsePathSegment}?at=${branch}&start=${start}&limit=100`;
-
-        const response = await fetchWithAuthFallback(url, userId, fetchParams);
-        if (!response.ok) break;
-
-        const data = await response.json();
-        const parsedData = BitbucketServerBrowseResponseSchema.parse(data);
-
-        for (const item of parsedData.children.values) {
-            const itemName = item.path.name;
-            const fullItemPath = path ? `${path}/${itemName}` : itemName;
-
-            if (shouldIgnore(fullItemPath)) continue;
-            
-            if (item.type === 'DIRECTORY') {
-                files.push(...await getBitbucketServerFilesRecursively(info, branch, mainBranch, userId, fullItemPath));
-            } else {
-                const content = await getBitbucketServerFileContent(host, project, repo, branch, fullItemPath, userId);
-                if (content === null) continue;
-
-                let originalContent = content;
-                if (branch !== mainBranch) {
-                    originalContent = await getBitbucketServerFileContent(host, project, repo, mainBranch, fullItemPath, userId) ?? '';
-                }
-                const language = itemName.split('.').pop() || 'text';
-                files.push({ id: fullItemPath, name: itemName, language, content, originalContent });
-            }
+    try {
+        const content = await getBitbucketServerFileContent(host, project, repo, branch, path, userId);
+        if (content === null) {
+            return { success: false, error: 'Could not fetch file content. It may be a binary file or you lack permissions.' };
         }
-        isLastPage = parsedData.children.isLastPage;
-        if (parsedData.children.nextPageStart) start = parsedData.children.nextPageStart;
-        else isLastPage = true;
+        let originalContent = content;
+        if (branch !== mainBranch) {
+            originalContent = await getBitbucketServerFileContent(host, project, repo, mainBranch, path, userId) ?? '';
+        }
+        return { success: true, content, originalContent };
+    } catch (error) {
+        return { success: false, error: `Could not fetch file content. ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
-    return files;
 }
+
 
 export async function fetchBitbucketFileCommits(url: string, branch: string, path: string, userId: string): Promise<{ success: boolean; commits?: Commit[]; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);

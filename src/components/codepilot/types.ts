@@ -33,11 +33,13 @@ export type Commit = {
 };
 
 export type CodeFile = {
-  id: string;
+  id: string; // This is the full path
   name: string;
   language: string;
-  content: string;
-  originalContent: string;
+  type: 'file' | 'folder';
+  content?: string; // Optional: loaded on demand
+  originalContent?: string; // Optional: loaded on demand
+  childrenLoaded?: boolean; // For folders
   previousContent?: string;
   commits?: Commit[];
   activeCommitHash?: string;

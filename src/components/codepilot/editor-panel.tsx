@@ -181,10 +181,10 @@ export function EditorPanel({
   viewMode,
   setViewMode,
 }: EditorPanelProps) {
-  const [code, setCode] = useState(file.content);
+  const [code, setCode] = useState(file.content || '');
 
   useEffect(() => {
-    setCode(file.content);
+    setCode(file.content || '');
   }, [file.content]);
   
   const handleCodeMirrorChange = (value: string) => {

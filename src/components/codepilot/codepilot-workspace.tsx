@@ -22,7 +22,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
 import type { Project } from '@/lib/project-database';
-import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit, loadBitbucketFiles } from '@/actions/github';
+import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit, loadBitbucketFiles, fetchDirectory, fetchFileWithContent, getMainBranch } from '@/actions/github';
 import { CopilotChatPanel } from './copilot-chat-panel';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { useAuth } from '@/context/auth-context';
@@ -40,7 +40,7 @@ export function SemCoPilotWorkspace() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFileLoading, setIsFileLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [loadedProjectInfo, setLoadedProjectInfo] = useState<{ project: Project; branch: string } | null>(null);
+  const [loadedProjectInfo, setLoadedProjectInfo] = useState<{ project: Project; branch: string, mainBranch: string } | null>(null);
   const [rightPanelView, setRightPanelView] = useState<'ai-output' | 'copilot-chat'>('copilot-chat');
   const [copilotChatMessages, setCopilotChatMessages] = useState<Message[]>([]);
   const [analysisChatMessages, setAnalysisChatMessages] = useState<Message[]>([]);
@@ -59,9 +59,17 @@ export function SemCoPilotWorkspace() {
     ]);
   }, []);
   
-  const handleFilesLoaded = useCallback(async (loadedFiles: CodeFile[], project: Project, branch: string) => {
-    setFiles(loadedFiles);
-    setLoadedProjectInfo({ project, branch });
+  const handleFilesLoaded = useCallback(async (loadedFiles: Partial<CodeFile>[], project: Project, branch: string) => {
+    if (!user) return;
+    const mainBranch = await getMainBranch(project.url, user.id);
+    if (!mainBranch) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not determine the main branch of the repository.' });
+        return;
+    }
+
+    setFiles(loadedFiles as CodeFile[]);
+    setLoadedProjectInfo({ project, branch, mainBranch });
+
     if (activeProjectKey) {
         try {
             localStorage.setItem(activeProjectKey, JSON.stringify({ project, branch }));
@@ -69,19 +77,15 @@ export function SemCoPilotWorkspace() {
             console.error("Could not save project info to localStorage", e);
         }
     }
-    if (loadedFiles.length > 0) {
-      setActiveFileId(loadedFiles[0].id);
-    } else {
-      setActiveFileId(null);
-    }
+    
+    setActiveFileId(null);
     setAiOutput(null);
     resetCopilotChat();
     setAnalysisChatMessages([]);
     setRightPanelView('copilot-chat');
-    if (user) {
-        await updateUserLastActive(user.id);
-    }
-  }, [resetCopilotChat, activeProjectKey, user]);
+    await updateUserLastActive(user.id);
+
+  }, [resetCopilotChat, activeProjectKey, user, toast]);
 
   useEffect(() => {
     resetCopilotChat();
@@ -123,61 +127,89 @@ export function SemCoPilotWorkspace() {
   }, [handleFilesLoaded, toast, user, activeProjectKey]);
 
   const handleFileSelect = useCallback(async (fileId: string) => {
-    if (!user) return;
+    if (!user || !loadedProjectInfo) return;
+
     setActiveFileId(fileId);
     setEditorViewMode('edit');
 
     const file = files.find(f => f.id === fileId);
-    if (file && !file.commits && loadedProjectInfo) {
+
+    if (file && file.type === 'file' && typeof file.content === 'undefined') {
         setIsFileLoading(true);
-        const result = await fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, file.id, user.id);
+
+        const [contentResult, commitsResult] = await Promise.all([
+             fetchFileWithContent(loadedProjectInfo.project.url, loadedProjectInfo.branch, loadedProjectInfo.mainBranch, file.id, user.id),
+             fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, file.id, user.id)
+        ]);
         
-        if (result.success && result.commits && result.commits.length > 0) {
-            const latestCommitHash = result.commits[0].hash;
-            const previousCommitHash = result.commits.length > 1 ? result.commits[1].hash : null;
+        setIsFileLoading(false);
+        
+        let commits: Commit[] | undefined = undefined;
+        let activeCommitHash: string | undefined = undefined;
+        let previousContent: string | undefined = undefined;
 
-            const [latestContentResult, previousContentResult] = await Promise.all([
-                getBitbucketFileContentForCommit(loadedProjectInfo.project.url, latestCommitHash, file.id, user.id),
-                previousCommitHash 
-                    ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id, user.id) 
-                    : Promise.resolve({ success: false })
-            ]);
-
-            setIsFileLoading(false);
-
-            if (latestContentResult.success) {
-                setFiles(prevFiles => prevFiles.map(f => 
-                    f.id === fileId 
-                        ? { 
-                            ...f, 
-                            content: latestContentResult.content ?? f.content,
-                            previousContent: previousContentResult.success ? (previousContentResult.content ?? '') : undefined,
-                            commits: result.commits, 
-                            activeCommitHash: latestCommitHash,
-                          } 
-                        : f
-                ));
-            } else {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Error loading file content',
-                    description: latestContentResult.error || 'Could not load file content for this commit.',
-                });
+        if (commitsResult.success && commitsResult.commits && commitsResult.commits.length > 0) {
+            commits = commitsResult.commits;
+            activeCommitHash = commits[0].hash;
+            const previousCommitHash = commits.length > 1 ? commits[1].hash : null;
+            if (previousCommitHash) {
+                const prevContentResult = await getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id, user.id);
+                if (prevContentResult.success) {
+                    previousContent = prevContentResult.content;
+                }
             }
+        }
+
+        if (contentResult.success) {
+            setFiles(prevFiles => prevFiles.map(f => 
+                f.id === fileId 
+                    ? { 
+                        ...f, 
+                        content: contentResult.content,
+                        originalContent: contentResult.originalContent,
+                        previousContent: previousContent,
+                        commits: commits, 
+                        activeCommitHash: activeCommitHash,
+                      } 
+                    : f
+            ));
         } else {
-            setIsFileLoading(false);
-            if (result.error) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Error fetching commits',
-                    description: result.error || 'Could not load commit history for this file.',
-                });
-            }
-            // If no commits, just keep the file as is. It might have been loaded from main branch.
-            setFiles(prevFiles => prevFiles.map(f => f.id === fileId ? { ...f, commits: [] } : f));
+             toast({
+                variant: 'destructive',
+                title: 'Error loading file content',
+                description: contentResult.error || 'Could not load file content.',
+            });
         }
     }
   }, [files, loadedProjectInfo, toast, user]);
+
+  const handleFolderExpand = async (folderId: string) => {
+    if (!user || !loadedProjectInfo) return;
+    
+    const result = await fetchDirectory(loadedProjectInfo.project.url, loadedProjectInfo.branch, folderId, user.id);
+
+    if (result.success && result.files) {
+        setFiles(prevFiles => {
+            const newFiles = [...prevFiles];
+            const folderIndex = newFiles.findIndex(f => f.id === folderId);
+            if (folderIndex > -1) {
+                newFiles[folderIndex] = { ...newFiles[folderIndex], childrenLoaded: true };
+            }
+            // Add new items, avoiding duplicates
+            const existingIds = new Set(newFiles.map(f => f.id));
+            const itemsToAdd = result.files!.filter(newItem => !existingIds.has(newItem.id!));
+
+            return [...newFiles, ...itemsToAdd as CodeFile[]];
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Error expanding directory',
+            description: result.error || 'Could not load directory contents.',
+        });
+    }
+  };
+
 
   const handleCommitChange = useCallback(async (fileId: string, commitHash: string) => {
     if (!user) return;
@@ -359,18 +391,23 @@ export function SemCoPilotWorkspace() {
     );
   }
 
-  const editor = activeFile ? (
+  const editor = (isFileLoading && activeFile?.type === 'file') ? (
+     <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-muted-foreground mt-4">Loading file content...</p>
+    </Card>
+  ) : activeFile && activeFile.type === 'file' ? (
     <EditorPanel
       key={`${activeFile.id}-${activeFile.activeCommitHash || 'latest'}`}
       file={activeFile}
       onCodeChange={handleCodeChange}
       onAiAction={handleAiAction}
       onCompletion={handleCompletion}
-      isLoading={isLoading || isFileLoading}
+      isLoading={isLoading}
       completion={aiOutput?.type === 'completion' ? aiOutput.data : null}
       onAcceptCompletion={(completion) => {
         if (activeFile) {
-          handleCodeChange(activeFile.id, activeFile.content + completion);
+          handleCodeChange(activeFile.id, (activeFile.content || '') + completion);
         }
         setAiOutput(null);
       }}
@@ -433,6 +470,7 @@ export function SemCoPilotWorkspace() {
                  activeFileId={activeFileId}
                  onFileSelect={handleFileSelect}
                  onSwitchProject={handleSwitchProject}
+                 onFolderExpand={handleFolderExpand}
                  project={loadedProjectInfo?.project}
                  branch={loadedProjectInfo?.branch}
                />
@@ -466,6 +504,7 @@ export function SemCoPilotWorkspace() {
         activeFileId={activeFileId}
         onFileSelect={handleFileSelect}
         onSwitchProject={handleSwitchProject}
+        onFolderExpand={handleFolderExpand}
         project={loadedProjectInfo?.project}
         branch={loadedProjectInfo?.branch}
       />

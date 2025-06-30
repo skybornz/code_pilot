@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { CodeFile } from '@/components/codepilot/types';
-import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical, GitBranch } from 'lucide-react';
+import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical, GitBranch, Loader2 } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Logo } from './logo';
 import { Button } from '../ui/button';
@@ -21,40 +21,37 @@ interface FileExplorerProps {
   activeFileId: string | null;
   onFileSelect: (fileId: string) => void;
   onSwitchProject: () => void;
+  onFolderExpand: (folderId: string) => void;
   project?: Project;
   branch?: string;
 }
 
 type FileTreeNode = {
-    [key: string]: {
-        type: 'file';
-        file: CodeFile;
-    } | {
-        type: 'folder';
-        path: string;
-        children: FileTreeNode;
-    }
+    [key: string]: CodeFile & { children?: FileTreeNode };
 };
 
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
     const tree: FileTreeNode = {};
+    const fileMap: { [id: string]: CodeFile & { children?: FileTreeNode } } = {};
+
+    // First pass: create a map of all items
     files.forEach(file => {
-        const pathParts = file.id.split('/');
-        let currentLevel: any = tree;
-        pathParts.forEach((part, index) => {
-            if (!currentLevel[part]) {
-                if (index === pathParts.length - 1) {
-                    currentLevel[part] = { type: 'file', file: file };
-                } else {
-                    const currentPath = pathParts.slice(0, index + 1).join('/');
-                    currentLevel[part] = { type: 'folder', path: currentPath, children: {} };
-                }
-            }
-            if (currentLevel[part].type === 'folder') {
-                currentLevel = currentLevel[part].children;
-            }
-        });
+        fileMap[file.id] = { ...file };
+        if (file.type === 'folder') {
+            fileMap[file.id].children = {};
+        }
     });
+    
+    // Second pass: build the tree structure
+    Object.values(fileMap).forEach(item => {
+        const parentPath = item.id.substring(0, item.id.lastIndexOf('/'));
+        if (parentPath && fileMap[parentPath] && fileMap[parentPath].type === 'folder') {
+            fileMap[parentPath].children![item.name] = item;
+        } else {
+            tree[item.name] = item;
+        }
+    });
+
     return tree;
 };
 
@@ -63,10 +60,21 @@ interface FileTreeViewProps {
     tree: FileTreeNode;
     activeFileId: string | null;
     onFileSelect: (fileId: string) => void;
+    onFolderExpand: (folderId: string) => void;
     level?: number;
 }
 
-const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeViewProps) => {
+const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level = 0 }: FileTreeViewProps) => {
+    const [loadingFolder, setLoadingFolder] = useState<string | null>(null);
+
+    const handleExpand = async (isOpen: boolean, node: CodeFile) => {
+        if (isOpen && !node.childrenLoaded) {
+            setLoadingFolder(node.id);
+            await onFolderExpand(node.id);
+            setLoadingFolder(null);
+        }
+    };
+    
     const sortedEntries = Object.entries(tree).sort(([aName, aValue], [bName, bValue]) => {
         if (aValue.type === 'folder' && bValue.type === 'file') return -1;
         if (aValue.type === 'file' && bValue.type === 'folder') return 1;
@@ -78,39 +86,51 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeV
             {sortedEntries.map(([name, node]) => {
                 if (node.type === 'folder') {
                     return (
-                        <Collapsible key={node.path} defaultOpen className="group">
+                        <Collapsible 
+                            key={node.id} 
+                            defaultOpen={level < 1} // Auto-expand root level
+                            className="group"
+                            onOpenChange={(isOpen) => handleExpand(isOpen, node)}
+                        >
                             <CollapsibleTrigger 
                                 className="w-full flex items-center gap-2 text-left py-1.5 rounded-md hover:bg-sidebar-accent/50 text-sm"
                                 style={{ paddingLeft: `${level * 1.25}rem` }}
                             >
                                 <ChevronRight className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                                <Folder className="w-4 h-4 text-accent flex-shrink-0" />
+                                {loadingFolder === node.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                                ) : (
+                                    <Folder className="w-4 h-4 text-accent flex-shrink-0" />
+                                )}
                                 <span>{name}</span>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
-                                <FileTreeView
-                                    tree={node.children}
-                                    activeFileId={activeFileId}
-                                    onFileSelect={onFileSelect}
-                                    level={level + 1}
-                                />
+                                {node.children && (
+                                     <FileTreeView
+                                        tree={node.children}
+                                        activeFileId={activeFileId}
+                                        onFileSelect={onFileSelect}
+                                        onFolderExpand={onFolderExpand}
+                                        level={level + 1}
+                                    />
+                                )}
                             </CollapsibleContent>
                         </Collapsible>
                     );
                 } else {
                     return (
                         <button
-                            key={node.file.id}
-                            onClick={() => onFileSelect(node.file.id)}
+                            key={node.id}
+                            onClick={() => onFileSelect(node.id)}
                             className={`w-full text-left py-1.5 rounded-md flex items-center gap-2 transition-colors text-sm ${
-                                activeFileId === node.file.id
+                                activeFileId === node.id
                                     ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
                                     : 'hover:bg-sidebar-accent/50'
                             }`}
                             style={{ paddingLeft: `${level * 1.25 + 1.25}rem` }}
                         >
                             <FileCode className="w-4 h-4 flex-shrink-0" />
-                            <span title={node.file.name}>{node.file.name}</span>
+                            <span title={node.name}>{node.name}</span>
                         </button>
                     );
                 }
@@ -120,7 +140,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, level = 0 }: FileTreeV
 };
 
 
-export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProject, project, branch }: FileExplorerProps) {
+export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProject, onFolderExpand, project, branch }: FileExplorerProps) {
     const fileTree = useMemo(() => buildFileTree(files), [files]);
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
@@ -159,7 +179,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
               </TooltipProvider>
           </div>
           <div className="w-max min-w-full mt-4">
-            <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} />
+            <FileTreeView tree={fileTree} activeFileId={activeFileId} onFileSelect={onFileSelect} onFolderExpand={onFolderExpand} />
           </div>
         </div>
         <div className="p-2 border-t border-sidebar-border">

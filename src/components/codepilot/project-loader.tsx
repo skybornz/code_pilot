@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 
 interface ProjectLoaderProps {
-  onFilesLoaded: (files: CodeFile[], project: Project, branch: string) => void;
+  onFilesLoaded: (files: Partial<CodeFile>[], project: Project, branch: string) => void;
 }
 
 export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
@@ -212,7 +212,7 @@ function ProjectCard({ project, onDelete, onFilesLoaded }: { project: Project, o
     setIsLoadingFiles(false);
 
     if (result.success && result.files) {
-      update({ id, title: 'Import Successful', description: `Loaded ${result.files.length} files.` });
+      update({ id, title: 'Import Successful', description: `Loaded ${result.files.length} files from root.` });
       onFilesLoaded(result.files, project, selectedBranch);
     } else {
       update({ id, variant: 'destructive', title: 'Import Failed', description: result.error });
