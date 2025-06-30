@@ -183,7 +183,7 @@ export function SemCoPilotWorkspace() {
     }
   }, [files, loadedProjectInfo, toast, user]);
 
-  const handleFolderExpand = async (folderId: string) => {
+  const handleFolderExpand = useCallback(async (folderId: string) => {
     if (!user || !loadedProjectInfo) return;
     
     const result = await fetchDirectory(loadedProjectInfo.project.url, loadedProjectInfo.branch, folderId, user.id);
@@ -208,7 +208,7 @@ export function SemCoPilotWorkspace() {
             description: result.error || 'Could not load directory contents.',
         });
     }
-  };
+  }, [user, loadedProjectInfo, toast]);
 
 
   const handleCommitChange = useCallback(async (fileId: string, commitHash: string) => {
