@@ -38,7 +38,7 @@ type BitbucketServerInfo = { host: string; project: string; repo: string };
 
 // ====== Authentication (reusable) ======
 async function getAuthHeaders(userId?: string): Promise<Headers> {
-    const headers = new Headers({ 'Accept': 'application/json' });
+    const headers = new Headers();
     if (!userId) return headers;
     
     try {
@@ -117,14 +117,11 @@ const BitbucketServerCommitsResponseSchema = z.object({
 
 // ====== API Fetching Logic ======
 async function fetchWithAuthFallback(url: string, userId: string, params: RequestInit = {}): Promise<Response> {
-    const anonymousHeaders = new Headers(params.headers);
-    if (!anonymousHeaders.has('Accept')) {
-        anonymousHeaders.set('Accept', 'application/json');
-    }
+    const baseHeaders = new Headers(params.headers);
 
     // 1. Try anonymous request first
     console.log(`[Anonymous] Fetching Bitbucket URL: ${url}`);
-    const anonymousResponse = await fetch(url, { ...params, headers: anonymousHeaders, cache: 'no-store' });
+    const anonymousResponse = await fetch(url, { ...params, headers: baseHeaders, cache: 'no-store' });
 
     // If anonymous request is successful, we're done.
     if (anonymousResponse.ok) {
@@ -142,7 +139,7 @@ async function fetchWithAuthFallback(url: string, userId: string, params: Reques
         return anonymousResponse;
     }
     
-    const authenticatedHeaders = new Headers(anonymousHeaders);
+    const authenticatedHeaders = new Headers(baseHeaders);
     authenticatedHeaders.set('Authorization', authToken);
     
     console.log(`[Authenticated] Fetching Bitbucket URL: ${url}`);
@@ -175,10 +172,11 @@ async function fetchBitbucketServerBranches(info: BitbucketServerInfo, userId: s
     let start = 0;
     let isLastPage = false;
     let branchesUrl = '';
+    const fetchParams: RequestInit = { headers: { 'Accept': 'application/json' } };
 
     while (!isLastPage) {
         branchesUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/branches?start=${start}&limit=100`;
-        const response = await fetchWithAuthFallback(branchesUrl, userId);
+        const response = await fetchWithAuthFallback(branchesUrl, userId, fetchParams);
 
         if (!response.ok) {
             const errorText = await response.text().catch(()=>'');
@@ -201,7 +199,7 @@ async function fetchBitbucketServerBranches(info: BitbucketServerInfo, userId: s
 async function getMainBranch(info: BitbucketServerInfo, userId: string): Promise<string | null> {
     const { host, project, repo } = info;
     const defaultBranchUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/branches/default`;
-    const response = await fetchWithAuthFallback(defaultBranchUrl, userId);
+    const response = await fetchWithAuthFallback(defaultBranchUrl, userId, { headers: { 'Accept': 'application/json' } });
     if (!response.ok) return null;
     const branchData = await response.json();
     const parsed = BitbucketServerDefaultBranchSchema.safeParse(branchData);
@@ -231,7 +229,7 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
 async function getBitbucketServerFileContent(host: string, project: string, repo: string, commit: string, path: string, userId: string): Promise<string | null> {
     const encodedPath = path.split('/').map(encodeURIComponent).join('/');
     const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/raw/${encodedPath}?at=${commit}`;
-    const response = await fetchWithAuthFallback(url, userId);
+    const response = await fetchWithAuthFallback(url, userId, { headers: { 'Accept': 'text/plain, */*' } });
     if (!response.ok) return null;
     const content = await response.text();
     return content.includes('\uFFFD') ? null : content;
@@ -244,12 +242,13 @@ async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, bra
     const files: CodeFile[] = [];
     let start = 0;
     let isLastPage = false;
+    const fetchParams: RequestInit = { headers: { 'Accept': 'application/json' } };
     
     while (!isLastPage) {
         const browsePathSegment = path ? `/${path.split('/').map(encodeURIComponent).join('/')}` : '';
         const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/browse${browsePathSegment}?at=${branch}&start=${start}&limit=100`;
 
-        const response = await fetchWithAuthFallback(url, userId);
+        const response = await fetchWithAuthFallback(url, userId, fetchParams);
         if (!response.ok) break;
 
         const data = await response.json();
@@ -297,10 +296,11 @@ async function fetchBitbucketServerFileCommits(info: BitbucketServerInfo, branch
     const commits: Commit[] = [];
     let start = 0;
     let isLastPage = false;
+    const fetchParams: RequestInit = { headers: { 'Accept': 'application/json' } };
     
     while (!isLastPage) {
         const commitsUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/commits?path=${encodeURIComponent(path)}&until=${branch}&start=${start}&limit=100`;
-        const response = await fetchWithAuthFallback(commitsUrl, userId);
+        const response = await fetchWithAuthFallback(commitsUrl, userId, fetchParams);
         if (!response.ok) return { success: false, error: `Failed to fetch commits: ${response.statusText}` };
 
         const data = await response.json();
@@ -321,7 +321,7 @@ export async function getBitbucketFileContentForCommit(url: string, commitHash: 
     const encodedPath = path.split('/').map(encodeURIComponent).join('/');
     const contentUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/raw/${encodedPath}?at=${commitHash}`;
 
-    const response = await fetchWithAuthFallback(contentUrl, userId);
+    const response = await fetchWithAuthFallback(contentUrl, userId, { headers: { 'Accept': 'text/plain, */*' } });
     if (!response.ok) return { success: false, error: 'Could not fetch file content for the specified commit.' };
 
     const content = await response.text();

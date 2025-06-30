@@ -1,47 +1,49 @@
--- This script contains default data to populate the tables.
--- It should be run after schema.sql.
-
--- Default Activities (The system will add new AI actions automatically)
--- Type: AI Action, Authentication, File System, Profile Update
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Login')
-        INSERT INTO Activities (Name, Type) VALUES ('Login', 'Authentication');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Password Change')
-        INSERT INTO Activities (Name, Type) VALUES ('Password Change', 'Authentication');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Update Profile')
-        INSERT INTO Activities (Name, Type) VALUES ('Update Profile', 'Profile Update');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Explain Code')
-        INSERT INTO Activities (Name, Type) VALUES ('Explain Code', 'AI Action');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Refactor Code')
-        INSERT INTO Activities (Name, Type) VALUES ('Refactor Code', 'AI Action');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Find Bugs')
-        INSERT INTO Activities (Name, Type) VALUES ('Find Bugs', 'AI Action');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Generate Test')
-        INSERT INTO Activities (Name, Type) VALUES ('Generate Test', 'AI Action');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Generate Comments')
-        INSERT INTO Activities (Name, Type) VALUES ('Generate Comments', 'AI Action');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Generate SDD')
-        INSERT INTO Activities (Name, Type) VALUES ('Generate SDD', 'AI Action');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Analyze Diff')
-        INSERT INTO Activities (Name, Type) VALUES ('Analyze Diff', 'AI Action');
-    IF NOT EXISTS (SELECT 1 FROM Activities WHERE Name = 'Co-Pilot Chat')
-        INSERT INTO Activities (Name, Type) VALUES ('Co-Pilot Chat', 'AI Action');
-END
+-- Clear existing data in a safe order (respecting foreign key constraints)
+DELETE FROM UserActivityLog;
+DELETE FROM Activities;
+DELETE FROM Projects;
+DELETE FROM Models;
+DELETE FROM Users;
 GO
 
--- Default User (admin/password)
--- The password 'password' will be hashed by the application logic upon first login.
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = 'admin@example.com')
-        INSERT INTO Users (Email, PasswordHash, Role, IsActive)
-        VALUES ('admin@example.com', 'password', 'admin', 1);
-END
+-- Reset identity columns to start fresh
+DBCC CHECKIDENT ('Users', RESEED, 0);
+DBCC CHECKIDENT ('Projects', RESEED, 0);
+DBCC CHECKIDENT ('Activities', RESEED, 0);
+DBCC CHECKIDENT ('UserActivityLog', RESEED, 0);
+DBCC CHECKIDENT ('Models', RESEED, 0);
 GO
 
--- Default Model
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM Models)
-        INSERT INTO Models (Name, Type, IsDefault)
-        VALUES ('gemini-1.5-flash-latest', 'online', 1);
-END
+
+-- Seed Users
+-- Note: The password for both users is 'password'. In a real app, use a more secure, unique password.
+-- This hash was generated using bcrypt with 10 salt rounds for the string 'password'.
+INSERT INTO Users (Email, PasswordHash, Role, IsActive) VALUES
+('admin@samsung.com', '$2b$10$9sZ/..EmdE/25B4S4A4h.uI8f1YhLzBeKj9bE.wzJzQGq7hR.x.Oq', 'admin', 1),
+('user@samsung.com', '$2b$10$9sZ/..EmdE/25B4S4A4h.uI8f1YhLzBeKj9bE.wzJzQGq7hR.x.Oq', 'user', 1);
+GO
+
+-- Seed Activities
+INSERT INTO Activities (Name, Type) VALUES
+('Login', 'Authentication'),
+('Logout', 'Authentication'),
+('Password Change', 'Profile'),
+('Update Profile', 'Profile'),
+('Explain Code', 'AI Action'),
+('Find Bugs', 'AI Action'),
+('Refactor Code', 'AI Action'),
+('Generate Unit Test', 'AI Action'),
+('Generate Comments', 'AI Action'),
+('Generate SDD', 'AI Action'),
+('Analyze Diff', 'AI Action'),
+('Co-Pilot Chat', 'AI Action'),
+('AI Assistant Chat', 'AI Action');
+GO
+
+-- Seed Models
+INSERT INTO Models (Name, Type, IsDefault) VALUES
+('gemini-1.5-flash-latest', 'online', 1);
+GO
+
+PRINT 'Seed data has been successfully inserted.';
 GO
