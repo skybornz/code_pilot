@@ -11,7 +11,7 @@ import type { ExplainCodeOutput as ExplainCodeFlowOutput } from "@/ai/flows/expl
 export type AnalyzeDiffOutput = AnalyzeDiffFlowOutput;
 export type ExplainCodeOutput = ExplainCodeFlowOutput;
 
-export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'completion' | 'docs' | 'sdd' | 'analyze-diff';
+export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'docs' | 'sdd' | 'analyze-diff' | 'copilot';
 
 type AIOutputBase = {
   title: string;
@@ -23,7 +23,6 @@ type AIOutputBase = {
 };
 
 export type AIOutput = AIOutputBase & (
-  | { type: 'completion'; data: string }
   | { type: 'explain'; data: ExplainCodeOutput }
   | { type: 'bugs'; data: FindBugsOutput }
   | { type: 'refactor'; data: RefactorCodeOutput }

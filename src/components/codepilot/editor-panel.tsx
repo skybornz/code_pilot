@@ -2,7 +2,7 @@
 
 import type { CodeFile } from '@/components/codepilot/types';
 import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot } from 'lucide-react';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -24,11 +24,7 @@ interface EditorPanelProps {
   file: CodeFile;
   onCodeChange: (fileId: string, newContent: string) => void;
   onAiAction: (action: ActionType, code: string, language: string, originalCode?: string) => void;
-  onCompletion: (code: string, language: string) => void;
   isLoading: boolean;
-  completion: string | null;
-  onAcceptCompletion: (completion: string) => void;
-  onDismissCompletion: () => void;
   onCommitChange: (fileId: string, commitHash: string) => void;
   onShowCopilotChat: () => void;
   viewMode: 'edit' | 'diff';
@@ -171,11 +167,7 @@ export function EditorPanel({
   file,
   onCodeChange,
   onAiAction,
-  onCompletion,
   isLoading,
-  completion,
-  onAcceptCompletion,
-  onDismissCompletion,
   onCommitChange,
   onShowCopilotChat,
   viewMode,
@@ -192,26 +184,6 @@ export function EditorPanel({
     onCodeChange(file.id, value);
   };
   
-  const debouncedCompletion = useCallback(
-    debounce((newCode: string, lang: string) => {
-      onCompletion(newCode, lang);
-    }, 1000),
-    [onCompletion]
-  );
-  
-  useEffect(() => {
-    if (code !== file.content) { // to avoid triggering on initial load
-        debouncedCompletion(code, file.language);
-    }
-  }, [code, file.language, debouncedCompletion, file.content]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Tab' && completion) {
-      e.preventDefault();
-      onAcceptCompletion(completion);
-    }
-  };
-
   const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
@@ -376,7 +348,7 @@ export function EditorPanel({
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <div className="relative flex-1 min-h-0" onKeyDown={handleKeyDown}>
+        <div className="relative flex-1 min-h-0">
           {viewMode === 'edit' ? (
             <CodeMirror
               value={code}
@@ -405,28 +377,7 @@ export function EditorPanel({
              />
           )}
         </div>
-        {completion && viewMode === 'edit' && (
-          <div className="p-4 border-t bg-background/50">
-            <h3 className="text-sm font-semibold mb-2">AI Suggestion (Press Tab to accept)</h3>
-            <pre className="bg-muted p-3 rounded-md text-sm font-code whitespace-pre-wrap">{completion}</pre>
-            <div className="flex gap-2 mt-2">
-              <Button size="sm" onClick={() => onAcceptCompletion(completion)}>Accept</Button>
-              <Button size="sm" variant="ghost" onClick={onDismissCompletion}>Dismiss</Button>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
-}
-
-function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<F>): Promise<ReturnType<F>> =>
-    new Promise(resolve => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-      timeout = setTimeout(() => resolve(func(...args)), waitFor);
-    });
 }

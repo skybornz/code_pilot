@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { codeCompletion } from '@/ai/flows/code-completion';
 import { explainCode } from '@/ai/flows/explain-code';
 import { findBugs } from '@/ai/flows/find-bugs';
 import { generateUnitTest } from '@/ai/flows/generate-unit-test';
@@ -303,8 +302,8 @@ export function SemCoPilotWorkspace() {
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'docs') {
         actionName = 'Generate Docs';
-        const { documentation } = await generateCodeDocs({ model, code });
-        result = { type: 'docs', data: { documentation }, title: 'Generated Comments', language };
+        const docsData = await generateCodeDocs({ model, code });
+        result = { type: 'docs', data: docsData, title: 'Generated Comments', language };
       } else if (action === 'sdd') {
         actionName = 'Generate SDD';
         const sdd = await generateSdd({ model, code });
@@ -319,7 +318,6 @@ export function SemCoPilotWorkspace() {
           };
           setAiOutput(outputWithContext);
         } else {
-          // The result doesn't have a file context, which is acceptable since it's optional.
           setAiOutput(result);
         }
         await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
@@ -338,29 +336,6 @@ export function SemCoPilotWorkspace() {
       setIsLoading(false);
     }
   }, [toast, activeFile, user]);
-
-  const handleCompletion = useCallback(async (code: string, language: string) => {
-    try {
-      const modelConfig = await getDefaultModel();
-      if (!modelConfig) return;
-      
-      const model = modelConfig.type === 'local'
-        ? `ollama/${modelConfig.name}`
-        : `googleai/${modelConfig.name}`;
-
-      const { completion } = await codeCompletion({ model, codeSnippet: code, language });
-      if (completion) {
-        setAiOutput({ type: 'completion', data: completion, title: 'Code Completion' });
-      }
-    } catch (error) {
-      console.error('Code completion failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Code Completion Failed',
-        description: 'The AI model could not provide a suggestion.',
-      });
-    }
-  }, [toast]);
 
   const handleSwitchProject = () => {
     setFiles([]);
@@ -402,16 +377,7 @@ export function SemCoPilotWorkspace() {
       file={activeFile}
       onCodeChange={handleCodeChange}
       onAiAction={handleAiAction}
-      onCompletion={handleCompletion}
       isLoading={isLoading}
-      completion={aiOutput?.type === 'completion' ? aiOutput.data : null}
-      onAcceptCompletion={(completion) => {
-        if (activeFile) {
-          handleCodeChange(activeFile.id, (activeFile.content || '') + completion);
-        }
-        setAiOutput(null);
-      }}
-      onDismissCompletion={() => setAiOutput(null)}
       onCommitChange={handleCommitChange}
       onShowCopilotChat={handleShowCopilotChat}
       viewMode={editorViewMode}

@@ -1,7 +1,6 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/code-completion.ts';
 import '@/ai/flows/generate-unit-test.ts';
 import '@/ai/flows/find-bugs.ts';
 import '@/ai/flows/refactor-code.ts';
