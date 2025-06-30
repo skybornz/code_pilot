@@ -92,7 +92,7 @@ const BitbucketServerBranchesResponseSchema = z.object({
 });
 
 const BitbucketServerBrowseNodeSchema = z.object({
-    path: z.object({ toString: z.string() }),
+    path: z.object({ toString: z.string(), name: z.string() }),
     type: z.enum(['FILE', 'DIRECTORY']),
 });
 const BitbucketServerBrowseResponseSchema = z.object({
@@ -255,21 +255,23 @@ async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, bra
         const parsedData = BitbucketServerBrowseResponseSchema.parse(data);
 
         for (const item of parsedData.children.values) {
-            const itemPath = item.path.toString;
-            if (shouldIgnore(itemPath)) continue;
+            const itemName = item.path.name;
+            const fullItemPath = path ? `${path}/${itemName}` : itemName;
+
+            if (shouldIgnore(fullItemPath)) continue;
+            
             if (item.type === 'DIRECTORY') {
-                files.push(...await getBitbucketServerFilesRecursively(info, branch, mainBranch, userId, itemPath));
+                files.push(...await getBitbucketServerFilesRecursively(info, branch, mainBranch, userId, fullItemPath));
             } else {
-                const content = await getBitbucketServerFileContent(host, project, repo, branch, itemPath, userId);
+                const content = await getBitbucketServerFileContent(host, project, repo, branch, fullItemPath, userId);
                 if (content === null) continue;
 
                 let originalContent = content;
                 if (branch !== mainBranch) {
-                    originalContent = await getBitbucketServerFileContent(host, project, repo, mainBranch, itemPath, userId) ?? '';
+                    originalContent = await getBitbucketServerFileContent(host, project, repo, mainBranch, fullItemPath, userId) ?? '';
                 }
-                const name = itemPath.split('/').pop() || '';
-                const language = name.split('.').pop() || 'text';
-                files.push({ id: itemPath, name, language, content, originalContent });
+                const language = itemName.split('.').pop() || 'text';
+                files.push({ id: fullItemPath, name: itemName, language, content, originalContent });
             }
         }
         isLastPage = parsedData.children.isLastPage;
