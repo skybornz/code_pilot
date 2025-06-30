@@ -136,8 +136,8 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
     const result = await fetchBitbucketBranches(url, user.id);
 
     if (result.success && result.branches) {
-      const repoNameMatch = url.match(/bitbucket.org\/[^/]+\/([^/.]+)/);
-      const name = repoNameMatch ? repoNameMatch[1] : 'New Project';
+      const repoNameMatch = url.match(/\/repos\/([^/]+)/);
+      const name = repoNameMatch ? repoNameMatch[1].replace(/\.git$/, '') : 'New Project';
       
       const newProjectData: NewProject = { name, url, userId: user.id };
       const addResult = await addProject(newProjectData);
@@ -157,7 +157,7 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
   return (
     <div className="space-y-4 py-2">
       <Input
-        placeholder="https://bitbucket.org/workspace/repo"
+        placeholder="https://your-bitbucket-server/projects/PROJ/repos/repo"
         value={url}
         onChange={e => setUrl(e.target.value)}
         disabled={isLoading}
