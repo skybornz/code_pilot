@@ -118,35 +118,28 @@ const BitbucketServerCommitsResponseSchema = z.object({
 // ====== API Fetching Logic ======
 async function fetchWithAuthFallback(url: string, userId: string, params: RequestInit = {}): Promise<Response> {
     const baseHeaders = new Headers(params.headers);
-
-    // 1. Try anonymous request first
-    console.log(`[Anonymous] Fetching Bitbucket URL: ${url}`);
-    const anonymousResponse = await fetch(url, { ...params, headers: baseHeaders, cache: 'no-store' });
-
-    // If anonymous request is successful, we're done.
-    if (anonymousResponse.ok) {
-        return anonymousResponse;
-    }
-
-    // 2. If anonymous request failed, log it and try with credentials
-    console.log(`[Anonymous] Request to ${url} failed with status ${anonymousResponse.status}. Retrying with credentials.`);
     const authHeaders = await getAuthHeaders(userId);
     const authToken = authHeaders.get('Authorization');
 
-    // If there are no credentials, we have to return the original failed response.
-    if (!authToken) {
-        console.log(`[Authenticated] No credentials found for user ${userId}. Returning original failed response.`);
-        return anonymousResponse;
-    }
-    
-    const authenticatedHeaders = new Headers(baseHeaders);
-    authenticatedHeaders.set('Authorization', authToken);
-    
-    console.log(`[Authenticated] Fetching Bitbucket URL: ${url}`);
-    const authenticatedResponse = await fetch(url, { ...params, headers: authenticatedHeaders, cache: 'no-store' });
+    // 1. Try with credentials if they exist.
+    if (authToken) {
+        const authenticatedHeaders = new Headers(baseHeaders);
+        authenticatedHeaders.set('Authorization', authToken);
+        
+        const authenticatedResponse = await fetch(url, { ...params, headers: authenticatedHeaders, cache: 'no-store' });
 
-    // Return the result of the authenticated attempt, whether it succeeded or failed.
-    return authenticatedResponse;
+        // If successful, we're done.
+        if (authenticatedResponse.ok) {
+            return authenticatedResponse;
+        }
+        // If the authenticated request fails (e.g., 401 on a public repo),
+        // we will fall through and try an anonymous request.
+    }
+
+    // 2. Try anonymous request (if no token or if authenticated request failed).
+    const anonymousResponse = await fetch(url, { ...params, headers: baseHeaders, cache: 'no-store' });
+    
+    return anonymousResponse;
 }
 
 export async function fetchBitbucketBranches(url: string, userId: string): Promise<{ success: boolean; branches?: string[]; error?: string }> {
