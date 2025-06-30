@@ -38,8 +38,7 @@ const findBugsFlow = ai.defineFlow(
   async (input) => {
     const {output} = await ai.generate({
       model: input.model as any,
-      prompt: `You are a security expert who provides code analysis in a structured JSON format. Your output MUST be a valid JSON object matching the requested schema.
-
+      prompt: `You are a security expert.
 Analyze the following code snippet for potential bugs and vulnerabilities. Provide a list of the bugs found and an explanation of the bugs and how to fix them.
 
 Code:

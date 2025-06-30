@@ -37,8 +37,7 @@ const refactorCodeFlow = ai.defineFlow(
   async (input) => {
     const {output} = await ai.generate({
         model: input.model as any,
-        prompt: `You are an AI code assistant that refactors code to improve its quality and maintainability. Your output MUST be a valid JSON object matching the requested schema.
-
+        prompt: `You are an AI code assistant that refactors code.
 Given the following code block and its programming language, suggest refactoring improvements. Return the refactored code and an explanation of the changes.
 
 Language: ${input.language}

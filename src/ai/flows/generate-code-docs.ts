@@ -35,8 +35,7 @@ const generateCodeDocsFlow = ai.defineFlow(
   async (input) => {
     const {output} = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert software developer who generates code documentation in a structured JSON format. Your output MUST be a valid JSON object matching the requested schema.
-
+        prompt: `You are an expert software developer.
 Generate code comments for the following code block. The comments should explain the code's functionality, parameters, and return values, suitable for in-line documentation or docblocks.
 
 Code:
