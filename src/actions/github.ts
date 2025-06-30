@@ -113,16 +113,21 @@ const BitbucketServerCommitsResponseSchema = z.object({
 
 // ====== API Fetching Logic ======
 async function fetchWithAuthFallback(url: string, userId: string, params: RequestInit = {}): Promise<Response> {
+    // 1. Try anonymous request first
     let headersToUse: HeadersInit = { 'Accept': 'application/json', ...(params.headers || {}) };
     let response = await fetch(url, { ...params, headers: headersToUse, cache: 'no-store' });
-    
-    if (response.status === 401 || response.status === 403) {
+
+    // 2. If the anonymous request was not successful, and we have credentials, retry with auth.
+    // This handles both public repos (which should succeed on the first try) and private repos (which will fail and retry with auth).
+    if (!response.ok) {
         const authHeaders = await getAuthHeaders(userId);
         if (authHeaders.Authorization) {
-            headersToUse = { ...headersToUse, ...authHeaders };
-            response = await fetch(url, { ...params, headers: headersToUse, cache: 'no-store' });
+            const headersWithAuth = { ...headersToUse, ...authHeaders };
+            // Retry the request with authentication
+            response = await fetch(url, { ...params, headers: headersWithAuth, cache: 'no-store' });
         }
     }
+    
     return response;
 }
 
