@@ -59,15 +59,19 @@ function parseBitbucketUrl(url: string): BitbucketServerInfo | null {
     try {
         const urlObj = new URL(url);
         // Bitbucket Server/Data Center URL: e.g., https://bitbucket.mycompany.com/projects/PROJ/repos/my-repo/browse
+        // Or with a context path: http://1.1.1.1/bitbucket/projects/PROJ/repos/my-repo/browse
         const parts = urlObj.pathname.split('/').filter(Boolean);
         const projectsIndex = parts.indexOf('projects');
         const reposIndex = parts.indexOf('repos');
 
         if (projectsIndex !== -1 && reposIndex === projectsIndex + 2) {
+             const pathPrefix = parts.slice(0, projectsIndex).join('/');
+             const host = pathPrefix ? `${urlObj.origin}/${pathPrefix}` : urlObj.origin;
              const project = parts[projectsIndex + 1];
              const repo = parts[reposIndex + 1];
+
              if (project && repo) {
-                return { host: urlObj.origin, project, repo };
+                return { host, project, repo };
              }
         }
         return null;
