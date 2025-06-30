@@ -37,8 +37,8 @@ type BitbucketServerInfo = { host: string; project: string; repo: string };
 
 
 // ====== Authentication (reusable) ======
-async function getAuthHeaders(userId?: string): Promise<HeadersInit> {
-    const headers: HeadersInit = { 'Accept': 'application/json' };
+async function getAuthHeaders(userId?: string): Promise<Headers> {
+    const headers = new Headers({ 'Accept': 'application/json' });
     if (!userId) return headers;
     
     try {
@@ -46,7 +46,7 @@ async function getAuthHeaders(userId?: string): Promise<HeadersInit> {
         if (user && user.bitbucketUsername && user.bitbucketAppPassword) {
             const credentials = `${user.bitbucketUsername}:${user.bitbucketAppPassword}`;
             const encodedCredentials = Buffer.from(credentials).toString('base64');
-            headers['Authorization'] = `Basic ${encodedCredentials}`;
+            headers.set('Authorization', `Basic ${encodedCredentials}`);
         }
     } catch (e) {
         console.error("Failed to get user credentials for Bitbucket auth", e);
@@ -113,19 +113,25 @@ const BitbucketServerCommitsResponseSchema = z.object({
 
 // ====== API Fetching Logic ======
 async function fetchWithAuthFallback(url: string, userId: string, params: RequestInit = {}): Promise<Response> {
-    const headersToUse: HeadersInit = { 'Accept': 'application/json', ...(params.headers || {}) };
+    const headersToUse = new Headers(params.headers);
+    if (!headersToUse.has('Accept')) {
+        headersToUse.set('Accept', 'application/json');
+    }
 
     // 1. Try anonymous request first
     console.log(`[Anonymous] Fetching Bitbucket URL: ${url}`);
     let response = await fetch(url, { ...params, headers: headersToUse, cache: 'no-store' });
 
-    // 2. If the anonymous request was not successful, retry with auth.
-    // This handles both public repos and private repos that might fail for any reason (not just 401/403).
+    // 2. If the anonymous request was not successful, retry with auth for any error.
     if (!response.ok) {
         console.log(`[Anonymous] Request to ${url} failed with status ${response.status}. Retrying with credentials.`);
         const authHeaders = await getAuthHeaders(userId);
-        if (authHeaders.Authorization) {
-            const headersWithAuth = { ...headersToUse, ...authHeaders };
+        const authToken = authHeaders.get('Authorization');
+
+        if (authToken) {
+            const headersWithAuth = new Headers(headersToUse);
+            headersWithAuth.set('Authorization', authToken);
+            
             console.log(`[Authenticated] Fetching Bitbucket URL: ${url}`);
             response = await fetch(url, { ...params, headers: headersWithAuth, cache: 'no-store' });
         }
