@@ -404,16 +404,14 @@ BEGIN
 
     -- Trend Analysis
     ;WITH DateSeries AS (
-  SELECT TOP (@Intervals)
-      CASE @DatePart
-          WHEN 'day'   THEN DATEADD(DAY,   1 - ROW_NUMBER() OVER (ORDER BY (SELECT NULL)), @EndDate)
-          WHEN 'week'  THEN DATEADD(WEEK,  1 - ROW_NUMBER() OVER (ORDER BY (SELECT NULL)), @EndDate)
-          WHEN 'month' THEN DATEADD(MONTH, 1 - ROW_NUMBER() OVER (ORDER BY (SELECT NULL)), @EndDate)
-          WHEN 'year'  THEN DATEADD(YEAR,  1 - ROW_NUMBER() OVER (ORDER BY (SELECT NULL)), @EndDate)
-          ELSE              DATEADD(YEAR,  1 - ROW_NUMBER() OVER (ORDER BY (SELECT NULL)), @EndDate)
-      END AS DatePoint
-  FROM master.dbo.spt_values
-),
+      SELECT TOP (@Intervals)
+          DATEADD(
+              CASE @DatePart WHEN 'day' THEN DAY WHEN 'week' THEN WEEK WHEN 'month' THEN MONTH ELSE YEAR END, 
+              - (ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) - 1), 
+              @EndDate
+          ) AS DatePoint
+      FROM master.dbo.spt_values
+    ),
     GroupedLogs AS (
       SELECT 
           CAST(Timestamp AS DATE) as LogDate,
