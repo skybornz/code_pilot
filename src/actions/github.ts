@@ -113,17 +113,20 @@ const BitbucketServerCommitsResponseSchema = z.object({
 
 // ====== API Fetching Logic ======
 async function fetchWithAuthFallback(url: string, userId: string, params: RequestInit = {}): Promise<Response> {
+    const headersToUse: HeadersInit = { 'Accept': 'application/json', ...(params.headers || {}) };
+
     // 1. Try anonymous request first
-    let headersToUse: HeadersInit = { 'Accept': 'application/json', ...(params.headers || {}) };
+    console.log(`[Anonymous] Fetching Bitbucket URL: ${url}`);
     let response = await fetch(url, { ...params, headers: headersToUse, cache: 'no-store' });
 
-    // 2. If the anonymous request was not successful, and we have credentials, retry with auth.
-    // This handles both public repos (which should succeed on the first try) and private repos (which will fail and retry with auth).
+    // 2. If the anonymous request was not successful, retry with auth.
+    // This handles both public repos and private repos that might fail for any reason (not just 401/403).
     if (!response.ok) {
+        console.log(`[Anonymous] Request to ${url} failed with status ${response.status}. Retrying with credentials.`);
         const authHeaders = await getAuthHeaders(userId);
         if (authHeaders.Authorization) {
             const headersWithAuth = { ...headersToUse, ...authHeaders };
-            // Retry the request with authentication
+            console.log(`[Authenticated] Fetching Bitbucket URL: ${url}`);
             response = await fetch(url, { ...params, headers: headersWithAuth, cache: 'no-store' });
         }
     }
@@ -153,16 +156,15 @@ async function fetchBitbucketServerBranches(info: BitbucketServerInfo, userId: s
     const branches: string[] = [];
     let start = 0;
     let isLastPage = false;
+    let branchesUrl = '';
 
     while (!isLastPage) {
-        const branchesUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/branches?start=${start}&limit=100`;
+        branchesUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/branches?start=${start}&limit=100`;
         const response = await fetchWithAuthFallback(branchesUrl, userId);
 
         if (!response.ok) {
             const errorText = await response.text().catch(()=>'');
-            const errorDetail = (response.status === 401 || response.status === 403) 
-                ? 'Access denied. The repository may be private. Please check your credentials.'
-                : `Failed to fetch branches: ${response.statusText} ${errorText}`;
+            const errorDetail = `Failed to fetch branches from ${branchesUrl}. Status: ${response.status} ${response.statusText}. Response: ${errorText}`;
             return { success: false, error: branches.length > 0 ? undefined : errorDetail, branches: branches.length > 0 ? branches : undefined };
         }
         
@@ -225,7 +227,7 @@ async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, bra
     let isLastPage = false;
     
     while (!isLastPage) {
-        const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/browse/${path}?start=${start}&limit=100&at=${branch}`;
+        const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/browse/${path}?at=${branch}&start=${start}&limit=100`;
         const response = await fetchWithAuthFallback(url, userId);
         if (!response.ok) break;
 
