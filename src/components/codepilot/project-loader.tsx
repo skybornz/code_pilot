@@ -117,7 +117,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
 }
 
 function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project) => void }) {
-  const [url, setUrl] = useState('');
+  const [repoName, setRepoName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -127,29 +127,22 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to add a project.' });
       return;
     }
-    if (!url.trim()) {
-      toast({ variant: 'destructive', title: 'URL Required' });
+    if (!repoName.trim()) {
+      toast({ variant: 'destructive', title: 'Repository Name Required' });
       return;
     }
     
     setIsLoading(true);
-    const result = await fetchBitbucketBranches(url, user.id);
 
-    if (result.success && result.branches) {
-      const repoNameMatch = url.match(/\/repos\/([^/]+)/);
-      const name = repoNameMatch ? repoNameMatch[1].replace(/\.git$/, '') : 'New Project';
-      
-      const newProjectData: NewProject = { name, url, userId: user.id };
-      const addResult = await addProject(newProjectData);
+    // The 'url' property is a dummy value here. The server action will construct the real one.
+    const newProjectData: NewProject = { name: repoName, url: '', userId: user.id };
+    const addResult = await addProject(newProjectData);
 
-      if (addResult.success && addResult.project) {
-        toast({ title: 'Project Added!', description: `Successfully added "${name}".` });
-        onProjectAdded(addResult.project);
-      } else {
-        toast({ variant: 'destructive', title: 'Failed to Add Project', description: addResult.message });
-      }
+    if (addResult.success && addResult.project) {
+      toast({ title: 'Project Added!', description: `Successfully added "${repoName}".` });
+      onProjectAdded(addResult.project);
     } else {
-      toast({ variant: 'destructive', title: 'Invalid Repository', description: result.error || 'Could not validate the repository URL.' });
+      toast({ variant: 'destructive', title: 'Failed to Add Project', description: addResult.message });
     }
     setIsLoading(false);
   };
@@ -157,9 +150,9 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
   return (
     <div className="space-y-4 py-2">
       <Input
-        placeholder="https://your-bitbucket-server/projects/PROJ/repos/repo"
-        value={url}
-        onChange={e => setUrl(e.target.value)}
+        placeholder="Repository Name (e.g., jira)"
+        value={repoName}
+        onChange={e => setRepoName(e.target.value)}
         disabled={isLoading}
       />
       <div className="flex justify-end gap-2">
