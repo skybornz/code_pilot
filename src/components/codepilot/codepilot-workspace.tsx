@@ -277,7 +277,7 @@ export function SemCoPilotWorkspace() {
       ? `ollama/${modelConfig.name}`
       : `googleai/${modelConfig.name}`;
     
-    let result: Omit<AIOutput, 'fileContext'> | null = null;
+    let result: AIOutput | null = null;
     let actionName: string = 'Unknown AI Action';
     try {
       if (action === 'analyze-diff' && originalCode !== undefined) {
