@@ -13,18 +13,25 @@ export type ExplainCodeOutput = ExplainCodeFlowOutput;
 
 export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'completion' | 'docs' | 'sdd' | 'analyze-diff';
 
-export type AIOutputData = string | FindBugsOutput | RefactorCodeOutput | GenerateUnitTestOutput | GenerateCodeDocsOutput | GenerateSddOutput | AnalyzeDiffOutput | ExplainCodeOutput;
-
-export type AIOutput = {
-    type: ActionType;
-    data: AIOutputData;
-    title: string;
-    language?: string;
-    fileContext?: {
-      id: string;
-      name: string;
-    };
+type AIOutputBase = {
+  title: string;
+  language?: string;
+  fileContext?: {
+    id: string;
+    name: string;
+  };
 };
+
+export type AIOutput = AIOutputBase & (
+  | { type: 'completion'; data: string }
+  | { type: 'explain'; data: ExplainCodeOutput }
+  | { type: 'bugs'; data: FindBugsOutput }
+  | { type: 'refactor'; data: RefactorCodeOutput }
+  | { type: 'test'; data: GenerateUnitTestOutput }
+  | { type: 'docs'; data: GenerateCodeDocsOutput }
+  | { type: 'sdd'; data: GenerateSddOutput }
+  | { type: 'analyze-diff'; data: AnalyzeDiffOutput }
+);
 
 export type Commit = {
   hash: string;

@@ -222,12 +222,10 @@ export function SemCoPilotWorkspace() {
     const previousCommitHash = commitIndex < file.commits.length - 1 ? file.commits[commitIndex + 1].hash : null;
 
     setIsFileLoading(true);
-    const [currentContentResult, previousContentResult] = await Promise.all([
-        getBitbucketFileContentForCommit(loadedProjectInfo.project.url, commitHash, file.id, user.id),
-        previousCommitHash
-            ? getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id, user.id)
-            : Promise.resolve({ success: false })
-    ]);
+    const currentContentResult = await getBitbucketFileContentForCommit(loadedProjectInfo.project.url, commitHash, file.id, user.id);
+    const previousContentResult = previousCommitHash
+        ? await getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id, user.id)
+        : { success: false, content: undefined, error: "No previous commit" };
     setIsFileLoading(false);
 
     if (currentContentResult.success) {
@@ -427,7 +425,7 @@ export function SemCoPilotWorkspace() {
     switch (rightPanelView) {
       case 'copilot-chat':
         return <CopilotChatPanel 
-            activeFile={activeFile} 
+            activeFile={activeFile || null} 
             messages={copilotChatMessages}
             onMessagesChange={setCopilotChatMessages}
             isChatLoading={isChatLoading}
@@ -444,7 +442,7 @@ export function SemCoPilotWorkspace() {
         />;
       default:
         return <CopilotChatPanel 
-            activeFile={activeFile} 
+            activeFile={activeFile || null} 
             messages={copilotChatMessages}
             onMessagesChange={setCopilotChatMessages}
             isChatLoading={isChatLoading}
