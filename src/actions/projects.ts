@@ -9,11 +9,11 @@ export async function getProjects(userId: string): Promise<Project[]> {
 }
 
 export async function addProject(projectData: NewProject): Promise<{ success: boolean; message?: string; project?: Project }> {
-    const host = process.env.BITBUCKET_SERVER_HOST;
-    const projectKey = process.env.BITBUCKET_SERVER_PROJECT;
+    const host = process.env.NEXT_PUBLIC_BITBUCKET_SERVER_HOST;
+    const projectKey = process.env.NEXT_PUBLIC_BITBUCKET_SERVER_PROJECT;
 
     if (!host || !projectKey) {
-        return { success: false, message: 'Bitbucket Server host and project key are not configured in the environment. Please ask the administrator to set BITBUCKET_SERVER_HOST and BITBUCKET_SERVER_PROJECT.' };
+        return { success: false, message: 'Bitbucket Server host and project key are not configured in the environment. Please ask the administrator to set NEXT_PUBLIC_BITBUCKET_SERVER_HOST and NEXT_PUBLIC_BITBUCKET_SERVER_PROJECT.' };
     }
     
     const repoName = projectData.name;

@@ -121,6 +121,10 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  const host = process.env.NEXT_PUBLIC_BITBUCKET_SERVER_HOST;
+  const projectKey = process.env.NEXT_PUBLIC_BITBUCKET_SERVER_PROJECT;
+  const previewUrl = repoName.trim() && host && projectKey ? `${host}/projects/${projectKey}/repos/${repoName.trim()}` : '';
 
   const handleValidateAndAdd = async () => {
     if (!user) {
@@ -150,16 +154,22 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
   return (
     <div className="space-y-4 py-2">
       <Input
-        placeholder="Repository Name (e.g., jira)"
+        placeholder="Repository Name (e.g., my-awesome-repo)"
         value={repoName}
         onChange={e => setRepoName(e.target.value)}
         disabled={isLoading}
       />
+      {previewUrl && (
+        <div className="text-xs text-muted-foreground bg-muted p-2 rounded-md break-all">
+          <p className="font-medium text-foreground mb-1">Full URL Preview:</p>
+          {previewUrl}
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <DialogClose asChild>
           <Button variant="ghost">Cancel</Button>
         </DialogClose>
-        <Button onClick={handleValidateAndAdd} disabled={isLoading}>
+        <Button onClick={handleValidateAndAdd} disabled={isLoading || !repoName.trim()}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Add Project
         </Button>
