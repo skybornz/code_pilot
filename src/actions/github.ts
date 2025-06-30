@@ -212,7 +212,7 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
         
         const files: CodeFile[] = await getBitbucketServerFilesRecursively(bitbucketInfo, branch, mainBranch, userId, '');
 
-        if (files.length === 0) return { success: false, error: 'No readable files found in this branch.' };
+        if (files.length === 0) return { success: false, error: 'No readable files were found in this branch. Please check the repository permissions and that the branch is not empty.' };
         return { success: true, files };
     } catch (error) {
         console.error('Failed to import from Bitbucket repository:', error);
@@ -221,7 +221,8 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
 }
 
 async function getBitbucketServerFileContent(host: string, project: string, repo: string, commit: string, path: string, userId: string): Promise<string | null> {
-    const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/raw/${path}?at=${commit}`;
+    const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+    const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/raw/${encodedPath}?at=${commit}`;
     const response = await fetchWithAuthFallback(url, userId);
     if (!response.ok) return null;
     const content = await response.text();
@@ -237,7 +238,9 @@ async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, bra
     let isLastPage = false;
     
     while (!isLastPage) {
-        const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/browse/${path}?at=${branch}&start=${start}&limit=100`;
+        const browsePathSegment = path ? `/${path.split('/').map(encodeURIComponent).join('/')}` : '';
+        const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/browse${browsePathSegment}?at=${branch}&start=${start}&limit=100`;
+
         const response = await fetchWithAuthFallback(url, userId);
         if (!response.ok) break;
 
@@ -307,7 +310,8 @@ export async function getBitbucketFileContentForCommit(url: string, commitHash: 
     if (!bitbucketInfo) return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
     
     const { host, project, repo } = bitbucketInfo;
-    const contentUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/raw/${path}?at=${commitHash}`;
+    const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+    const contentUrl = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/raw/${encodedPath}?at=${commitHash}`;
 
     const response = await fetchWithAuthFallback(contentUrl, userId);
     if (!response.ok) return { success: false, error: 'Could not fetch file content for the specified commit.' };
