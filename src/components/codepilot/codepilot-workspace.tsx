@@ -313,12 +313,14 @@ export function SemCoPilotWorkspace() {
 
       if (result) {
         if (activeFile) {
-            setAiOutput({ 
-                ...result, 
-                fileContext: { id: activeFile.id, name: activeFile.name } 
-            });
+          const outputWithContext: AIOutput = {
+            ...result,
+            fileContext: { id: activeFile.id, name: activeFile.name },
+          };
+          setAiOutput(outputWithContext);
         } else {
-            setAiOutput(result as AIOutput);
+          // The result doesn't have a file context, which is acceptable since it's optional.
+          setAiOutput(result);
         }
         await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
         await updateUserLastActive(user.id);
