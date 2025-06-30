@@ -193,9 +193,7 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
         const mainBranch = await getMainBranch(bitbucketInfo, userId);
         if (!mainBranch) return { success: false, error: 'Could not determine the main branch for this repository.' };
         
-        const authHeaders = await getAuthHeaders(userId);
-        
-        const files: CodeFile[] = await getBitbucketServerFilesRecursively(bitbucketInfo, branch, mainBranch, authHeaders, '');
+        const files: CodeFile[] = await getBitbucketServerFilesRecursively(bitbucketInfo, branch, mainBranch, userId, '');
 
         if (files.length === 0) return { success: false, error: 'No readable files found in this branch.' };
         return { success: true, files };
@@ -205,15 +203,15 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
     }
 }
 
-async function getBitbucketServerFileContent(host: string, project: string, repo: string, commit: string, path: string, headers: HeadersInit): Promise<string | null> {
+async function getBitbucketServerFileContent(host: string, project: string, repo: string, commit: string, path: string, userId: string): Promise<string | null> {
     const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/raw/${path}?at=${commit}`;
-    const response = await fetch(url, { headers, cache: 'no-store' });
+    const response = await fetchWithAuthFallback(url, userId);
     if (!response.ok) return null;
     const content = await response.text();
     return content.includes('\uFFFD') ? null : content;
 }
 
-async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, branch: string, mainBranch: string, headers: HeadersInit, path: string): Promise<CodeFile[]> {
+async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, branch: string, mainBranch: string, userId: string, path: string): Promise<CodeFile[]> {
     if (shouldIgnore(path)) return [];
 
     const { host, project, repo } = info;
@@ -223,7 +221,7 @@ async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, bra
     
     while (!isLastPage) {
         const url = `${host}${BITBUCKET_SERVER_API_BASE}/projects/${project}/repos/${repo}/browse/${path}?start=${start}&limit=100&at=${branch}`;
-        const response = await fetch(url, { headers, cache: 'no-store' });
+        const response = await fetchWithAuthFallback(url, userId);
         if (!response.ok) break;
 
         const data = await response.json();
@@ -233,14 +231,14 @@ async function getBitbucketServerFilesRecursively(info: BitbucketServerInfo, bra
             const itemPath = item.path.toString;
             if (shouldIgnore(itemPath)) continue;
             if (item.type === 'DIRECTORY') {
-                files.push(...await getBitbucketServerFilesRecursively(info, branch, mainBranch, headers, itemPath));
+                files.push(...await getBitbucketServerFilesRecursively(info, branch, mainBranch, userId, itemPath));
             } else {
-                const content = await getBitbucketServerFileContent(host, project, repo, branch, itemPath, headers);
+                const content = await getBitbucketServerFileContent(host, project, repo, branch, itemPath, userId);
                 if (content === null) continue;
 
                 let originalContent = content;
                 if (branch !== mainBranch) {
-                    originalContent = await getBitbucketServerFileContent(host, project, repo, mainBranch, itemPath, headers) ?? '';
+                    originalContent = await getBitbucketServerFileContent(host, project, repo, mainBranch, itemPath, userId) ?? '';
                 }
                 const name = itemPath.split('/').pop() || '';
                 const language = name.split('.').pop() || 'text';
