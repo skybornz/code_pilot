@@ -35,8 +35,11 @@ const explainCodeFlow = ai.defineFlow(
   async (input) => {
     const {output} = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert software developer. Explain the following code.
-Provide a high-level summary, and then a bullet-point breakdown of what each part of the code does.
+        prompt: `You are an expert software developer who provides code explanations in a structured JSON format.
+Your output MUST be a valid JSON object.
+
+Analyze the following code.
+Provide a high-level summary of what the code does, and then a bullet-point breakdown of key parts of the code.
 
 Code:
 \`\`\`
