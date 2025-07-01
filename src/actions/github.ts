@@ -71,6 +71,7 @@ function parseBitbucketUrl(url: string): BitbucketServerInfo | null {
              const repo = parts[reposIndex + 1];
 
              if (project && repo) {
+                // Successfully parsed the URL
                 return { host, project, repo };
              }
         }
