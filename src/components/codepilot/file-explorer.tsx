@@ -35,52 +35,46 @@ const buildFileTree = (files: CodeFile[]): FileTreeNode => {
   const tree: FileTreeNode = {};
 
   files.forEach(file => {
-    // For each file, reduce its path parts into the tree structure.
-    file.id.split('/').reduce((currentLevel, part, index, pathParts) => {
+    let currentLevel = tree;
+    const pathParts = file.id.split('/');
+    
+    pathParts.forEach((part, index) => {
       const isLastPart = index === pathParts.length - 1;
-      
-      // Check if the node for the current path part exists.
-      if (!currentLevel[part]) {
-        // If the node doesn't exist, create it.
-        if (isLastPart) {
-          // If it's the last part of the path, it's the actual file/folder from the API.
-          // We use its data directly.
-          currentLevel[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
+
+      if (isLastPart) {
+        // We've reached the end of the path. This node is the file/folder itself.
+        // It might already exist as a synthetic folder, so merge properties to preserve children.
+        if (currentLevel[part]) {
+             Object.assign(currentLevel[part], {
+                ...file,
+                name: part,
+                children: currentLevel[part].children || (file.type === 'folder' ? {} : undefined),
+            });
         } else {
-          // If it's an intermediate part of the path, create a synthetic folder
-          // to represent the directory structure.
+             currentLevel[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
+        }
+      } else {
+        // This is an intermediate directory.
+        if (!currentLevel[part]) {
+          // Create a synthetic folder if it doesn't exist.
           const syntheticPath = pathParts.slice(0, index + 1).join('/');
           currentLevel[part] = {
             id: syntheticPath,
             name: part,
             type: 'folder',
             language: 'folder',
-            childrenLoaded: true, // It's considered 'loaded' as we are building its children from the current file list.
+            childrenLoaded: true, // It's synthetic, its children will be added by other files
             children: {},
           };
         }
-      } else if (isLastPart) {
-        // If the node *does* exist and it's the last part, it means a synthetic folder
-        // was created by a deeper file path earlier. Now we have the *actual* data
-        // for that folder, so we merge the real properties into it.
-        Object.assign(currentLevel[part], {
-          ...file,
-          name: part,
-          children: currentLevel[part].children || (file.type === 'folder' ? {} : undefined),
-        });
+        // Descend into the next level. This is the crucial step.
+        currentLevel = currentLevel[part].children as FileTreeNode;
       }
-
-      // For the next iteration of the reducer, return the children of the current node.
-      // This makes the reducer effectively descend one level deeper into the tree.
-      // If a path conflict occurs (e.g., a file is where a folder should be),
-      // returning an empty object prevents crashes.
-      return currentLevel[part]?.children || {};
-    }, tree); // Start the reduction with the root of the tree.
+    });
   });
 
   return tree;
 };
-
 
 interface FileTreeViewProps {
     tree: FileTreeNode;
@@ -91,9 +85,11 @@ interface FileTreeViewProps {
 }
 
 const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level = 0 }: FileTreeViewProps) => {
+    const [openState, setOpenState] = useState<Record<string, boolean>>({});
     const [loadingFolder, setLoadingFolder] = useState<string | null>(null);
 
     const handleExpand = async (isOpen: boolean, node: CodeFile) => {
+        setOpenState(prev => ({ ...prev, [node.id]: isOpen })); // Control the open state
         if (isOpen && !node.childrenLoaded) {
             setLoadingFolder(node.id);
             await onFolderExpand(node.id);
@@ -114,9 +110,9 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                     return (
                         <Collapsible 
                             key={node.id} 
-                            defaultOpen={level < 1} // Auto-expand root level
-                            className="group"
+                            open={openState[node.id] ?? level < 1} // Use controlled state
                             onOpenChange={(isOpen) => handleExpand(isOpen, node)}
+                            className="group"
                         >
                             <CollapsibleTrigger 
                                 className="w-full flex items-center gap-2 text-left py-1.5 rounded-md hover:bg-sidebar-accent/50 text-sm"
