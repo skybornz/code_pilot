@@ -33,53 +33,49 @@ type FileTreeNode = {
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
   const tree: FileTreeNode = {};
 
-  const sortedFiles = [...files].sort((a, b) => {
-      const aParts = a.id.split('/');
-      const bParts = b.id.split('/');
-      const minLength = Math.min(aParts.length, bParts.length);
-
-      for (let i = 0; i < minLength; i++) {
-          const aIsFolder = i < aParts.length - 1 || a.type === 'folder';
-          const bIsFolder = i < bParts.length - 1 || b.type === 'folder';
-
-          if (aIsFolder && !bIsFolder) return -1;
-          if (!aIsFolder && bIsFolder) return 1;
-
-          if (aParts[i] !== bParts[i]) {
-              return aParts[i].localeCompare(bParts[i]);
+  for (const file of files) {
+    const parts = file.id.split('/');
+    
+    // Use reduce to traverse/create the path in the tree
+    parts.reduce((currentLevel, part, index) => {
+      const isLastPart = index === parts.length - 1;
+      
+      // If this part of the path doesn't exist in the current level, create it
+      if (!currentLevel[part]) {
+        if (isLastPart) {
+          // If it's the last part, use the actual file object
+          currentLevel[part] = { ...file };
+          if (file.type === 'folder') {
+            currentLevel[part].children = currentLevel[part].children || {}; // Ensure children object exists
           }
+        } else {
+          // If it's not the last part, create a synthetic folder
+          const currentPath = parts.slice(0, index + 1).join('/');
+          currentLevel[part] = {
+            id: currentPath,
+            name: part,
+            type: 'folder',
+            language: 'folder',
+            childrenLoaded: true, // It's synthetic, its contents will be populated by other files.
+            children: {},
+          };
+        }
+      } else {
+        // The node already exists (e.g., created as a synthetic parent).
+        // If we are now processing the actual folder object, we should merge/update it.
+        if (isLastPart && file.type === 'folder') {
+            currentLevel[part] = {
+                ...file, // Overwrite with actual folder data (like childrenLoaded status)
+                ...acc[part], // Keep existing synthetic data
+                children: acc[part].children || {} // IMPORTANT: preserve children from synthetic creation
+            };
+        }
       }
-
-      return a.id.localeCompare(b.id);
-  });
-
-  for (const file of sortedFiles) {
-      const parts = file.id.split('/');
-      parts.reduce((currentLevel, part, index) => {
-          const currentPath = index === 0 ? part : `${currentLevel.id}/${part}`;
-          
-          if (!currentLevel.children) {
-              currentLevel.children = {};
-          }
-
-          if (!currentLevel.children[part]) {
-              const isLastPart = index === parts.length - 1;
-              if (isLastPart) {
-                  currentLevel.children[part] = { ...file, name: part };
-              } else {
-                  currentLevel.children[part] = {
-                      id: currentPath,
-                      name: part,
-                      type: 'folder',
-                      language: 'folder',
-                      childrenLoaded: true,
-                      children: {},
-                  };
-              }
-          }
-
-          return currentLevel.children[part];
-      }, { children: tree, id: '', name: '', type: 'folder', language: 'folder' });
+      
+      // Return the children of the current node for the next iteration
+      return currentLevel[part].children!;
+      
+    }, tree);
   }
 
   return tree;
@@ -107,15 +103,15 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
         }
     };
     
-    const sortedEntries = Object.entries(tree).sort(([aName, aValue], [bName, bValue]) => {
+    const sortedEntries = Object.values(tree).sort((aValue, bValue) => {
         if (aValue.type === 'folder' && bValue.type === 'file') return -1;
         if (aValue.type === 'file' && bValue.type === 'folder') return 1;
-        return aName.localeCompare(bName);
+        return aValue.name.localeCompare(bValue.name);
     });
 
     return (
         <div className="space-y-0.5">
-            {sortedEntries.map(([name, node]) => {
+            {sortedEntries.map((node) => {
                 const isOpen = openFolders[node.id] ?? false;
                 if (node.type === 'folder') {
                     return (
@@ -135,7 +131,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                                 ) : (
                                     <Folder className="w-4 h-4 text-accent flex-shrink-0" />
                                 )}
-                                <span>{name}</span>
+                                <span>{node.name}</span>
                             </CollapsibleTrigger>
                             <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                                 {node.children && (
