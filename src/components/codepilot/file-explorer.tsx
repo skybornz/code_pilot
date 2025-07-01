@@ -1,14 +1,13 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { CodeFile } from '@/components/codepilot/types';
 import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical, GitBranch, Loader2 } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Logo } from './logo';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { useMemo } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
@@ -32,53 +31,45 @@ type FileTreeNode = {
 };
 
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
-  const tree: FileTreeNode = {};
+    const tree: FileTreeNode = {};
 
-  files.forEach(file => {
-    // Split the full path into parts.
-    file.id.split('/').reduce((currentLevel, part, index, pathParts) => {
-      const currentPath = pathParts.slice(0, index + 1).join('/');
-      
-      // If the node for this part of the path doesn't exist, create it.
-      if (!currentLevel[part]) {
-        const isLastPart = index === pathParts.length - 1;
-        if (isLastPart) {
-          // If it's the last part, it's the actual file/folder from the file list.
-          currentLevel[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
-        } else {
-          // If not the last part, it's a synthetic intermediate folder.
-          currentLevel[part] = {
-            id: currentPath,
-            name: part,
-            type: 'folder',
-            language: 'folder',
-            childrenLoaded: true, // We are populating its children from the main file list.
-            children: {},
-          };
-        }
-      } else {
-        // If the node exists and we're at the end of the path, it means we have the full 
-        // folder object for what was previously a synthetic folder. We merge properties.
-        const isLastPart = index === pathParts.length - 1;
-        if (isLastPart) {
-           Object.assign(currentLevel[part], {
-            ...file,
-            name: part, // Ensure name is correct
-            children: currentLevel[part].children || (file.type === 'folder' ? {} : undefined),
-          });
-        }
-      }
+    const sortedFiles = [...files].sort((a, b) => a.id.localeCompare(b.id));
+    
+    for (const file of sortedFiles) {
+        const parts = file.id.split('/');
+        let currentLevel = tree;
 
-      // Descend into the children for the next part of the path, if it's a folder.
-      if (currentLevel[part]?.type === 'folder' && currentLevel[part].children) {
-        return currentLevel[part].children as FileTreeNode;
-      }
-      
-      return currentLevel;
-    }, tree);
-  });
+        parts.reduce((accumulator, part, index) => {
+            const currentPath = accumulator ? `${accumulator}/${part}` : part;
+            const isLastPart = index === parts.length - 1;
 
-  return tree;
+            if (!currentLevel[part]) {
+                currentLevel[part] = {
+                    id: currentPath,
+                    name: part,
+                    type: 'folder',
+                    language: 'folder',
+                    childrenLoaded: true,
+                    children: {},
+                };
+            }
+            
+            if (isLastPart) {
+                currentLevel[part] = {
+                    ...currentLevel[part],
+                    ...file,
+                    name: part,
+                    children: currentLevel[part]?.children || (file.type === 'folder' ? {} : undefined),
+                };
+            } else {
+                 currentLevel = currentLevel[part].children!;
+            }
+
+            return currentPath;
+        }, '');
+    }
+
+    return tree;
 };
 
 
@@ -88,11 +79,10 @@ interface FileTreeViewProps {
     onFileSelect: (fileId: string) => void;
     onFolderExpand: (folderId: string) => void;
     level?: number;
-    openFolders: Record<string, boolean>;
-    setOpenFolders: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
-const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level = 0, openFolders, setOpenFolders }: FileTreeViewProps) => {
+const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level = 0 }: FileTreeViewProps) => {
+    const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
     const [loadingFolder, setLoadingFolder] = useState<string | null>(null);
 
     const handleExpand = async (isOpen: boolean, node: CodeFile) => {
@@ -113,19 +103,20 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
     return (
         <div className="space-y-0.5">
             {sortedEntries.map(([name, node]) => {
+                const isOpen = openFolders[node.id] ?? false;
                 if (node.type === 'folder') {
                     return (
                         <Collapsible 
                             key={node.id} 
-                            open={openFolders[node.id] ?? false}
-                            onOpenChange={(isOpen) => handleExpand(isOpen, node)}
+                            open={isOpen}
+                            onOpenChange={(open) => handleExpand(open, node)}
                             className="group"
                         >
                             <CollapsibleTrigger 
                                 className="w-full flex items-center gap-2 text-left py-1.5 rounded-md hover:bg-sidebar-accent/50 text-sm"
                                 style={{ paddingLeft: `${level * 1.25}rem` }}
                             >
-                                <ChevronRight className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                                <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
                                 {loadingFolder === node.id ? (
                                     <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                                 ) : (
@@ -141,8 +132,6 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                                         onFileSelect={onFileSelect}
                                         onFolderExpand={onFolderExpand}
                                         level={level + 1}
-                                        openFolders={openFolders}
-                                        setOpenFolders={setOpenFolders}
                                     />
                                 )}
                             </CollapsibleContent>
@@ -176,7 +165,6 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
     const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = React.useState(false);
-    const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   
     return (
     <>
@@ -216,8 +204,6 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                 activeFileId={activeFileId} 
                 onFileSelect={onFileSelect} 
                 onFolderExpand={onFolderExpand} 
-                openFolders={openFolders}
-                setOpenFolders={setOpenFolders}
             />
           </div>
         </div>
