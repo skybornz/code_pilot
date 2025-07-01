@@ -217,7 +217,8 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
 
         for (const item of parsedData.children.values) {
             const itemName = item.path.name;
-            const fullItemPath = path ? `${path}/${itemName}` : itemName;
+            const fullItemPath = item.path.toString; // Use the authoritative full path from the API
+            
             if (shouldIgnore(fullItemPath)) continue;
 
             if (item.type === 'DIRECTORY') {
