@@ -44,25 +44,26 @@ const buildFileTree = (files: CodeFile[]): FileTreeNode => {
             if (!currentNode[part]) {
                 if (isLastPart) {
                     // It's the actual file/folder from the API.
-                    currentNode[part] = { ...file, children: file.type === 'folder' ? {} : undefined };
+                    currentNode[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
                 } else {
-                    // It's a synthetic parent folder.
+                    // It's a synthetic parent folder that doesn't exist in the list yet.
                     const syntheticPath = pathParts.slice(0, index + 1).join('/');
                     currentNode[part] = {
                         id: syntheticPath,
                         name: part,
                         type: 'folder',
                         language: 'folder',
-                        childrenLoaded: true, 
+                        childrenLoaded: true, // It's synthetic, its 'children' are what we process next
                         children: {}
                     };
                 }
             } else {
                  if (isLastPart) {
-                     // A synthetic node was already created. Now we have the real one. Merge them.
+                     // A synthetic node was already created. Now we have the real data. Merge them.
                      currentNode[part] = {
-                        ...file, // Real data from API
-                        // Preserve children that might have been added from other paths traversing this synthetic node
+                        ...file, // Use the real data from the API
+                        name: part, // But ensure the name is just this path part
+                        // Preserve any children that might have been added from other file paths
                         children: currentNode[part].children || (file.type === 'folder' ? {} : undefined),
                      };
                  }
