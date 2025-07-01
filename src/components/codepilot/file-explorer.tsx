@@ -38,35 +38,36 @@ const buildFileTree = (files: CodeFile[]): FileTreeNode => {
     file.id.split('/').reduce((currentLevel, part, index, pathParts) => {
       const isLastPart = index === pathParts.length - 1;
 
-      if (!currentLevel[part]) {
-        if (isLastPart) {
-          // This is the actual file or folder from the list.
-          currentLevel[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
+      if (isLastPart) {
+        // We've reached the end of the path. This node is the file/folder itself.
+        // It might already exist as a synthetic folder, so merge properties to preserve children.
+        if (currentLevel[part]) {
+             Object.assign(currentLevel[part], {
+                ...file,
+                name: part,
+                children: currentLevel[part].children || (file.type === 'folder' ? {} : undefined),
+            });
         } else {
-          // This is an intermediate directory part; create a synthetic folder.
+             currentLevel[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
+        }
+      } else {
+        // This is an intermediate directory.
+        if (!currentLevel[part]) {
+          // Create a synthetic folder if it doesn't exist.
           const syntheticPath = pathParts.slice(0, index + 1).join('/');
           currentLevel[part] = {
             id: syntheticPath,
             name: part,
             type: 'folder',
             language: 'folder',
-            childrenLoaded: true, // It's synthetic; its children are added by other files.
+            childrenLoaded: true, // It's synthetic, its children will be added by other files
             children: {},
           };
         }
-      } else if (isLastPart) {
-        // Node already exists (likely as a synthetic folder); merge the details.
-        Object.assign(currentLevel[part], {
-          ...file,
-          name: part,
-          children: currentLevel[part].children || (file.type === 'folder' ? {} : undefined),
-        });
+        // Descend into the next level. This is the crucial step.
+        currentLevel = currentLevel[part].children as FileTreeNode;
       }
-
-      // Descend into the next level for the subsequent part of the path.
-      // If it's a file on the last part, this will be undefined, which is fine.
-      return currentLevel[part].children as FileTreeNode;
-    }, tree);
+    });
   });
 
   return tree;
@@ -108,7 +109,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                     return (
                         <Collapsible 
                             key={node.id} 
-                            open={openFolders[node.id] ?? level < 1}
+                            open={openState[node.id] ?? level < 1} // Use controlled state
                             onOpenChange={(isOpen) => handleExpand(isOpen, node)}
                             className="group"
                         >
