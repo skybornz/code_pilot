@@ -32,56 +32,53 @@ type FileTreeNode = {
 };
 
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
-    const tree: FileTreeNode = {};
+  const tree: FileTreeNode = {};
 
-    files.forEach(file => {
-        const pathParts = file.id.split('/');
-        let currentNode = tree;
-
-        pathParts.forEach((part, index) => {
-            const isLastPart = index === pathParts.length - 1;
-
-            // Step 1: Ensure the node for the current 'part' exists.
-            if (!currentNode[part]) {
-                if (isLastPart) {
-                    // This is the actual file/folder from the API. Create it.
-                    currentNode[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
-                } else {
-                    // This is an intermediate path part that's not in our tree yet.
-                    // Create a synthetic parent folder for it.
-                    const syntheticPath = pathParts.slice(0, index + 1).join('/');
-                    currentNode[part] = {
-                        id: syntheticPath,
-                        name: part,
-                        type: 'folder',
-                        language: 'folder',
-                        childrenLoaded: true, // Its children will be populated as we process files.
-                        children: {}
-                    };
-                }
-            } else {
-                 // The node already exists (likely a synthetic folder created by a previous file path).
-                 // If this is the last part of the current file's path, it means we now have the "real"
-                 // data for what was a synthetic node. We should merge it.
-                 if (isLastPart) {
-                     Object.assign(currentNode[part], {
-                        ...file, // Use the real data from the API
-                        name: part, // Ensure the name is just this path part
-                        // Preserve any children that might have been added from other file paths
-                        children: currentNode[part].children || (file.type === 'folder' ? {} : undefined),
-                     });
-                 }
-            }
-            
-            // Step 2: Traverse down into the children object for the next iteration.
-            // This must happen whether the node was new or existing.
-            if (currentNode[part].type === 'folder' && currentNode[part].children) {
-                 currentNode = currentNode[part].children;
-            }
+  files.forEach(file => {
+    // For each file, reduce its path parts into the tree structure.
+    file.id.split('/').reduce((currentLevel, part, index, pathParts) => {
+      const isLastPart = index === pathParts.length - 1;
+      
+      // Check if the node for the current path part exists.
+      if (!currentLevel[part]) {
+        // If the node doesn't exist, create it.
+        if (isLastPart) {
+          // If it's the last part of the path, it's the actual file/folder from the API.
+          // We use its data directly.
+          currentLevel[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
+        } else {
+          // If it's an intermediate part of the path, create a synthetic folder
+          // to represent the directory structure.
+          const syntheticPath = pathParts.slice(0, index + 1).join('/');
+          currentLevel[part] = {
+            id: syntheticPath,
+            name: part,
+            type: 'folder',
+            language: 'folder',
+            childrenLoaded: true, // It's considered 'loaded' as we are building its children from the current file list.
+            children: {},
+          };
+        }
+      } else if (isLastPart) {
+        // If the node *does* exist and it's the last part, it means a synthetic folder
+        // was created by a deeper file path earlier. Now we have the *actual* data
+        // for that folder, so we merge the real properties into it.
+        Object.assign(currentLevel[part], {
+          ...file,
+          name: part,
+          children: currentLevel[part].children || (file.type === 'folder' ? {} : undefined),
         });
-    });
+      }
 
-    return tree;
+      // For the next iteration of the reducer, return the children of the current node.
+      // This makes the reducer effectively descend one level deeper into the tree.
+      // If a path conflict occurs (e.g., a file is where a folder should be),
+      // returning an empty object prevents crashes.
+      return currentLevel[part]?.children || {};
+    }, tree); // Start the reduction with the root of the tree.
+  });
+
+  return tree;
 };
 
 
