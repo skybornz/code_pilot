@@ -31,54 +31,35 @@ type FileTreeNode = {
 };
 
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
-  const tree: FileTreeNode = {};
+    const root: FileTreeNode = {};
+    files.forEach(file => {
+        const pathParts = file.id.split('/');
+        const nodeName = pathParts.pop()!;
+        
+        const parentNode = pathParts.reduce((currentLevel, part, index) => {
+            if (!currentLevel[part]) {
+                const currentPath = pathParts.slice(0, index + 1).join('/');
+                currentLevel[part] = {
+                    id: currentPath,
+                    name: part,
+                    type: 'folder',
+                    language: 'folder',
+                    childrenLoaded: true,
+                    children: {},
+                };
+            }
+            return currentLevel[part].children!;
+        }, root);
 
-  for (const file of files) {
-    const parts = file.id.split('/');
-    
-    // Use reduce to traverse/create the path in the tree
-    parts.reduce((currentLevel, part, index) => {
-      const isLastPart = index === parts.length - 1;
-      
-      // If this part of the path doesn't exist in the current level, create it
-      if (!currentLevel[part]) {
-        if (isLastPart) {
-          // If it's the last part, use the actual file object
-          currentLevel[part] = { ...file };
-          if (file.type === 'folder') {
-            currentLevel[part].children = currentLevel[part].children || {}; // Ensure children object exists
-          }
-        } else {
-          // If it's not the last part, create a synthetic folder
-          const currentPath = parts.slice(0, index + 1).join('/');
-          currentLevel[part] = {
-            id: currentPath,
-            name: part,
-            type: 'folder',
-            language: 'folder',
-            childrenLoaded: true, // It's synthetic, its contents will be populated by other files.
-            children: {},
-          };
+        if (!parentNode[nodeName] || file.type === 'folder') {
+             const existingChildren = parentNode[nodeName]?.children;
+             parentNode[nodeName] = {
+                ...file,
+                children: file.type === 'folder' ? (existingChildren || {}) : undefined,
+             };
         }
-      } else {
-        // The node already exists (e.g., created as a synthetic parent).
-        // If we are now processing the actual folder object, we should merge/update it.
-        if (isLastPart && file.type === 'folder') {
-            currentLevel[part] = {
-                ...file, // Overwrite with actual folder data (like childrenLoaded status)
-                ...acc[part], // Keep existing synthetic data
-                children: acc[part].children || {} // IMPORTANT: preserve children from synthetic creation
-            };
-        }
-      }
-      
-      // Return the children of the current node for the next iteration
-      return currentLevel[part].children!;
-      
-    }, tree);
-  }
-
-  return tree;
+    });
+    return root;
 };
 
 
@@ -86,23 +67,13 @@ interface FileTreeViewProps {
     tree: FileTreeNode;
     activeFileId: string | null;
     onFileSelect: (fileId: string) => void;
-    onFolderExpand: (folderId: string) => void;
+    onFolderToggle: (node: CodeFile) => Promise<void>;
     level?: number;
+    openFolders: Record<string, boolean>;
+    loadingFolder: string | null;
 }
 
-const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level = 0 }: FileTreeViewProps) => {
-    const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
-    const [loadingFolder, setLoadingFolder] = useState<string | null>(null);
-
-    const handleExpand = async (isOpen: boolean, node: CodeFile) => {
-        setOpenFolders(prev => ({ ...prev, [node.id]: isOpen }));
-        if (isOpen && !node.childrenLoaded) {
-            setLoadingFolder(node.id);
-            await onFolderExpand(node.id);
-            setLoadingFolder(null);
-        }
-    };
-    
+const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderToggle, level = 0, openFolders, loadingFolder }: FileTreeViewProps) => {
     const sortedEntries = Object.values(tree).sort((aValue, bValue) => {
         if (aValue.type === 'folder' && bValue.type === 'file') return -1;
         if (aValue.type === 'file' && bValue.type === 'folder') return 1;
@@ -118,7 +89,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                         <Collapsible 
                             key={node.id} 
                             open={isOpen}
-                            onOpenChange={(open) => handleExpand(open, node)}
+                            onOpenChange={() => onFolderToggle(node)}
                             className="group"
                         >
                             <CollapsibleTrigger 
@@ -131,7 +102,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                                 ) : (
                                     <Folder className="w-4 h-4 text-accent flex-shrink-0" />
                                 )}
-                                <span>{node.name}</span>
+                                <span className="truncate">{node.name}</span>
                             </CollapsibleTrigger>
                             <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                                 {node.children && (
@@ -139,8 +110,10 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                                         tree={node.children}
                                         activeFileId={activeFileId}
                                         onFileSelect={onFileSelect}
-                                        onFolderExpand={onFolderExpand}
+                                        onFolderToggle={onFolderToggle}
                                         level={level + 1}
+                                        openFolders={openFolders}
+                                        loadingFolder={loadingFolder}
                                     />
                                 )}
                             </CollapsibleContent>
@@ -159,7 +132,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                             style={{ paddingLeft: `${level * 1.25 + 1.25}rem` }}
                         >
                             <FileCode className="w-4 h-4 flex-shrink-0" />
-                            <span title={node.name}>{node.name}</span>
+                            <span className="truncate" title={node.name}>{node.name}</span>
                         </button>
                     );
                 }
@@ -174,6 +147,21 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
     const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = React.useState(false);
+    const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
+    const [loadingFolder, setLoadingFolder] = useState<string | null>(null);
+
+    const handleFolderToggle = async (node: CodeFile) => {
+        const isOpen = openFolders[node.id] ?? false;
+        const newOpenState = !isOpen;
+
+        setOpenFolders(prev => ({ ...prev, [node.id]: newOpenState }));
+
+        if (newOpenState && !node.childrenLoaded) {
+            setLoadingFolder(node.id);
+            await onFolderExpand(node.id);
+            setLoadingFolder(null);
+        }
+    };
   
     return (
     <>
@@ -212,7 +200,9 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                 tree={fileTree} 
                 activeFileId={activeFileId} 
                 onFileSelect={onFileSelect} 
-                onFolderExpand={onFolderExpand} 
+                onFolderToggle={handleFolderToggle} 
+                openFolders={openFolders}
+                loadingFolder={loadingFolder}
             />
           </div>
         </div>
