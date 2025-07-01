@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -32,24 +33,46 @@ type FileTreeNode = {
 
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
     const tree: FileTreeNode = {};
-    const fileMap: { [id: string]: CodeFile & { children?: FileTreeNode } } = {};
 
-    // First pass: create a map of all items
     files.forEach(file => {
-        fileMap[file.id] = { ...file };
-        if (file.type === 'folder') {
-            fileMap[file.id].children = {};
-        }
-    });
-    
-    // Second pass: build the tree structure
-    Object.values(fileMap).forEach(item => {
-        const parentPath = item.id.substring(0, item.id.lastIndexOf('/'));
-        if (parentPath && fileMap[parentPath] && fileMap[parentPath].type === 'folder') {
-            fileMap[parentPath].children![item.name] = item;
-        } else {
-            tree[item.name] = item;
-        }
+        const pathParts = file.id.split('/');
+        let currentNode = tree;
+
+        pathParts.forEach((part, index) => {
+            const isLastPart = index === pathParts.length - 1;
+
+            if (!currentNode[part]) {
+                if (isLastPart) {
+                    // It's the actual file/folder from the API.
+                    currentNode[part] = { ...file, children: file.type === 'folder' ? {} : undefined };
+                } else {
+                    // It's a synthetic parent folder.
+                    const syntheticPath = pathParts.slice(0, index + 1).join('/');
+                    currentNode[part] = {
+                        id: syntheticPath,
+                        name: part,
+                        type: 'folder',
+                        language: 'folder',
+                        childrenLoaded: true, 
+                        children: {}
+                    };
+                }
+            } else {
+                 if (isLastPart) {
+                     // A synthetic node was already created. Now we have the real one. Merge them.
+                     currentNode[part] = {
+                        ...file, // Real data from API
+                        // Preserve children that might have been added from other paths traversing this synthetic node
+                        children: currentNode[part].children || (file.type === 'folder' ? {} : undefined),
+                     };
+                 }
+            }
+            
+            // Traverse down into the children of the current folder node.
+            if (currentNode[part].type === 'folder' && currentNode[part].children) {
+                 currentNode = currentNode[part].children;
+            }
+        });
     });
 
     return tree;
