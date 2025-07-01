@@ -6,6 +6,7 @@ export const ProjectSchema = z.object({
   id: z.string(), // The DB will return INT, but we'll cast to string for consistency
   userId: z.string(),
   name: z.string(),
+  projectKey: z.string(),
   url: z.string().url({ message: "Invalid Bitbucket URL" }),
 });
 
@@ -22,6 +23,7 @@ export async function dbGetProjects(userId: string): Promise<Project[]> {
         id: String(p.ProjectID),
         userId: String(p.UserID),
         name: p.Name,
+        projectKey: p.ProjectKey,
         url: p.URL
     }));
 }
@@ -32,6 +34,7 @@ export async function dbAddProject(projectData: NewProject): Promise<{ success: 
         const result = await pool.request()
             .input('UserID', sql.Int, projectData.userId)
             .input('Name', sql.NVarChar, projectData.name)
+            .input('ProjectKey', sql.NVarChar, projectData.projectKey)
             .input('URL', sql.NVarChar, projectData.url)
             .execute('sp_AddProject');
 
@@ -41,6 +44,7 @@ export async function dbAddProject(projectData: NewProject): Promise<{ success: 
                 id: String(newProject.ProjectID), 
                 userId: String(newProject.UserID),
                 name: newProject.Name,
+                projectKey: newProject.ProjectKey,
                 url: newProject.URL
             }};
         } else {

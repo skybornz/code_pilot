@@ -13,6 +13,7 @@ import { fetchBitbucketBranches, loadBitbucketFiles } from '@/actions/github';
 import { Loader2, PlusCircle, Trash2, FolderGit2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
+import { Label } from '../ui/label';
 
 interface ProjectLoaderProps {
   onFilesLoaded: (files: Partial<CodeFile>[], project: Project, branch: string) => void;
@@ -118,13 +119,13 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
 
 function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project) => void }) {
   const [repoName, setRepoName] = useState('');
+  const [projectKey, setProjectKey] = useState(process.env.NEXT_PUBLIC_BITBUCKET_SERVER_PROJECT || '');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   
   const host = process.env.NEXT_PUBLIC_BITBUCKET_SERVER_HOST;
-  const projectKey = process.env.NEXT_PUBLIC_BITBUCKET_SERVER_PROJECT;
-  const previewUrl = repoName.trim() && host && projectKey ? `${host}/projects/${projectKey}/repos/${repoName.trim()}` : '';
+  const previewUrl = repoName.trim() && host && projectKey.trim() ? `${host}/projects/${projectKey.trim()}/repos/${repoName.trim()}` : '';
 
   const handleValidateAndAdd = async () => {
     if (!user) {
@@ -135,11 +136,20 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
       toast({ variant: 'destructive', title: 'Repository Name Required' });
       return;
     }
+     if (!projectKey.trim()) {
+      toast({ variant: 'destructive', title: 'Project Key Required' });
+      return;
+    }
     
     setIsLoading(true);
 
     // The 'url' property is a dummy value here. The server action will construct the real one.
-    const newProjectData: NewProject = { name: repoName, url: '', userId: user.id };
+    const newProjectData: NewProject = { 
+        name: repoName, 
+        projectKey: projectKey,
+        url: '', 
+        userId: user.id 
+    };
     const addResult = await addProject(newProjectData);
 
     if (addResult.success && addResult.project) {
@@ -153,12 +163,27 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
 
   return (
     <div className="space-y-4 py-2">
-      <Input
-        placeholder="Repository Name (e.g., my-awesome-repo)"
-        value={repoName}
-        onChange={e => setRepoName(e.target.value)}
-        disabled={isLoading}
-      />
+       <div className="space-y-1">
+        <Label htmlFor="repoName">Repository Name</Label>
+        <Input
+          id="repoName"
+          placeholder="my-awesome-repo"
+          value={repoName}
+          onChange={e => setRepoName(e.target.value)}
+          disabled={isLoading}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="projectKey">Project Key</Label>
+        <Input
+          id="projectKey"
+          placeholder="PROJ"
+          value={projectKey}
+          onChange={e => setProjectKey(e.target.value)}
+          disabled={isLoading}
+        />
+      </div>
+
       {previewUrl && (
         <div className="text-xs text-muted-foreground bg-muted p-2 rounded-md break-all">
           <p className="font-medium text-foreground mb-1">Full URL Preview:</p>
@@ -169,7 +194,7 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
         <DialogClose asChild>
           <Button variant="ghost">Cancel</Button>
         </DialogClose>
-        <Button onClick={handleValidateAndAdd} disabled={isLoading || !repoName.trim()}>
+        <Button onClick={handleValidateAndAdd} disabled={isLoading || !repoName.trim() || !projectKey.trim()}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Add Project
         </Button>

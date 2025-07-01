@@ -10,10 +10,10 @@ export async function getProjects(userId: string): Promise<Project[]> {
 
 export async function addProject(projectData: NewProject): Promise<{ success: boolean; message?: string; project?: Project }> {
     const host = process.env.NEXT_PUBLIC_BITBUCKET_SERVER_HOST;
-    const projectKey = process.env.NEXT_PUBLIC_BITBUCKET_SERVER_PROJECT;
+    const projectKey = projectData.projectKey || process.env.NEXT_PUBLIC_BITBUCKET_SERVER_PROJECT;
 
     if (!host || !projectKey) {
-        return { success: false, message: 'Bitbucket Server host and project key are not configured in the environment. Please ask the administrator to set NEXT_PUBLIC_BITBUCKET_SERVER_HOST and NEXT_PUBLIC_BITBUCKET_SERVER_PROJECT.' };
+        return { success: false, message: 'Bitbucket Server host and a Project Key are required. Please check your input and the environment configuration.' };
     }
     
     const repoName = projectData.name;
@@ -30,6 +30,7 @@ export async function addProject(projectData: NewProject): Promise<{ success: bo
         name: repoName,
         url: fullUrl,
         userId: projectData.userId,
+        projectKey: projectKey,
     };
 
     const result = await dbAddProject(dataToSave);
