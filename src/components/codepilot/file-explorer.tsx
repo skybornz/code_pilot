@@ -41,35 +41,40 @@ const buildFileTree = (files: CodeFile[]): FileTreeNode => {
         pathParts.forEach((part, index) => {
             const isLastPart = index === pathParts.length - 1;
 
+            // Step 1: Ensure the node for the current 'part' exists.
             if (!currentNode[part]) {
                 if (isLastPart) {
-                    // It's the actual file/folder from the API.
+                    // This is the actual file/folder from the API. Create it.
                     currentNode[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
                 } else {
-                    // It's a synthetic parent folder that doesn't exist in the list yet.
+                    // This is an intermediate path part that's not in our tree yet.
+                    // Create a synthetic parent folder for it.
                     const syntheticPath = pathParts.slice(0, index + 1).join('/');
                     currentNode[part] = {
                         id: syntheticPath,
                         name: part,
                         type: 'folder',
                         language: 'folder',
-                        childrenLoaded: true, // It's synthetic, its 'children' are what we process next
+                        childrenLoaded: true, // Its children will be populated as we process files.
                         children: {}
                     };
                 }
             } else {
+                 // The node already exists (likely a synthetic folder created by a previous file path).
+                 // If this is the last part of the current file's path, it means we now have the "real"
+                 // data for what was a synthetic node. We should merge it.
                  if (isLastPart) {
-                     // A synthetic node was already created. Now we have the real data. Merge them.
-                     currentNode[part] = {
+                     Object.assign(currentNode[part], {
                         ...file, // Use the real data from the API
-                        name: part, // But ensure the name is just this path part
+                        name: part, // Ensure the name is just this path part
                         // Preserve any children that might have been added from other file paths
                         children: currentNode[part].children || (file.type === 'folder' ? {} : undefined),
-                     };
+                     });
                  }
             }
             
-            // Traverse down into the children of the current folder node.
+            // Step 2: Traverse down into the children object for the next iteration.
+            // This must happen whether the node was new or existing.
             if (currentNode[part].type === 'folder' && currentNode[part].children) {
                  currentNode = currentNode[part].children;
             }
