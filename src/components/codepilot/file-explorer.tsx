@@ -31,45 +31,58 @@ type FileTreeNode = {
 };
 
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
-    const tree: FileTreeNode = {};
+  const tree: FileTreeNode = {};
 
-    const sortedFiles = [...files].sort((a, b) => a.id.localeCompare(b.id));
-    
-    for (const file of sortedFiles) {
-        const parts = file.id.split('/');
-        let currentLevel = tree;
+  const sortedFiles = [...files].sort((a, b) => {
+      const aParts = a.id.split('/');
+      const bParts = b.id.split('/');
+      const minLength = Math.min(aParts.length, bParts.length);
 
-        parts.reduce((accumulator, part, index) => {
-            const currentPath = accumulator ? `${accumulator}/${part}` : part;
-            const isLastPart = index === parts.length - 1;
+      for (let i = 0; i < minLength; i++) {
+          const aIsFolder = i < aParts.length - 1 || a.type === 'folder';
+          const bIsFolder = i < bParts.length - 1 || b.type === 'folder';
 
-            if (!currentLevel[part]) {
-                currentLevel[part] = {
-                    id: currentPath,
-                    name: part,
-                    type: 'folder',
-                    language: 'folder',
-                    childrenLoaded: true,
-                    children: {},
-                };
-            }
-            
-            if (isLastPart) {
-                currentLevel[part] = {
-                    ...currentLevel[part],
-                    ...file,
-                    name: part,
-                    children: currentLevel[part]?.children || (file.type === 'folder' ? {} : undefined),
-                };
-            } else {
-                 currentLevel = currentLevel[part].children!;
-            }
+          if (aIsFolder && !bIsFolder) return -1;
+          if (!aIsFolder && bIsFolder) return 1;
 
-            return currentPath;
-        }, '');
-    }
+          if (aParts[i] !== bParts[i]) {
+              return aParts[i].localeCompare(bParts[i]);
+          }
+      }
 
-    return tree;
+      return a.id.localeCompare(b.id);
+  });
+
+  for (const file of sortedFiles) {
+      const parts = file.id.split('/');
+      parts.reduce((currentLevel, part, index) => {
+          const currentPath = index === 0 ? part : `${currentLevel.id}/${part}`;
+          
+          if (!currentLevel.children) {
+              currentLevel.children = {};
+          }
+
+          if (!currentLevel.children[part]) {
+              const isLastPart = index === parts.length - 1;
+              if (isLastPart) {
+                  currentLevel.children[part] = { ...file, name: part };
+              } else {
+                  currentLevel.children[part] = {
+                      id: currentPath,
+                      name: part,
+                      type: 'folder',
+                      language: 'folder',
+                      childrenLoaded: true,
+                      children: {},
+                  };
+              }
+          }
+
+          return currentLevel.children[part];
+      }, { children: tree, id: '', name: '', type: 'folder', language: 'folder' });
+  }
+
+  return tree;
 };
 
 
@@ -124,7 +137,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                                 )}
                                 <span>{name}</span>
                             </CollapsibleTrigger>
-                            <CollapsibleContent>
+                            <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                                 {node.children && (
                                      <FileTreeView
                                         tree={node.children}
