@@ -35,41 +35,47 @@ const buildFileTree = (files: CodeFile[]): FileTreeNode => {
   const tree: FileTreeNode = {};
 
   files.forEach(file => {
+    // Split the full path into parts.
     file.id.split('/').reduce((currentLevel, part, index, pathParts) => {
-      const isLastPart = index === pathParts.length - 1;
-
+      const currentPath = pathParts.slice(0, index + 1).join('/');
+      
+      // If the node for this part of the path doesn't exist, create it.
       if (!currentLevel[part]) {
-        // Node doesn't exist, create it.
+        const isLastPart = index === pathParts.length - 1;
         if (isLastPart) {
-          // It's the actual file/folder from the API.
+          // If it's the last part, it's the actual file/folder from the file list.
           currentLevel[part] = { ...file, name: part, children: file.type === 'folder' ? {} : undefined };
         } else {
-          // It's a synthetic intermediate folder.
-          const syntheticPath = pathParts.slice(0, index + 1).join('/');
+          // If not the last part, it's a synthetic intermediate folder.
           currentLevel[part] = {
-            id: syntheticPath,
+            id: currentPath,
             name: part,
             type: 'folder',
             language: 'folder',
-            childrenLoaded: true, // It's synthetic, its actual children will be added later.
+            childrenLoaded: true, // We are populating its children from the main file list.
             children: {},
           };
         }
-      } else if (isLastPart) {
-        // Node exists and we're at the end of the path. This means we have the full folder object
-        // for what was previously a synthetic folder. We need to merge properties.
-        Object.assign(currentLevel[part], {
-          ...file,
-          name: part, // Ensure name is correct
-          children: currentLevel[part].children || (file.type === 'folder' ? {} : undefined), // Preserve any children that were already added
-        });
+      } else {
+        // If the node exists and we're at the end of the path, it means we have the full 
+        // folder object for what was previously a synthetic folder. We merge properties.
+        const isLastPart = index === pathParts.length - 1;
+        if (isLastPart) {
+           Object.assign(currentLevel[part], {
+            ...file,
+            name: part, // Ensure name is correct
+            children: currentLevel[part].children || (file.type === 'folder' ? {} : undefined),
+          });
+        }
       }
 
       // Descend into the children for the next part of the path, if it's a folder.
-      if (currentLevel[part]?.type === 'folder') {
-        currentLevel = currentLevel[part].children as FileTreeNode;
+      if (currentLevel[part]?.type === 'folder' && currentLevel[part].children) {
+        return currentLevel[part].children as FileTreeNode;
       }
-    });
+      
+      return currentLevel;
+    }, tree);
   });
 
   return tree;
@@ -111,7 +117,7 @@ const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderExpand, level 
                     return (
                         <Collapsible 
                             key={node.id} 
-                            open={openState[node.id] ?? false}
+                            open={openFolders[node.id] ?? false}
                             onOpenChange={(isOpen) => handleExpand(isOpen, node)}
                             className="group"
                         >
