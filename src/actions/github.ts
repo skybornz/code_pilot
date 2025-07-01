@@ -198,7 +198,7 @@ export async function getMainBranch(url: string, userId: string): Promise<string
     return parsed.success ? parsed.data.displayId : null;
 }
 
-// New function to fetch directory contents (non-recursive)
+// Fetches directory contents using Bitbucket's `/browse` endpoint.
 async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: string, userId: string, path: string): Promise<Partial<CodeFile>[]> {
     const { host, project, repo } = info;
     const items: Partial<CodeFile>[] = [];
@@ -217,7 +217,7 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
 
         for (const item of parsedData.children.values) {
             const itemName = item.path.name;
-            const fullItemPath = item.path.toString; // Use the authoritative full path from the API
+            const fullItemPath = item.path.toString;
             
             if (shouldIgnore(fullItemPath)) continue;
 
@@ -259,7 +259,7 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
     }
 }
 
-// New action to fetch a specific directory's contents
+// Action to fetch a specific directory's contents
 export async function fetchDirectory(url: string, branch: string, path: string, userId: string): Promise<{ success: boolean; files?: Partial<CodeFile>[]; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);
     if (!bitbucketInfo) return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
@@ -280,7 +280,7 @@ async function getBitbucketServerFileContent(host: string, project: string, repo
     return content.includes('\uFFFD') ? null : content;
 }
 
-// New action to fetch a single file's content and its original version
+// Action to fetch a single file's content and its original version
 export async function fetchFileWithContent(url: string, branch: string, mainBranch: string, path: string, userId: string): Promise<{ success: boolean; content?: string; originalContent?: string; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);
     if (!bitbucketInfo) return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
