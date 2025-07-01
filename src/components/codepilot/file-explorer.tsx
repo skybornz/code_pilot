@@ -32,33 +32,47 @@ type FileTreeNode = {
 
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
     const root: FileTreeNode = {};
-    files.forEach(file => {
-        const pathParts = file.id.split('/');
-        const nodeName = pathParts.pop()!;
-        
-        const parentNode = pathParts.reduce((currentLevel, part, index) => {
-            if (!currentLevel[part]) {
-                const currentPath = pathParts.slice(0, index + 1).join('/');
-                currentLevel[part] = {
-                    id: currentPath,
-                    name: part,
-                    type: 'folder',
-                    language: 'folder',
-                    childrenLoaded: true,
-                    children: {},
-                };
-            }
-            return currentLevel[part].children!;
-        }, root);
 
-        if (!parentNode[nodeName] || file.type === 'folder') {
-             const existingChildren = parentNode[nodeName]?.children;
-             parentNode[nodeName] = {
-                ...file,
-                children: file.type === 'folder' ? (existingChildren || {}) : undefined,
-             };
+    // Sort files by path depth to ensure parent directories are created before their children
+    const sortedFiles = [...files].sort((a, b) => a.id.split('/').length - b.id.split('/').length);
+
+    sortedFiles.forEach(file => {
+        const pathParts = file.id.split('/');
+        let currentLevel = root;
+
+        for (let i = 0; i < pathParts.length; i++) {
+            const part = pathParts[i];
+            const isLastPart = i === pathParts.length - 1;
+
+            if (isLastPart) {
+                // This is the file or folder itself.
+                // Merge with any existing synthetic node.
+                const existingNode = currentLevel[part];
+                currentLevel[part] = {
+                    ...existingNode,
+                    ...file,
+                    children: file.type === 'folder' ? (existingNode?.children || {}) : undefined,
+                };
+            } else {
+                // This is a parent directory part.
+                if (!currentLevel[part]) {
+                    // Create a synthetic folder if it doesn't exist
+                    const syntheticPath = pathParts.slice(0, i + 1).join('/');
+                    currentLevel[part] = {
+                        id: syntheticPath,
+                        name: part,
+                        type: 'folder',
+                        language: 'folder',
+                        childrenLoaded: false, // This might be overwritten later if the actual folder is in the files list
+                        children: {},
+                    };
+                }
+                // Descend to the next level
+                currentLevel = currentLevel[part].children!;
+            }
         }
     });
+
     return root;
 };
 
