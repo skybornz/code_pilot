@@ -1,3 +1,4 @@
+
 'use server';
 
 import type { CodeFile, Commit } from '@/components/codepilot/types';
@@ -215,6 +216,7 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
         if (!response.ok) break;
 
         const data = await response.json();
+        console.log('[DEBUG] Raw Bitbucket API Response:', JSON.stringify(data, null, 2));
         const parsedData = BitbucketServerBrowseResponseSchema.parse(data);
 
         for (const item of parsedData.children.values) {
