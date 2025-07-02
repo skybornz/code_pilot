@@ -21,7 +21,7 @@ import { logUserActivity } from '@/actions/activity';
 interface CopilotChatPanelProps {
   activeFile: CodeFile | null;
   messages: Message[];
-  onMessagesChange: (messages: Message[]) => void;
+  onMessagesChange: React.Dispatch<React.SetStateAction<Message[]>>;
   isChatLoading: boolean;
   setIsChatLoading: (isLoading: boolean) => void;
 }

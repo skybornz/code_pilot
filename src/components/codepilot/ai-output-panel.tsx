@@ -30,7 +30,7 @@ interface AIOutputPanelProps {
   output: AIOutput | null;
   isLoading: boolean;
   messages: Message[];
-  onMessagesChange: (messages: Message[]) => void;
+  onMessagesChange: React.Dispatch<React.SetStateAction<Message[]>>;
   isChatLoading: boolean;
   setIsChatLoading: (isLoading: boolean) => void;
 }
