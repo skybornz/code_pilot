@@ -218,6 +218,7 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
         const data = await response.json();
         console.log('[DEBUG] Raw Bitbucket API Response:', JSON.stringify(data, null, 2));
         const parsedData = BitbucketServerBrowseResponseSchema.parse(data);
+        console.log('[DEBUG] Parsed Bitbucket API Response:', JSON.stringify(parsedData, null, 2));
 
         for (const item of parsedData.children.values) {
             const originalNameFromApi = item.path.name;
