@@ -10,6 +10,7 @@ export async function dbGetModels(): Promise<Model[]> {
     name: record.Name,
     type: record.Type,
     isDefault: record.IsDefault,
+    url: record.URL,
   }));
 }
 
@@ -23,6 +24,7 @@ export async function dbGetDefaultModel(): Promise<Model | null> {
             name: record.Name,
             type: record.Type,
             isDefault: record.IsDefault,
+            url: record.URL,
         };
     }
     return null;
@@ -34,6 +36,7 @@ export async function dbAddModel(modelData: NewModel): Promise<{ success: boolea
     const result = await pool.request()
         .input('Name', sql.NVarChar, modelData.name)
         .input('Type', sql.NVarChar, modelData.type)
+        .input('URL', sql.NVarChar, modelData.url || null)
         .execute('sp_AddModel');
     
     if (result.returnValue === 0 && result.recordset.length > 0) {
@@ -42,7 +45,8 @@ export async function dbAddModel(modelData: NewModel): Promise<{ success: boolea
           id: String(record.ModelID),
           name: record.Name,
           type: record.Type,
-          isDefault: record.IsDefault
+          isDefault: record.IsDefault,
+          url: record.URL,
       };
       return { success: true, model: newModel };
     } else {
@@ -60,6 +64,7 @@ export async function dbUpdateModel(modelData: Model): Promise<{ success: boolea
         .input('ModelID', sql.Int, modelData.id)
         .input('Name', sql.NVarChar, modelData.name)
         .input('Type', sql.NVarChar, modelData.type)
+        .input('URL', sql.NVarChar, modelData.url || null)
         .execute('sp_UpdateModel');
 
     if (result.returnValue === 0) {

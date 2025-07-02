@@ -25,7 +25,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const formSchema = z.object({
   name: z.string().min(1, 'Model name is required.'),
   type: z.enum(['online', 'local']),
+  url: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.type === 'local') {
+        if (!data.url || data.url.trim() === '') {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Ollama host URL is required for local models.',
+                path: ['url'],
+            });
+            return;
+        }
+        try {
+            // Use zod's URL validation for a more robust check.
+            z.string().url('Invalid URL format.').parse(data.url);
+        } catch (error) {
+             if (error instanceof z.ZodError) {
+                 ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: error.errors[0].message,
+                    path: ['url'],
+                });
+             }
+        }
+    }
 });
+
 
 type ModelFormValues = z.infer<typeof formSchema>;
 
@@ -43,6 +68,7 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
     defaultValues: {
       name: model?.name || '',
       type: model?.type || 'online',
+      url: model?.url || '',
     },
   });
 
@@ -50,6 +76,7 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
     form.reset({
       name: model?.name || '',
       type: model?.type || 'online',
+      url: model?.url || '',
     });
   }, [model, form]);
 
@@ -57,9 +84,15 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
   async function onSubmit(data: ModelFormValues) {
     setIsSubmitting(true);
     
+    const modelPayload: any = { ...data };
+    if (data.type === 'online') {
+        modelPayload.url = null; // Ensure URL is null for online models
+    }
+
     const result = model
-      ? await updateModel({ ...data, id: model.id })
-      : await addModel(data as NewModel);
+      ? await updateModel({ ...modelPayload, id: model.id, isDefault: model.isDefault })
+      : await addModel(modelPayload as NewModel);
+
 
     setIsSubmitting(false);
 
@@ -156,6 +189,25 @@ export function ModelForm({ model, onSubmitSuccess }: ModelFormProps) {
           )}
         />
         
+        {selectedType === 'local' && (
+          <FormField
+            control={form.control}
+            name="url"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ollama Host URL</FormLabel>
+                <FormControl>
+                  <Input placeholder="http://127.0.0.1:11434" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormDescription>
+                  The base URL for your local Ollama server.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {model ? 'Update Model' : 'Add Model'}

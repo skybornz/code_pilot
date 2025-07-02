@@ -133,6 +133,9 @@ export default function ModelSettingsPage() {
                                 <CardContent className="space-y-2 text-sm text-muted-foreground">
                                     <p><span className="font-semibold text-foreground">Type:</span> <span className="capitalize">{model.type}</span></p>
                                     <p><span className="font-semibold text-foreground">Provider:</span> {model.type === 'online' ? 'Google' : 'Ollama (Local)'}</p>
+                                    {model.type === 'local' && model.url && (
+                                        <p className="truncate" title={model.url}><span className="font-semibold text-foreground">Host:</span> {model.url}</p>
+                                    )}
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
                                      {!model.isDefault && (
