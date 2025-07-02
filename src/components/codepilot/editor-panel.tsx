@@ -82,7 +82,7 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
   );
 }
 
-const createMinimap = (_view: EditorView) => {
+const createMinimap = (view: EditorView) => {
     const dom = document.createElement('div');
     return { dom };
 };
@@ -151,8 +151,8 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     };
 
     return (
-        <div className="grid grid-rows-2 gap-2 p-2 h-full">
-            <div className="flex flex-col min-h-0 relative">
+        <div className="flex flex-col gap-2 p-2 h-full">
+            <div className="flex-1 flex flex-col min-h-0 relative">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
@@ -168,7 +168,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                     />
                 </div>
             </div>
-            <div className="flex flex-col min-h-0 relative">
+            <div className="flex-1 flex flex-col min-h-0 relative">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
                 </h3>
