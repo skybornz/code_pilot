@@ -10,13 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { explainCode } from '@/ai/flows/explain-code';
-import { findBugs } from '@/ai/flows/find-bugs';
-import { generateUnitTest } from '@/ai/flows/generate-unit-test';
-import { refactorCode } from '@/ai/flows/refactor-code';
-import { generateCodeDocs } from '@/ai/flows/generate-code-docs';
-import { generateSdd } from '@/ai/flows/generate-sdd';
-import { analyzeDiff } from '@/ai/flows/analyze-diff';
 import { Menu, Loader2 } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
@@ -30,6 +23,7 @@ import { logUserActivity } from '@/actions/activity';
 import { updateUserLastActive } from '@/actions/users';
 import { getDefaultModel } from '@/actions/models';
 import { withRetry } from '@/lib/utils';
+import { configureAi } from '@/ai/genkit';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
 
@@ -264,6 +258,8 @@ export function SemCoPilotWorkspace() {
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
     
+    await configureAi();
+
     const modelConfig = await getDefaultModel();
     if (!modelConfig) {
       toast({
@@ -285,26 +281,32 @@ export function SemCoPilotWorkspace() {
     try {
       if (action === 'analyze-diff' && originalCode !== undefined) {
         actionName = 'Analyze Diff';
+        const { analyzeDiff } = await import('@/ai/flows/analyze-diff');
         const analysis = await withRetry(() => analyzeDiff({ model, oldCode: originalCode, newCode: code, language }));
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
       } else if (action === 'explain') {
         actionName = 'Explain Code';
+        const { explainCode } = await import('@/ai/flows/explain-code');
         const explanationData = await withRetry(() => explainCode({ model, code }));
         result = { type: 'explain', data: explanationData, title: 'Code Explanation' };
       } else if (action === 'bugs') {
         actionName = 'Find Bugs';
+        const { findBugs } = await import('@/ai/flows/find-bugs');
         const bugReport = await withRetry(() => findBugs({ model, code }));
         result = { type: 'bugs', data: bugReport, title: 'Bug Report' };
       } else if (action === 'test') {
         actionName = 'Generate Test';
+        const { generateUnitTest } = await import('@/ai/flows/generate-unit-test');
         const unitTest = await withRetry(() => generateUnitTest({ model, code, language }));
         result = { type: 'test', data: unitTest, title: 'Generated Unit Test', language };
       } else if (action === 'refactor') {
         actionName = 'Refactor Code';
+        const { refactorCode } = await import('@/ai/flows/refactor-code');
         const refactored = await withRetry(() => refactorCode({ model, code, language }));
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'sdd') {
         actionName = 'Generate SDD';
+        const { generateSdd } = await import('@/ai/flows/generate-sdd');
         const sdd = await withRetry(() => generateSdd({ model, code }));
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
       }
@@ -492,5 +494,3 @@ export function SemCoPilotWorkspace() {
     </div>
   );
 }
-
-    

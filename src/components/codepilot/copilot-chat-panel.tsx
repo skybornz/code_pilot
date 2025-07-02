@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Send, User, Loader2, Wand2 } from 'lucide-react';
-import { copilotChat, type Message } from '@/ai/flows/copilot-chat';
+import type { Message } from '@/ai/flows/copilot-chat';
 import type { CodeFile } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { LogoMark } from './logo-mark';
@@ -17,6 +17,7 @@ import { MessageContent } from './message-content';
 import { getDefaultModel } from '@/actions/models';
 import { useAuth } from '@/context/auth-context';
 import { logUserActivity } from '@/actions/activity';
+import { configureAi } from '@/ai/genkit';
 
 
 interface CopilotChatPanelProps {
@@ -55,6 +56,9 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
     setIsChatLoading(true);
 
     try {
+      await configureAi();
+      const { copilotChat } = await import('@/ai/flows/copilot-chat');
+
       const modelConfig = await getDefaultModel();
       if (!modelConfig) {
         toast({

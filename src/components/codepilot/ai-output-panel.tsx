@@ -14,7 +14,7 @@ import { CodeBlock } from './code-block';
 import type { AnalyzeDiffOutput, ExplainCodeOutput } from './types';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { copilotChat, type Message } from '@/ai/flows/copilot-chat';
+import type { Message } from '@/ai/flows/copilot-chat';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -25,6 +25,7 @@ import { Separator } from '../ui/separator';
 import { getDefaultModel } from '@/actions/models';
 import { useAuth } from '@/context/auth-context';
 import { logUserActivity } from '@/actions/activity';
+import { configureAi } from '@/ai/genkit';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -247,6 +248,9 @@ export function AIOutputPanel({
     setIsChatLoading(true);
 
     try {
+      await configureAi();
+      const { copilotChat } = await import('@/ai/flows/copilot-chat');
+
       const modelConfig = await getDefaultModel();
       if (!modelConfig) {
         toast({
