@@ -15,6 +15,7 @@ import { ChangePasswordDialog } from '../profile/change-password-dialog';
 import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // This will be the internal representation for the tree
 type FileTreeNode = CodeFile & {
@@ -183,7 +184,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
         <div className="p-4 border-b border-sidebar-border">
           <Logo />
         </div>
-        <div className="flex-1 overflow-auto p-2 min-h-0">
+        <ScrollArea className="flex-1 p-2 min-h-0">
           <div className="flex justify-between items-center mb-2 px-2">
               {project && branch ? (
                 <div className="overflow-hidden mr-2">
@@ -217,7 +218,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                 onFolderExpand={onFolderExpand}
             />
           </div>
-        </div>
+        </ScrollArea>
         <div className="p-2 border-t border-sidebar-border">
           {user && (
               <Card className="bg-card/50">

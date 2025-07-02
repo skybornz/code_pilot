@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wand2, Send, User, Loader2 } from 'lucide-react';
+import { Wand2, Send, User, Loader2, CheckCircle, Circle } from 'lucide-react';
 import type { AIOutput } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogoMark } from './logo-mark';
-import { cn, withRetry } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { Separator } from '../ui/separator';
 import { getDefaultModel } from '@/actions/models';
@@ -157,6 +157,61 @@ const renderOutput = (output: AIOutput) => {
   return <p className="whitespace-pre-wrap">{String(data)}</p>;
 };
 
+const AIActionLoader = () => {
+  const steps = [
+    'Initializing AI Model...',
+    'Analyzing code context...',
+    'Generating insights...',
+    'Finalizing response...',
+  ];
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentStep((prev) => {
+        if (prev < steps.length - 1) {
+          return prev + 1;
+        }
+        clearInterval(interval);
+        return prev;
+      });
+    }, 1200); // Simulate progress every 1.2 seconds
+
+    return () => clearInterval(interval);
+  }, [steps.length]);
+
+  return (
+    <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+      <h4 className="font-semibold text-center text-primary animate-pulse">AI is thinking...</h4>
+      <div className="space-y-3">
+        {steps.map((step, index) => (
+          <div key={index} className="flex items-center gap-3 text-sm">
+            <div>
+              {index < currentStep ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : index === currentStep ? (
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground/50" />
+              )}
+            </div>
+            <span
+              className={cn(
+                'transition-colors duration-300',
+                index < currentStep ? 'text-muted-foreground line-through' : '',
+                index === currentStep ? 'text-foreground font-medium' : 'text-muted-foreground'
+              )}
+            >
+              {step}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
 export function AIOutputPanel({ 
   output, 
   isLoading, 
@@ -286,14 +341,7 @@ export function AIOutputPanel({
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
         <ScrollArea className="flex-1" ref={scrollAreaRef}>
           <div className="p-4">
-            {isLoading && (
-              <div className="space-y-4">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-4 w-1/3" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            )}
+            {isLoading && <AIActionLoader />}
             {!isLoading && !output && (
               <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-16">
                 <p>Select an AI action to see the results here.</p>
