@@ -243,6 +243,7 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
         if (parsedData.children.nextPageStart) start = parsedData.children.nextPageStart;
         else isLastPage = true;
     }
+    console.log(`[DEBUG] Fetched directory contents for path: '${path || '/'}'. Found paths:`, items.map(i => i.id));
     return items;
 }
 
