@@ -31,55 +31,40 @@ type FileTreeNode = {
 };
 
 const buildFileTree = (files: CodeFile[]): FileTreeNode => {
-    const root: FileTreeNode = {};
-    const nodeMap: { [id: string]: CodeFile & { children?: FileTreeNode } } = {};
+    const treeRoot: FileTreeNode = {};
+    // The directoryMap maps a path string to the 'children' object of that directory node
+    const directoryMap: { [key: string]: FileTreeNode } = { root: treeRoot };
 
-    // First pass: Create nodes for every file and folder, and also create synthetic parent folders.
-    files.forEach(file => {
-        // Create synthetic parents for the current file if they don't exist
+    // Sort files by path to ensure parents are processed before children
+    const sortedFiles = [...files].sort((a, b) => a.id.localeCompare(b.id));
+
+    sortedFiles.forEach(file => {
         const pathParts = file.id.split('/');
-        let parentPath = '';
-        for (let i = 0; i < pathParts.length - 1; i++) {
-            const part = pathParts[i];
-            const currentPath = parentPath ? `${parentPath}/${part}` : part;
-            if (!nodeMap[currentPath]) {
-                nodeMap[currentPath] = {
-                    id: currentPath,
-                    name: part,
-                    type: 'folder',
-                    language: 'folder',
-                    childrenLoaded: false,
-                    children: {},
-                };
-            }
-            parentPath = currentPath;
-        }
+        const fileName = pathParts.pop()!;
+        const parentPath = pathParts.length > 0 ? pathParts.join('/') : 'root';
+        
+        const parentNode = directoryMap[parentPath];
+        
+        // This check is important. If a parent directory doesn't appear in the `files` list for some reason,
+        // we should not crash. Although with sorting, this should be very rare.
+        if (parentNode) {
+            // Create the new node for the file or folder
+            const newNode: CodeFile & { children?: FileTreeNode } = {
+                ...file,
+                children: file.type === 'folder' ? {} : undefined,
+            };
+            
+            parentNode[fileName] = newNode;
 
-        // Add or merge the file itself into the map
-        const existingNode = nodeMap[file.id];
-        nodeMap[file.id] = {
-            ...existingNode,
-            ...file,
-            children: file.type === 'folder' ? (existingNode?.children || {}) : undefined,
-        };
-    });
-
-    // Second pass: Link all nodes to their parents
-    Object.values(nodeMap).forEach(node => {
-        const pathParts = node.id.split('/');
-        if (pathParts.length > 1) {
-            const parentPath = pathParts.slice(0, -1).join('/');
-            const parentNode = nodeMap[parentPath];
-            if (parentNode?.children) {
-                parentNode.children[node.name] = node;
+            // If the new node is a folder, add its `children` object to the directory map
+            // so that its own children can find it later in the loop.
+            if (file.type === 'folder') {
+                directoryMap[file.id] = newNode.children!;
             }
-        } else {
-            // No parent path means it's a root node.
-            root[node.name] = node;
         }
     });
 
-    return root;
+    return treeRoot;
 };
 
 
