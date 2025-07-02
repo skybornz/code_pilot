@@ -378,7 +378,7 @@ export function SemCoPilotWorkspace() {
       onAiAction={handleAiAction}
       isLoading={isLoading}
       onCommitChange={handleCommitChange}
-      onShowCopilotChat={onShowCopilotChat}
+      onShowCopilotChat={handleShowCopilotChat}
       viewMode={editorViewMode}
       setViewMode={setEditorViewMode}
     />
