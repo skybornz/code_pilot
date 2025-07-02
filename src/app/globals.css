@@ -159,4 +159,16 @@
     word-break: break-all;
     color: hsl(var(--destructive));
   }
+
+  .cm-diff-info-icon {
+    display: inline-block;
+    margin-left: 8px;
+    cursor: pointer;
+    vertical-align: middle;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .cm-diff-info-icon:hover {
+    color: hsl(var(--accent-foreground));
+  }
 }
