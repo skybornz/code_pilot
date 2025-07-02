@@ -2,7 +2,7 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { BookText, Bug, TestTube2, Wand2, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot, ChevronUp, ChevronDown } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -99,6 +99,7 @@ export function EditorPanel({
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content || '');
   const [scrollToLine, setScrollToLine] = useState<number | null>(null);
+  const [currentChangeIndex, setCurrentChangeIndex] = useState(-1);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   useEffect(() => {
@@ -126,7 +127,7 @@ export function EditorPanel({
   };
   
     const { lineClasses, removedContentByLine } = useMemo(() => {
-        if (viewMode !== 'diff' || !file.previousContent) {
+        if (!file.previousContent) {
             return { lineClasses: [], removedContentByLine: new Map() };
         }
 
@@ -157,9 +158,48 @@ export function EditorPanel({
                 newLine += lineCount;
             }
         });
+        
+        if (pendingRemovedText) {
+            removedContentByLine.set(newLine, pendingRemovedText);
+        }
 
         return { lineClasses, removedContentByLine };
-    }, [viewMode, file.previousContent, code]);
+    }, [file.previousContent, code]);
+
+    const changeLines = useMemo(() => {
+        return [...new Set(lineClasses.map(lc => lc.line))].sort((a, b) => a - b);
+    }, [lineClasses]);
+    
+    const handleNavigateChange = (direction: 'next' | 'prev') => {
+        if (changeLines.length === 0) return;
+
+        let nextIndex;
+        if (direction === 'next') {
+            nextIndex = (currentChangeIndex + 1) % changeLines.length;
+        } else {
+            nextIndex = (currentChangeIndex - 1 + changeLines.length) % changeLines.length;
+        }
+        
+        setCurrentChangeIndex(nextIndex);
+        setScrollToLine(changeLines[nextIndex]);
+    };
+
+    const handleViewChangesClick = () => {
+        const isEnteringDiffMode = viewMode === 'edit';
+        setViewMode(isEnteringDiffMode ? 'diff' : 'edit');
+
+        if (isEnteringDiffMode && file.previousContent) {
+            const firstChangeLine = changeLines.length > 0 ? changeLines[0] : null;
+            if (firstChangeLine) {
+                setScrollToLine(firstChangeLine);
+                setCurrentChangeIndex(0);
+            } else {
+                setCurrentChangeIndex(-1);
+            }
+        } else {
+            setCurrentChangeIndex(-1);
+        }
+    };
 
   const extensions = useMemo(() => {
     const minimapExtension = showMinimap.compute(['doc'], () => ({
@@ -190,7 +230,7 @@ export function EditorPanel({
                         dom.className = 'cm-tooltip-diff';
                         const pre = document.createElement('pre');
                         pre.className = 'cm-tooltip-diff-pre';
-                        pre.textContent = removedText.trimEnd();
+                        pre.textContent = `--- Removed ---\n${removedText.trimEnd()}`;
                         dom.appendChild(pre);
                         return { dom };
                     },
@@ -203,33 +243,7 @@ export function EditorPanel({
     
     return baseExtensions;
   }, [file.language, viewMode, file.previousContent, code, lineClasses, removedContentByLine]);
-
-    const handleViewChangesClick = () => {
-        const isEnteringDiffMode = viewMode === 'edit';
-        setViewMode(isEnteringDiffMode ? 'diff' : 'edit');
-
-        if (isEnteringDiffMode && file.previousContent) {
-            const diff = diffLines(file.previousContent, code);
-            let currentLine = 1;
-            let firstChangeLine: number | null = null;
-            for (const part of diff) {
-                if (part.added) {
-                    firstChangeLine = currentLine;
-                    break;
-                }
-                if (!part.removed) {
-                    currentLine += part.count ?? 0;
-                }
-            }
-            if (firstChangeLine) {
-                setScrollToLine(firstChangeLine);
-            }
-        }
-    };
   
-  const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
-  const hasPreviousVersion = activeCommitIndex > -1 && file.commits ? activeCommitIndex < file.commits.length - 1 : false;
-
   const analyzeDisabled = isLoading || !file.previousContent;
 
   const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
@@ -284,6 +298,32 @@ export function EditorPanel({
                 </Select>
             </div>
           )}
+          
+          {viewMode === 'diff' && changeLines.length > 0 && (
+            <div className="flex items-center gap-1 border-l ml-2 pl-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleNavigateChange('prev')} disabled={changeLines.length < 2}>
+                                <ChevronUp className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Previous Change</p></TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleNavigateChange('next')} disabled={changeLines.length < 2}>
+                                <ChevronDown className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Next Change</p></TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <span className="text-xs text-muted-foreground w-16 text-center">
+                    {currentChangeIndex + 1} of {changeLines.length}
+                </span>
+            </div>
+        )}
 
           <TooltipProvider>
             <Tooltip>

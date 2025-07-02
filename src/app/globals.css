@@ -142,12 +142,13 @@
 
   /* Custom tooltip for diff view */
   .cm-tooltip-diff {
-    background-color: hsla(var(--destructive) / 0.2);
+    background-color: hsl(var(--card));
     color: hsl(var(--foreground));
-    border: 1px solid hsla(var(--destructive) / 0.5);
-    padding: 4px 8px;
+    border: 1px solid hsl(var(--border));
+    padding: 8px 12px;
     border-radius: var(--radius);
     max-width: 90ch;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
   .cm-tooltip-diff-pre {
     margin: 0;
@@ -155,5 +156,6 @@
     font-size: 0.875rem; /* text-sm */
     white-space: pre-wrap;
     word-break: break-all;
+    color: hsl(var(--destructive));
   }
 }
