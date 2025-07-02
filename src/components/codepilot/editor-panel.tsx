@@ -117,13 +117,13 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     const originalExtensions = useMemo(() => [
         ...getLanguageExtension(language),
         lineHighlighter(originalLineClasses),
-        showMinimap(),
+        showMinimap,
     ], [originalLineClasses, language]);
 
     const modifiedExtensions = useMemo(() => [
         ...getLanguageExtension(language),
         lineHighlighter(modifiedLineClasses),
-        showMinimap(),
+        showMinimap,
     ], [modifiedLineClasses, language]);
 
 
@@ -202,7 +202,7 @@ export function EditorPanel({
   
   const extensions = useMemo(() => [
     ...getLanguageExtension(file.language),
-    showMinimap(),
+    showMinimap,
   ], [file.language]);
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
