@@ -2,6 +2,8 @@ import sql from 'mssql';
 import { getPool } from './database/db';
 import type { Model, NewModel } from './model-schema';
 
+export type { Model, NewModel } from './model-schema';
+
 export async function dbGetModels(): Promise<Model[]> {
   const pool = await getPool();
   const result = await pool.request().execute('sp_GetModels');
