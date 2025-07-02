@@ -134,30 +134,30 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     };
 
     return (
-        <div className="flex flex-col gap-2 p-2">
-            <div className="flex flex-col">
+        <div className="grid grid-rows-2 gap-2 p-2 h-full">
+            <div className="flex flex-col min-h-0">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
-                <div className="rounded-md border">
+                <ScrollArea className="rounded-md border flex-1">
                     <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
                         {...commonEditorProps}
                     />
-                </div>
+                </ScrollArea>
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-h-0">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
                 </h3>
-                <div className="rounded-md border">
+                <ScrollArea className="rounded-md border flex-1">
                     <CodeMirror
                         value={original}
                         extensions={originalExtensions}
                         {...commonEditorProps}
                     />
-                </div>
+                </ScrollArea>
             </div>
         </div>
     );
@@ -350,33 +350,33 @@ export function EditorPanel({
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
         <div className="relative flex-1 min-h-0">
           {viewMode === 'edit' ? (
-            <CodeMirror
-              value={code}
-              height="100%"
-              theme={vscodeDark}
-              extensions={langExtension}
-              onChange={handleCodeMirrorChange}
-              basicSetup={{
-                lineNumbers: true,
-                foldGutter: true,
-                autocompletion: false,
-              }}
-              className="h-full"
-              style={{
-                fontSize: '0.875rem', // equiv to text-sm
-                fontFamily: 'var(--font-code)',
-              }}
-            />
-          ) : (
             <ScrollArea className="h-full">
-               <DiffView 
-                  original={file.previousContent ?? ''} 
-                  modified={code} 
-                  language={file.language} 
-                  originalCommitHash={previousCommit?.hash}
-                  modifiedCommitHash={file.activeCommitHash}
-               />
+                <CodeMirror
+                  value={code}
+                  height="auto"
+                  theme={vscodeDark}
+                  extensions={langExtension}
+                  onChange={handleCodeMirrorChange}
+                  basicSetup={{
+                    lineNumbers: true,
+                    foldGutter: true,
+                    autocompletion: false,
+                  }}
+                  className="h-full"
+                  style={{
+                    fontSize: '0.875rem', // equiv to text-sm
+                    fontFamily: 'var(--font-code)',
+                  }}
+                />
             </ScrollArea>
+          ) : (
+            <DiffView 
+                original={file.previousContent ?? ''} 
+                modified={code} 
+                language={file.language} 
+                originalCommitHash={previousCommit?.hash}
+                modifiedCommitHash={file.activeCommitHash}
+            />
           )}
         </div>
       </CardContent>
