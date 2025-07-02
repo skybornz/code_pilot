@@ -126,20 +126,27 @@ export function EditorPanel({
     onCodeChange(file.id, value);
   };
   
-    const { lineClasses, removedContentByLine } = useMemo(() => {
+    const { changeChunks, lineClasses, removedContentByLine } = useMemo(() => {
         if (!file.previousContent) {
-            return { lineClasses: [], removedContentByLine: new Map() };
+            return { changeChunks: [], lineClasses: [], removedContentByLine: new Map() };
         }
 
         const lineClasses: { line: number; class: string }[] = [];
         const removedContentByLine = new Map<number, string>();
         const diff = diffLines(file.previousContent, code);
+        const chunks: { startLine: number }[] = [];
+        
         let newLine = 1;
         let pendingRemovedText = '';
+        let inChangeBlock = false;
 
         diff.forEach((part: Change) => {
             const lineCount = part.count || 0;
             if (part.added) {
+                if (!inChangeBlock) {
+                    chunks.push({ startLine: newLine });
+                    inChangeBlock = true;
+                }
                 if (pendingRemovedText) {
                     removedContentByLine.set(newLine, pendingRemovedText);
                     pendingRemovedText = '';
@@ -149,6 +156,10 @@ export function EditorPanel({
                 }
                 newLine += lineCount;
             } else if (part.removed) {
+                if (!inChangeBlock) {
+                    chunks.push({ startLine: newLine });
+                    inChangeBlock = true;
+                }
                 pendingRemovedText += part.value;
             } else { // common part
                 if (pendingRemovedText) {
@@ -156,6 +167,7 @@ export function EditorPanel({
                     pendingRemovedText = '';
                 }
                 newLine += lineCount;
+                inChangeBlock = false; // Reset on a common block
             }
         });
         
@@ -163,12 +175,12 @@ export function EditorPanel({
             removedContentByLine.set(newLine, pendingRemovedText);
         }
 
-        return { lineClasses, removedContentByLine };
+        return { changeChunks, lineClasses, removedContentByLine };
     }, [file.previousContent, code]);
 
     const changeLines = useMemo(() => {
-        return [...new Set(lineClasses.map(lc => lc.line))].sort((a, b) => a - b);
-    }, [lineClasses]);
+        return changeChunks.map(c => c.startLine);
+    }, [changeChunks]);
     
     const handleNavigateChange = (direction: 'next' | 'prev') => {
         if (changeLines.length === 0) return;
@@ -202,6 +214,7 @@ export function EditorPanel({
     };
 
   const extensions = useMemo(() => {
+    // @ts-ignore
     const minimapExtension = showMinimap.compute(['doc'], () => ({
         create: createMinimap,
         showOverlay: 'always',
