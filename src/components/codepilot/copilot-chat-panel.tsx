@@ -11,7 +11,7 @@ import { copilotChat, type Message } from '@/ai/flows/copilot-chat';
 import type { CodeFile } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { LogoMark } from './logo-mark';
-import { cn } from '@/lib/utils';
+import { cn, withRetry } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { getDefaultModel } from '@/actions/models';
 import { useAuth } from '@/context/auth-context';
@@ -53,6 +53,15 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
     setInput('');
     setIsChatLoading(true);
 
+    const onRetry = (attempt: number, error: Error) => {
+        toast({
+            title: 'Chat connection failed',
+            description: `Retrying... (Attempt ${attempt})`,
+            variant: 'destructive',
+        });
+        console.warn(`Chat failed, retry attempt ${attempt}:`, error);
+    };
+
     try {
       const modelConfig = await getDefaultModel();
       if (!modelConfig) {
@@ -74,11 +83,11 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
       const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
       const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
       
-      const stream = await copilotChat({
+      const stream = await withRetry(() => copilotChat({
         model,
         messages: historyForApi,
         projectContext,
-      });
+      }), 2, 1000, onRetry);
 
       const reader = stream.getReader();
       const decoder = new TextDecoder();

@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogoMark } from './logo-mark';
-import { cn } from '@/lib/utils';
+import { cn, withRetry } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { Separator } from '../ui/separator';
 import { getDefaultModel } from '@/actions/models';
@@ -199,6 +199,15 @@ export function AIOutputPanel({
     setInput('');
     setIsChatLoading(true);
 
+    const onRetry = (attempt: number, error: Error) => {
+        toast({
+            title: 'Chat connection failed',
+            description: `Retrying... (Attempt ${attempt})`,
+            variant: 'destructive',
+        });
+        console.warn(`Chat failed, retry attempt ${attempt}:`, error);
+    };
+
     try {
       const modelConfig = await getDefaultModel();
       if (!modelConfig) {
@@ -221,12 +230,12 @@ export function AIOutputPanel({
       const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
       const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
 
-      const stream = await copilotChat({
+      const stream = await withRetry(() => copilotChat({
         model,
         messages: historyForApi,
         projectContext,
         discussionContext,
-      });
+      }), 2, 1000, onRetry);
 
       const reader = stream.getReader();
       const decoder = new TextDecoder();
