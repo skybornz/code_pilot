@@ -2,11 +2,11 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { BookText, Bug, TestTube2, Wand2, NotebookText, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ActionType } from './types';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
@@ -94,101 +94,6 @@ const minimapExtension = showMinimap.compute(['doc'], () => ({
 }));
 
 
-const DiffView = ({ original, modified, language, originalCommitHash, modifiedCommitHash }: { original: string, modified: string, language: string, originalCommitHash?: string, modifiedCommitHash?: string }) => {
-    const { originalLineClasses, modifiedLineClasses } = useMemo(() => {
-        const diff = diffLines(original, modified);
-        const oLineClasses: { line: number; class: string }[] = [];
-        const mLineClasses: { line: number; class: string }[] = [];
-        
-        let originalLineNum = 1;
-        let modifiedLineNum = 1;
-
-        diff.forEach((part: Change) => {
-            const lineCount = part.count || 0;
-            if (part.added) {
-                for (let i = 0; i < lineCount; i++) {
-                    mLineClasses.push({ line: modifiedLineNum + i, class: 'cm-line-bg-added' });
-                }
-                modifiedLineNum += lineCount;
-            } else if (part.removed) {
-                for (let i = 0; i < lineCount; i++) {
-                    oLineClasses.push({ line: originalLineNum + i, class: 'cm-line-bg-removed' });
-                }
-                originalLineNum += lineCount;
-            } else {
-                originalLineNum += lineCount;
-                modifiedLineNum += lineCount;
-            }
-        });
-
-        return { originalLineClasses: oLineClasses, modifiedLineClasses: mLineClasses };
-    }, [original, modified]);
-
-    const originalExtensions = useMemo(() => [
-        ...getLanguageExtension(language),
-        lineHighlighter(originalLineClasses),
-        minimapExtension,
-    ], [originalLineClasses, language]);
-
-    const modifiedExtensions = useMemo(() => [
-        ...getLanguageExtension(language),
-        lineHighlighter(modifiedLineClasses),
-        minimapExtension,
-    ], [modifiedLineClasses, language]);
-
-
-    const commonEditorStyle = {
-        fontSize: '0.875rem',
-        fontFamily: 'var(--font-code)',
-    };
-    
-    const commonEditorSetup = {
-        lineNumbers: true,
-        foldGutter: true,
-        autocompletion: false,
-        editable: false,
-        lineWrapping: false,
-    };
-
-    return (
-        <div className="flex flex-row h-full gap-2 p-2">
-            <div className="flex-1 min-w-0 flex flex-col">
-                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
-                    Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
-                </h3>
-                <div className="flex-1 relative rounded-md border">
-                     <CodeMirror
-                        value={modified}
-                        extensions={modifiedExtensions}
-                        height="100%"
-                        theme={vscodeDark}
-                        readOnly={true}
-                        basicSetup={commonEditorSetup}
-                        style={commonEditorStyle}
-                    />
-                </div>
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col">
-                <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
-                    Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
-                </h3>
-                 <div className="flex-1 relative rounded-md border">
-                    <CodeMirror
-                        value={original}
-                        extensions={originalExtensions}
-                        height="100%"
-                        theme={vscodeDark}
-                        readOnly={true}
-                        basicSetup={commonEditorSetup}
-                        style={commonEditorStyle}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
 export function EditorPanel({
   file,
   onCodeChange,
@@ -210,17 +115,43 @@ export function EditorPanel({
     onCodeChange(file.id, value);
   };
   
-  const extensions = useMemo(() => [
-    ...getLanguageExtension(file.language),
-    minimapExtension,
-  ], [file.language]);
+  const extensions = useMemo(() => {
+    const baseExtensions = [
+        ...getLanguageExtension(file.language),
+        minimapExtension,
+        EditorView.lineWrapping,
+    ];
+
+    if (viewMode === 'diff' && file.previousContent) {
+        const diff = diffLines(file.previousContent, code);
+        const lineClasses: { line: number; class: string }[] = [];
+        let currentLine = 1;
+
+        diff.forEach((part: Change) => {
+            const lineCount = part.count || 0;
+            if (part.added) {
+                for (let i = 0; i < lineCount; i++) {
+                    lineClasses.push({ line: currentLine + i, class: 'cm-line-bg-added' });
+                }
+                currentLine += lineCount;
+            } else if (part.removed) {
+                // In a single-pane diff view, we cannot show lines that don't exist in the current document.
+                // The AI analysis will still receive the full diff.
+            } else { // common part
+                currentLine += lineCount;
+            }
+        });
+        
+        baseExtensions.push(lineHighlighter(lineClasses));
+    }
+    
+    return baseExtensions;
+  }, [file.language, viewMode, file.previousContent, code]);
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
   const hasPreviousVersion = activeCommitIndex > -1 && file.commits ? activeCommitIndex < file.commits.length - 1 : false;
 
-  const previousCommit = hasPreviousVersion && file.commits ? file.commits[activeCommitIndex + 1] : null;
-
-  const analyzeDisabled = isLoading || !hasPreviousVersion || viewMode === 'edit';
+  const analyzeDisabled = isLoading || !hasPreviousVersion;
 
   const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
@@ -285,13 +216,13 @@ export function EditorPanel({
                   disabled={!hasPreviousVersion}
                   data-active={viewMode === 'diff'}
                   className="data-[active=true]:bg-accent"
-                  aria-label="View Changes"
+                  aria-label={viewMode === 'edit' ? 'View Changes' : 'Hide Changes'}
                 >
                   <GitCompare className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{hasPreviousVersion ? (viewMode === 'edit' ? 'View Changes' : 'Back to Editor') : 'No previous version to compare'}</p>
+                <p>{!hasPreviousVersion ? 'No previous version to compare' : (viewMode === 'edit' ? 'View Changes' : 'Hide Changes')}</p>
               </TooltipContent>
             </Tooltip>
             
@@ -308,13 +239,7 @@ export function EditorPanel({
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>
-                      {!hasPreviousVersion
-                        ? 'No previous version to compare'
-                        : viewMode === 'edit'
-                        ? 'Click "View Changes" to enable analysis'
-                        : 'Analyze Changes'}
-                    </p>
+                    <p>{hasPreviousVersion ? 'Analyze Changes' : 'No previous version for analysis'}</p>
                 </TooltipContent>
             </Tooltip>
 
@@ -377,33 +302,25 @@ export function EditorPanel({
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
         <div className="relative flex-1 min-h-0">
-          {viewMode === 'edit' ? (
-            <CodeMirror
-                value={code}
-                theme={vscodeDark}
-                extensions={extensions}
-                onChange={handleCodeMirrorChange}
-                height="100%"
-                basicSetup={{
-                  lineNumbers: true,
-                  foldGutter: true,
-                  autocompletion: false,
-                }}
-                className="h-full"
-                style={{
-                  fontSize: '0.875rem', // equiv to text-sm
-                  fontFamily: 'var(--font-code)',
-                }}
-              />
-          ) : (
-            <DiffView 
-                original={file.previousContent ?? ''} 
-                modified={code} 
-                language={file.language} 
-                originalCommitHash={previousCommit?.hash}
-                modifiedCommitHash={file.activeCommitHash}
+          <CodeMirror
+              value={code}
+              theme={vscodeDark}
+              extensions={extensions}
+              onChange={viewMode === 'edit' ? handleCodeMirrorChange : () => {}}
+              readOnly={viewMode === 'diff'}
+              height="100%"
+              basicSetup={{
+                lineNumbers: true,
+                foldGutter: true,
+                autocompletion: false,
+                editable: viewMode === 'edit',
+              }}
+              className="h-full"
+              style={{
+                fontSize: '0.875rem', // equiv to text-sm
+                fontFamily: 'var(--font-code)',
+              }}
             />
-          )}
         </div>
       </CardContent>
     </Card>
