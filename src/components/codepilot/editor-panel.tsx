@@ -114,13 +114,14 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     }, [original, modified]);
 
     const originalExtensions = useMemo(() => [
+        ...getLanguageExtension(language),
         lineHighlighter(originalLineClasses), 
-        ...getLanguageExtension(language),
     ], [originalLineClasses, language]);
+
     const modifiedExtensions = useMemo(() => [
-        lineHighlighter(modifiedLineClasses), 
         ...getLanguageExtension(language),
-    ], [modifiedLineClasses, language]);
+        lineHighlighter(modifiedLineClasses), 
+    ], [modifiedLineClasses, language, original, modified]);
 
 
     const commonEditorStyle = {
@@ -196,7 +197,9 @@ export function EditorPanel({
     onCodeChange(file.id, value);
   };
   
-  const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
+  const langExtension = useMemo(() => [
+      ...getLanguageExtension(file.language),
+  ], [file.language]);
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
   const hasPreviousVersion = activeCommitIndex > -1 && file.commits ? activeCommitIndex < file.commits.length - 1 : false;
@@ -365,7 +368,7 @@ export function EditorPanel({
                 <CodeMirror
                   value={code}
                   theme={vscodeDark}
-                  extensions={[...langExtension, EditorView.lineWrapping.off]}
+                  extensions={langExtension}
                   onChange={handleCodeMirrorChange}
                   basicSetup={{
                     lineNumbers: true,
