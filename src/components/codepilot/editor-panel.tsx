@@ -20,7 +20,6 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { showMinimap } from '@replit/codemirror-minimap';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -117,15 +116,11 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     const originalExtensions = useMemo(() => [
         ...getLanguageExtension(language),
         lineHighlighter(originalLineClasses),
-        // @ts-ignore
-        showMinimap(),
     ], [originalLineClasses, language]);
 
     const modifiedExtensions = useMemo(() => [
         ...getLanguageExtension(language),
         lineHighlighter(modifiedLineClasses),
-        // @ts-ignore
-        showMinimap(),
     ], [modifiedLineClasses, language]);
 
 
@@ -204,8 +199,6 @@ export function EditorPanel({
   
   const extensions = useMemo(() => [
     ...getLanguageExtension(file.language),
-    // @ts-ignore
-    showMinimap(),
   ], [file.language]);
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
