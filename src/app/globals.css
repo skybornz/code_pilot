@@ -92,4 +92,33 @@
   .cm-line-bg-removed {
     background-color: rgba(239, 68, 68, 0.2); /* equivalent to red-500/20 */
   }
+
+  /* Minimap styling */
+  .cm-minimap {
+    background-color: hsl(var(--card) / 0.8) !important;
+    border-left: 1px solid hsl(var(--border));
+  }
+  .cm-minimap-overlay {
+    background-color: hsl(var(--accent) / 0.1) !important;
+  }
+  .cm-minimap-selection {
+    background-color: hsl(var(--accent) / 0.2) !important;
+    border: 1px solid hsl(var(--accent) / 0.4);
+  }
+  .cm-minimap-scrollbar-track {
+    border-left: 1px solid hsl(var(--border));
+  }
+  .cm-minimap-scrollbar-thumb {
+    background-color: hsl(var(--accent) / 0.4) !important;
+    border: 1px solid hsl(var(--accent) / 0.7);
+  }
+  .cm-minimap-gutter > div {
+    width: 100% !important;
+  }
+  .cm-minimap-gutter .cm-line-bg-added {
+    background-color: rgba(78, 203, 126, 0.5) !important;
+  }
+  .cm-minimap-gutter .cm-line-bg-removed {
+    background-color: rgba(239, 68, 68, 0.5) !important;
+  }
 }

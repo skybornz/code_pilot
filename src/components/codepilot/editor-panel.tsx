@@ -20,6 +20,7 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { showMinimap } from '@replit/codemirror-minimap';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -82,6 +83,17 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
   );
 }
 
+const createMinimap = (_view: EditorView) => {
+    const dom = document.createElement('div');
+    return { dom };
+};
+
+const minimapExtension = showMinimap.compute(['doc'], () => ({
+    create: createMinimap,
+    showOverlay: 'always',
+    displayText: 'blocks',
+}));
+
 
 const DiffView = ({ original, modified, language, originalCommitHash, modifiedCommitHash }: { original: string, modified: string, language: string, originalCommitHash?: string, modifiedCommitHash?: string }) => {
     const { originalLineClasses, modifiedLineClasses } = useMemo(() => {
@@ -116,11 +128,13 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     const originalExtensions = useMemo(() => [
         ...getLanguageExtension(language),
         lineHighlighter(originalLineClasses),
+        minimapExtension,
     ], [originalLineClasses, language]);
 
     const modifiedExtensions = useMemo(() => [
         ...getLanguageExtension(language),
         lineHighlighter(modifiedLineClasses),
+        minimapExtension,
     ], [modifiedLineClasses, language]);
 
 
@@ -138,7 +152,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     };
 
     return (
-        <div className="grid grid-rows-2 gap-2 p-2 h-full">
+        <div className="grid grid-rows-2 gap-2 p-2 h-full overflow-hidden">
             <div className="flex flex-col min-h-0 relative">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
@@ -199,6 +213,7 @@ export function EditorPanel({
   
   const extensions = useMemo(() => [
     ...getLanguageExtension(file.language),
+    minimapExtension,
   ], [file.language]);
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
