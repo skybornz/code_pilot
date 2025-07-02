@@ -83,3 +83,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Diff view styling for editor */
+  .cm-line-bg-added {
+    background-color: rgba(78, 203, 126, 0.2); /* equivalent to green-500/20 */
+  }
+  .cm-line-bg-removed {
+    background-color: rgba(239, 68, 68, 0.2); /* equivalent to red-500/20 */
+  }
+}

@@ -86,8 +86,8 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
 const DiffView = ({ original, modified, language, originalCommitHash, modifiedCommitHash }: { original: string, modified: string, language: string, originalCommitHash?: string, modifiedCommitHash?: string }) => {
     const { originalLineClasses, modifiedLineClasses } = useMemo(() => {
         const diff = diffLines(original, modified);
-        const originalClasses: { line: number; class: string }[] = [];
-        const modifiedClasses: { line: number; class: string }[] = [];
+        const oLineClasses: { line: number; class: string }[] = [];
+        const mLineClasses: { line: number; class: string }[] = [];
         
         let originalLineNum = 1;
         let modifiedLineNum = 1;
@@ -96,12 +96,12 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
             const lineCount = part.count || 0;
             if (part.added) {
                 for (let i = 0; i < lineCount; i++) {
-                    modifiedClasses.push({ line: modifiedLineNum + i, class: 'bg-green-500/20' });
+                    mLineClasses.push({ line: modifiedLineNum + i, class: 'cm-line-bg-added' });
                 }
                 modifiedLineNum += lineCount;
             } else if (part.removed) {
                 for (let i = 0; i < lineCount; i++) {
-                    originalClasses.push({ line: originalLineNum + i, class: 'bg-red-500/20' });
+                    oLineClasses.push({ line: originalLineNum + i, class: 'cm-line-bg-removed' });
                 }
                 originalLineNum += lineCount;
             } else {
@@ -110,12 +110,12 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
             }
         });
 
-        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
+        return { originalLineClasses: oLineClasses, modifiedLineClasses: mLineClasses };
     }, [original, modified]);
 
     const originalExtensions = useMemo(() => [
         ...getLanguageExtension(language),
-        lineHighlighter(originalLineClasses), 
+        lineHighlighter(originalLineClasses),
     ], [originalLineClasses, language]);
 
     const modifiedExtensions = useMemo(() => [
@@ -197,7 +197,9 @@ export function EditorPanel({
     onCodeChange(file.id, value);
   };
   
-  const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
+  const extensions = useMemo(() => [
+    ...getLanguageExtension(file.language),
+  ], [file.language]);
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
   const hasPreviousVersion = activeCommitIndex > -1 && file.commits ? activeCommitIndex < file.commits.length - 1 : false;
@@ -366,7 +368,7 @@ export function EditorPanel({
                 <CodeMirror
                   value={code}
                   theme={vscodeDark}
-                  extensions={langExtension}
+                  extensions={extensions}
                   onChange={handleCodeMirrorChange}
                   basicSetup={{
                     lineNumbers: true,
