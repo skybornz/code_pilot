@@ -164,7 +164,6 @@ export function EditorPanel({
             } else { // common part
                 if (pendingRemovedText) {
                     removedContentByLine.set(newLine, pendingRemovedText);
-                    pendingRemovedText = '';
                 }
                 newLine += lineCount;
                 inChangeBlock = false; // Reset on a common block
@@ -175,7 +174,7 @@ export function EditorPanel({
             removedContentByLine.set(newLine, pendingRemovedText);
         }
 
-        return { changeChunks, lineClasses, removedContentByLine };
+        return { changeChunks: chunks, lineClasses, removedContentByLine };
     }, [file.previousContent, code]);
 
     const changeLines = useMemo(() => {
@@ -214,7 +213,6 @@ export function EditorPanel({
     };
 
   const extensions = useMemo(() => {
-    // @ts-ignore
     const minimapExtension = showMinimap.compute(['doc'], () => ({
         create: createMinimap,
         showOverlay: 'always',
