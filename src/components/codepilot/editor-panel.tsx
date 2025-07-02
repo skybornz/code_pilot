@@ -21,7 +21,6 @@ import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-
 interface EditorPanelProps {
   file: CodeFile;
   onCodeChange: (fileId: string, newContent: string) => void;
@@ -113,8 +112,14 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
         return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
     }, [original, modified]);
 
-    const originalExtensions = useMemo(() => [lineHighlighter(originalLineClasses), ...getLanguageExtension(language)], [originalLineClasses, language]);
-    const modifiedExtensions = useMemo(() => [lineHighlighter(modifiedLineClasses), ...getLanguageExtension(language)], [modifiedLineClasses, language]);
+    const originalExtensions = useMemo(() => [
+        lineHighlighter(originalLineClasses), 
+        ...getLanguageExtension(language),
+    ], [originalLineClasses, language]);
+    const modifiedExtensions = useMemo(() => [
+        lineHighlighter(modifiedLineClasses), 
+        ...getLanguageExtension(language),
+    ], [modifiedLineClasses, language]);
 
 
     const commonEditorStyle = {
@@ -127,15 +132,16 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
         foldGutter: true,
         autocompletion: false,
         editable: false,
+        lineWrapping: false,
     };
 
     return (
         <div className="grid grid-rows-2 gap-2 p-2 h-full">
-            <div className="flex flex-col min-h-0">
+            <div className="flex flex-col min-h-0 relative">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
-                <ScrollArea className="rounded-md border flex-1">
+                <ScrollArea className="rounded-md border flex-1" orientation="both">
                      <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
@@ -147,11 +153,11 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                     />
                 </ScrollArea>
             </div>
-            <div className="flex flex-col min-h-0">
+            <div className="flex flex-col min-h-0 relative">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
                 </h3>
-                <ScrollArea className="rounded-md border flex-1">
+                <ScrollArea className="rounded-md border flex-1" orientation="both">
                     <CodeMirror
                         value={original}
                         extensions={originalExtensions}
@@ -354,11 +360,11 @@ export function EditorPanel({
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
         <div className="relative flex-1 min-h-0">
           {viewMode === 'edit' ? (
-            <ScrollArea className="h-full">
+            <ScrollArea className="h-full" orientation="both">
                 <CodeMirror
                   value={code}
                   theme={vscodeDark}
-                  extensions={langExtension}
+                  extensions={[...langExtension, EditorView.lineWrapping.off]}
                   onChange={handleCodeMirrorChange}
                   basicSetup={{
                     lineNumbers: true,

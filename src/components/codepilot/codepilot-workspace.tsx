@@ -29,7 +29,6 @@ import { useAuth } from '@/context/auth-context';
 import { logUserActivity } from '@/actions/activity';
 import { updateUserLastActive } from '@/actions/users';
 import { getDefaultModel } from '@/actions/models';
-import { withRetry } from '@/lib/utils';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
 
@@ -282,39 +281,30 @@ export function SemCoPilotWorkspace() {
     let result: AIOutput | null = null;
     let actionName: string = 'Unknown AI Action';
 
-    const onRetry = (attempt: number, error: Error) => {
-        toast({
-            title: 'AI Action Failed',
-            description: `An API error occurred. Retrying... (Attempt ${attempt})`,
-            variant: 'destructive',
-        });
-        console.warn(`AI action failed, retry attempt ${attempt}:`, error);
-    };
-
     try {
       if (action === 'analyze-diff' && originalCode !== undefined) {
         actionName = 'Analyze Diff';
-        const analysis = await withRetry(() => analyzeDiff({ model, oldCode: originalCode, newCode: code, language }), 2, 1000, onRetry);
+        const analysis = await analyzeDiff({ model, oldCode: originalCode, newCode: code, language });
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
       } else if (action === 'explain') {
         actionName = 'Explain Code';
-        const explanationData = await withRetry(() => explainCode({ model, code }), 2, 1000, onRetry);
+        const explanationData = await explainCode({ model, code });
         result = { type: 'explain', data: explanationData, title: 'Code Explanation' };
       } else if (action === 'bugs') {
         actionName = 'Find Bugs';
-        const bugReport = await withRetry(() => findBugs({ model, code }), 2, 1000, onRetry);
+        const bugReport = await findBugs({ model, code });
         result = { type: 'bugs', data: bugReport, title: 'Bug Report' };
       } else if (action === 'test') {
         actionName = 'Generate Test';
-        const unitTest = await withRetry(() => generateUnitTest({ model, code, language }), 2, 1000, onRetry);
+        const unitTest = await generateUnitTest({ model, code, language });
         result = { type: 'test', data: unitTest, title: 'Generated Unit Test', language };
       } else if (action === 'refactor') {
         actionName = 'Refactor Code';
-        const refactored = await withRetry(() => refactorCode({ model, code, language }), 2, 1000, onRetry);
+        const refactored = await refactorCode({ model, code, language });
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'sdd') {
         actionName = 'Generate SDD';
-        const sdd = await withRetry(() => generateSdd({ model, code }), 2, 1000, onRetry);
+        const sdd = await generateSdd({ model, code });
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
       }
 
