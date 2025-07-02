@@ -223,6 +223,8 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
             const directChildName = nameParts[0];
 
             const fullItemPath = path ? `${path}/${directChildName}` : directChildName;
+            
+            console.log(`[DEBUG] Bitbucket API value: '${originalNameFromApi}', Generated full path: '${fullItemPath}'`);
 
             if (processedIds.has(fullItemPath) || shouldIgnore(fullItemPath)) {
                 continue;
