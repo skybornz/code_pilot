@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -53,15 +54,6 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
     setInput('');
     setIsChatLoading(true);
 
-    const onRetry = (attempt: number, error: Error) => {
-        toast({
-            title: 'Chat connection failed',
-            description: `Retrying... (Attempt ${attempt})`,
-            variant: 'destructive',
-        });
-        console.warn(`Chat failed, retry attempt ${attempt}:`, error);
-    };
-
     try {
       const modelConfig = await getDefaultModel();
       if (!modelConfig) {
@@ -83,11 +75,11 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
       const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
       const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
       
-      const stream = await withRetry(() => copilotChat({
+      const stream = await copilotChat({
         model,
         messages: historyForApi,
         projectContext,
-      }), 2, 1000, onRetry);
+      });
 
       const reader = stream.getReader();
       const decoder = new TextDecoder();

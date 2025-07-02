@@ -191,15 +191,6 @@ export function AIOutputPanel({
     setInput('');
     setIsChatLoading(true);
 
-    const onRetry = (attempt: number, error: Error) => {
-        toast({
-            title: 'Chat connection failed',
-            description: `Retrying... (Attempt ${attempt})`,
-            variant: 'destructive',
-        });
-        console.warn(`Chat failed, retry attempt ${attempt}:`, error);
-    };
-
     try {
       const modelConfig = await getDefaultModel();
       if (!modelConfig) {
@@ -222,12 +213,12 @@ export function AIOutputPanel({
       const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
       const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
 
-      const stream = await withRetry(() => copilotChat({
+      const stream = await copilotChat({
         model,
         messages: historyForApi,
         projectContext,
         discussionContext,
-      }), 2, 1000, onRetry);
+      });
 
       const reader = stream.getReader();
       const decoder = new TextDecoder();
@@ -247,10 +238,10 @@ export function AIOutputPanel({
           }
 
           if (isFirstChunk) {
-            onMessagesChange((prev: any) => [...prev, { role: 'model', content: chunkValue }]);
+            onMessagesChange((prev: Message[]) => [...prev, { role: 'model', content: chunkValue }]);
             isFirstChunk = false;
           } else {
-            onMessagesChange((prev: any) => {
+            onMessagesChange((prev: Message[]) => {
               const updatedMessages = [...prev];
               const lastMessage = updatedMessages[updatedMessages.length - 1];
               if (lastMessage?.role === 'model') {
