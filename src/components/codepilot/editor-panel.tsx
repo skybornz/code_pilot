@@ -19,7 +19,6 @@ import { diffLines, type Change } from 'diff';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { showMinimap } from "@replit/codemirror-minimap"
 
 interface EditorPanelProps {
@@ -152,12 +151,12 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     };
 
     return (
-        <div className="grid grid-rows-2 gap-2 p-2 h-full overflow-hidden">
+        <div className="grid grid-rows-2 gap-2 p-2 h-full">
             <div className="flex flex-col min-h-0 relative">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
-                <div className="rounded-md border flex-1 overflow-hidden">
+                <div className="rounded-md border flex-1">
                      <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
@@ -173,7 +172,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
                 </h3>
-                 <div className="rounded-md border flex-1 overflow-hidden">
+                 <div className="rounded-md border flex-1">
                     <CodeMirror
                         value={original}
                         extensions={originalExtensions}
@@ -377,7 +376,7 @@ export function EditorPanel({
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <div className="relative flex-1 min-h-0 overflow-hidden">
+        <div className="relative flex-1 min-h-0">
           {viewMode === 'edit' ? (
             <CodeMirror
                 value={code}
