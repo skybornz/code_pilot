@@ -1,9 +1,9 @@
+
 'use client';
 
 import type { FindBugsOutput } from "@/ai/flows/find-bugs";
 import type { RefactorCodeOutput } from "@/ai/flows/refactor-code";
 import type { GenerateUnitTestOutput } from "@/ai/flows/generate-unit-test";
-import type { GenerateCodeDocsOutput } from "@/ai/flows/generate-code-docs";
 import type { GenerateSddOutput } from "@/ai/flows/generate-sdd";
 import type { AnalyzeDiffOutput as AnalyzeDiffFlowOutput } from "@/ai/flows/analyze-diff";
 import type { ExplainCodeOutput as ExplainCodeFlowOutput } from "@/ai/flows/explain-code";
@@ -11,7 +11,7 @@ import type { ExplainCodeOutput as ExplainCodeFlowOutput } from "@/ai/flows/expl
 export type AnalyzeDiffOutput = AnalyzeDiffFlowOutput;
 export type ExplainCodeOutput = ExplainCodeFlowOutput;
 
-export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'docs' | 'sdd' | 'analyze-diff' | 'copilot';
+export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'sdd' | 'analyze-diff' | 'copilot';
 
 type AIOutputBase = {
   title: string;
@@ -27,7 +27,6 @@ export type AIOutput = AIOutputBase & (
   | { type: 'bugs'; data: FindBugsOutput }
   | { type: 'refactor'; data: RefactorCodeOutput }
   | { type: 'test'; data: GenerateUnitTestOutput }
-  | { type: 'docs'; data: GenerateCodeDocsOutput }
   | { type: 'sdd'; data: GenerateSddOutput }
   | { type: 'analyze-diff'; data: AnalyzeDiffOutput }
 );

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -8,8 +9,6 @@ import type { AIOutput } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
 import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
-import type { GenerateCodeDocsOutput } from '@/ai/flows/generate-code-docs';
-import type { GenerateSddOutput } from '@/ai/flows/generate-sdd';
 import { CodeBlock } from './code-block';
 import type { AnalyzeDiffOutput, ExplainCodeOutput } from './types';
 import { Input } from '../ui/input';
@@ -54,9 +53,6 @@ const formatAiOutputForChat = (output: AIOutput): string => {
   } else if (type === 'test') {
     const testData = data as GenerateUnitTestOutput;
     content += `**Generated Unit Test:**\n\`\`\`${language}\n${testData.unitTest}\n\`\`\``;
-  } else if (type === 'docs') {
-    const docsData = data as GenerateCodeDocsOutput;
-    content += `**Generated Comments:**\n\`\`\`${language}\n${docsData.documentation}\n\`\`\``;
   } else if (type === 'sdd') {
     const sddData = data as GenerateSddOutput;
     content += `**Software Design Document:**\n${sddData.sdd}`;
@@ -150,11 +146,6 @@ const renderOutput = (output: AIOutput) => {
   if (type === 'test') {
     const testData = data as GenerateUnitTestOutput;
     return <CodeBlock code={testData.unitTest} language={language} />;
-  }
-
-  if (type === 'docs') {
-    const docsData = data as GenerateCodeDocsOutput;
-    return <CodeBlock code={docsData.documentation} language={language} />;
   }
   
   if (type === 'sdd') {
@@ -317,7 +308,7 @@ export function AIOutputPanel({
                 <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
               </div>
             )}
-            {!isLoading && output && output.type !== 'completion' && (
+            {!isLoading && output && (
               <div>
                 <h3 className="font-medium mb-3 text-accent">{output.title}</h3>
                 {renderOutput(output)}
@@ -336,7 +327,8 @@ export function AIOutputPanel({
                   </Avatar>
                 )}
                 <div className={cn(
-                    'p-3 rounded-lg max-w-[85%] text-sm break-words', 
+                    'p-3 rounded-lg max-w-[85%]', 
+                    'text-sm break-words', 
                     message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 )}>
                   {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
