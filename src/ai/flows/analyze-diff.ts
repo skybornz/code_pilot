@@ -37,7 +37,7 @@ const analyzeDiffFlow = ai.defineFlow(
     inputSchema: AnalyzeDiffFlowInputSchema,
     outputSchema: AnalyzeDiffOutputSchema,
   },
-  async (input) => {
+  async (input: AnalyzeDiffInput) => {
     const { output } = await ai.generate({
         model: input.model as any,
         prompt: `You are an expert code reviewer. Analyze the following code changes for a file written in ${input.language}.

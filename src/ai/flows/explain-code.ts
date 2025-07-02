@@ -32,7 +32,7 @@ const explainCodeFlow = ai.defineFlow(
     inputSchema: ExplainCodeFlowInputSchema,
     outputSchema: ExplainCodeOutputSchema,
   },
-  async (input) => {
+  async (input: ExplainCodeInput) => {
     const {output} = await ai.generate({
         model: input.model as any,
         prompt: `You are an expert software developer.

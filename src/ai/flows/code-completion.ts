@@ -39,7 +39,7 @@ const codeCompletionFlow = ai.defineFlow(
     inputSchema: CodeCompletionFlowInputSchema,
     outputSchema: CodeCompletionOutputSchema,
   },
-  async (input) => {
+  async (input: CodeCompletionInput) => {
     const { output } = await ai.generate({
         model: input.model as any,
         prompt: `You are an AI code completion assistant. You will receive a code snippet and you will generate a code completion suggestion based on the code, language, and project context.

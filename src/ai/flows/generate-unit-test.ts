@@ -34,7 +34,7 @@ const generateUnitTestFlow = ai.defineFlow(
     inputSchema: GenerateUnitTestFlowInputSchema,
     outputSchema: GenerateUnitTestOutputSchema,
   },
-  async (input) => {
+  async (input: GenerateUnitTestInput) => {
     const {output} = await ai.generate({
         model: input.model as any,
         prompt: `You are a software quality assurance expert. Generate a unit test for the following code block. Also provide an explanation of what the test covers.

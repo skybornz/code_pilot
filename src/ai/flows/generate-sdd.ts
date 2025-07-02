@@ -32,7 +32,7 @@ const generateSddFlow = ai.defineFlow(
     inputSchema: GenerateSddFlowInputSchema,
     outputSchema: GenerateSddOutputSchema,
   },
-  async (input) => {
+  async (input: GenerateSddInput) => {
     const {output} = await ai.generate({
         model: input.model as any,
         prompt: `You are an expert software architect. Generate a comprehensive Software Design Document (SDD) in Markdown format for the following code block.

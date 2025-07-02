@@ -34,7 +34,7 @@ const refactorCodeFlow = ai.defineFlow(
     inputSchema: RefactorCodeFlowInputSchema,
     outputSchema: RefactorCodeOutputSchema,
   },
-  async (input) => {
+  async (input: RefactorCodeInput) => {
     const {output} = await ai.generate({
         model: input.model as any,
         prompt: `You are an AI code assistant that refactors code.

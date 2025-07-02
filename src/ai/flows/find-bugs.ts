@@ -35,7 +35,7 @@ const findBugsFlow = ai.defineFlow(
     inputSchema: FindBugsFlowInputSchema,
     outputSchema: FindBugsOutputSchema,
   },
-  async (input) => {
+  async (input: FindBugsInput) => {
     const {output} = await ai.generate({
       model: input.model as any,
       prompt: `You are a security expert.
