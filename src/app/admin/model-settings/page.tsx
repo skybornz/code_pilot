@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Globe, Pencil, Star, Server } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Globe, Pencil, Star, Server, CheckCircle, XCircle } from 'lucide-react';
 import type { Model } from '@/lib/model-schema';
 import { getModels, deleteModel, setDefaultModel } from '@/actions/models';
 import { ModelForm } from './model-form';
@@ -22,6 +22,54 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { checkDefaultModelStatus } from '@/actions/status';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+function ConnectionStatus({ status, message }: { status: 'idle' | 'checking' | 'connected' | 'error', message?: string }) {
+    if (status === 'checking') {
+        return (
+            <Badge variant="secondary" className="flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Checking...
+            </Badge>
+        );
+    }
+    if (status === 'connected') {
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <Badge className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+                            <CheckCircle className="h-3 w-3" />
+                            Connected
+                        </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{message}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
+    }
+    if (status === 'error') {
+        return (
+             <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <Badge variant="destructive" className="flex items-center gap-1.5">
+                            <XCircle className="h-3 w-3" />
+                            Connection Failed
+                        </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="max-w-xs">{message}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
+    }
+    return null; // idle
+}
 
 export default function ModelSettingsPage() {
     const [models, setModels] = useState<Model[]>([]);
@@ -29,6 +77,10 @@ export default function ModelSettingsPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [selectedModel, setSelectedModel] = useState<Model | null>(null);
     const { toast } = useToast();
+    const [connectionStatus, setConnectionStatus] = useState<{
+        status: 'idle' | 'checking' | 'connected' | 'error';
+        message?: string;
+    }>({ status: 'idle' });
 
     const fetchModels = useCallback(async () => {
         setIsLoading(true);
@@ -50,6 +102,23 @@ export default function ModelSettingsPage() {
     useEffect(() => {
         fetchModels();
     }, [fetchModels]);
+
+    useEffect(() => {
+        const defaultModel = models.find(m => m.isDefault);
+        if (defaultModel) {
+            setConnectionStatus({ status: 'checking' });
+            checkDefaultModelStatus().then(result => {
+                if (result.success) {
+                    setConnectionStatus({ status: 'connected', message: result.message });
+                } else {
+                    setConnectionStatus({ status: 'error', message: result.message });
+                }
+            });
+        } else {
+            setConnectionStatus({ status: 'idle' });
+        }
+    }, [models]);
+
 
     const onFormSubmit = () => {
         setIsFormOpen(false);
@@ -127,7 +196,12 @@ export default function ModelSettingsPage() {
                                             {model.type === 'online' ? <Globe className="h-5 w-5" /> : <Server className="h-5 w-5" />}
                                             {model.name}
                                         </div>
-                                        {model.isDefault && <Badge>Default</Badge>}
+                                        {model.isDefault && (
+                                            <div className="flex items-center gap-2">
+                                                <ConnectionStatus status={connectionStatus.status} message={connectionStatus.message} />
+                                                <Badge>Default</Badge>
+                                            </div>
+                                        )}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2 text-sm text-muted-foreground">
