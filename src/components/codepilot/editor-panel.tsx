@@ -27,7 +27,7 @@ interface EditorPanelProps {
   onAiAction: (action: ActionType, code: string, language: string, originalCode?: string) => void;
   isLoading: boolean;
   onCommitChange: (fileId: string, commitHash: string) => void;
-  onShowCopilotChat: () => void;
+  handleShowCopilotChat: () => void;
   viewMode: 'edit' | 'diff';
   setViewMode: (mode: 'edit' | 'diff') => void;
 }
@@ -110,7 +110,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
             }
         });
 
-        return { originalLineClasses, modifiedLineClasses };
+        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
     }, [original, modified]);
 
     const originalExtensions = useMemo(() => [
@@ -182,7 +182,7 @@ export function EditorPanel({
   onAiAction,
   isLoading,
   onCommitChange,
-  onShowCopilotChat,
+  handleShowCopilotChat,
   viewMode,
   setViewMode,
 }: EditorPanelProps) {
@@ -342,7 +342,7 @@ export function EditorPanel({
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem key={copilotAction.id} onClick={onShowCopilotChat} disabled={isLoading}>
+                <DropdownMenuItem key={copilotAction.id} onClick={handleShowCopilotChat} disabled={isLoading}>
                     <copilotAction.icon className="mr-2 h-4 w-4" />
                     <span>{copilotAction.label}</span>
                 </DropdownMenuItem>
