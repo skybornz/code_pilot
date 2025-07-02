@@ -139,4 +139,21 @@
   .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--accent) / 0.8);
   }
+
+  /* Custom tooltip for diff view */
+  .cm-tooltip-diff {
+    background-color: hsla(var(--destructive) / 0.2);
+    color: hsl(var(--foreground));
+    border: 1px solid hsla(var(--destructive) / 0.5);
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    max-width: 90ch;
+  }
+  .cm-tooltip-diff-pre {
+    margin: 0;
+    font-family: var(--font-code);
+    font-size: 0.875rem; /* text-sm */
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
 }

@@ -3,12 +3,12 @@
 
 import type { CodeFile } from '@/components/codepilot/types';
 import { BookText, Bug, TestTube2, Wand2, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ActionType } from './types';
-import CodeMirror from '@uiw/react-codemirror';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { css } from '@codemirror/lang-css';
 import { python } from '@codemirror/lang-python';
@@ -16,7 +16,7 @@ import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import { diffLines, type Change } from 'diff';
-import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { Decoration, EditorView, ViewPlugin, type ViewUpdate, hoverTooltip } from '@codemirror/view';
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { showMinimap } from "@replit/codemirror-minimap"
@@ -82,17 +82,10 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
   );
 }
 
-const createMinimap = (view: EditorView) => {
+let createMinimap = (v: EditorView) => {
     const dom = document.createElement('div');
     return { dom };
 };
-
-const minimapExtension = showMinimap.compute(['doc'], () => ({
-    create: createMinimap,
-    showOverlay: 'always',
-    displayText: 'blocks',
-}));
-
 
 export function EditorPanel({
   file,
@@ -105,17 +98,76 @@ export function EditorPanel({
   setViewMode,
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content || '');
+  const [scrollToLine, setScrollToLine] = useState<number | null>(null);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   useEffect(() => {
     setCode(file.content || '');
   }, [file.content]);
+
+  useEffect(() => {
+    if (scrollToLine && editorRef.current?.view) {
+        const view = editorRef.current.view;
+        if (scrollToLine <= view.state.doc.lines) {
+            const line = view.state.doc.line(scrollToLine);
+            view.dispatch({
+                effects: EditorView.scrollIntoView(line.from, {
+                    y: 'center',
+                }),
+            });
+        }
+        setScrollToLine(null); // Reset after scrolling
+    }
+  }, [scrollToLine]);
   
   const handleCodeMirrorChange = (value: string) => {
     setCode(value);
     onCodeChange(file.id, value);
   };
   
+    const { lineClasses, removedContentByLine } = useMemo(() => {
+        if (viewMode !== 'diff' || !file.previousContent) {
+            return { lineClasses: [], removedContentByLine: new Map() };
+        }
+
+        const lineClasses: { line: number; class: string }[] = [];
+        const removedContentByLine = new Map<number, string>();
+        const diff = diffLines(file.previousContent, code);
+        let newLine = 1;
+        let pendingRemovedText = '';
+
+        diff.forEach((part: Change) => {
+            const lineCount = part.count || 0;
+            if (part.added) {
+                if (pendingRemovedText) {
+                    removedContentByLine.set(newLine, pendingRemovedText);
+                    pendingRemovedText = '';
+                }
+                for (let i = 0; i < lineCount; i++) {
+                    lineClasses.push({ line: newLine + i, class: 'cm-line-bg-added' });
+                }
+                newLine += lineCount;
+            } else if (part.removed) {
+                pendingRemovedText += part.value;
+            } else { // common part
+                if (pendingRemovedText) {
+                    removedContentByLine.set(newLine, pendingRemovedText);
+                    pendingRemovedText = '';
+                }
+                newLine += lineCount;
+            }
+        });
+
+        return { lineClasses, removedContentByLine };
+    }, [viewMode, file.previousContent, code]);
+
   const extensions = useMemo(() => {
+    const minimapExtension = showMinimap.compute(['doc'], () => ({
+        create: createMinimap,
+        showOverlay: 'always',
+        displayText: 'blocks',
+    }));
+
     const baseExtensions = [
         ...getLanguageExtension(file.language),
         minimapExtension,
@@ -123,35 +175,62 @@ export function EditorPanel({
     ];
 
     if (viewMode === 'diff' && file.previousContent) {
-        const diff = diffLines(file.previousContent, code);
-        const lineClasses: { line: number; class: string }[] = [];
-        let currentLine = 1;
-
-        diff.forEach((part: Change) => {
-            const lineCount = part.count || 0;
-            if (part.added) {
-                for (let i = 0; i < lineCount; i++) {
-                    lineClasses.push({ line: currentLine + i, class: 'cm-line-bg-added' });
-                }
-                currentLine += lineCount;
-            } else if (part.removed) {
-                // In a single-pane diff view, we cannot show lines that don't exist in the current document.
-                // The AI analysis will still receive the full diff.
-            } else { // common part
-                currentLine += lineCount;
-            }
-        });
-        
         baseExtensions.push(lineHighlighter(lineClasses));
+
+        const diffTooltipExtension = hoverTooltip((view, pos) => {
+            const line = view.state.doc.lineAt(pos);
+            if (removedContentByLine.has(line.number)) {
+                const removedText = removedContentByLine.get(line.number)!;
+                return {
+                    pos: line.from,
+                    end: line.to,
+                    above: true,
+                    create() {
+                        const dom = document.createElement('div');
+                        dom.className = 'cm-tooltip-diff';
+                        const pre = document.createElement('pre');
+                        pre.className = 'cm-tooltip-diff-pre';
+                        pre.textContent = removedText.trimEnd();
+                        dom.appendChild(pre);
+                        return { dom };
+                    },
+                };
+            }
+            return null;
+        });
+        baseExtensions.push(diffTooltipExtension);
     }
     
     return baseExtensions;
-  }, [file.language, viewMode, file.previousContent, code]);
+  }, [file.language, viewMode, file.previousContent, code, lineClasses, removedContentByLine]);
+
+    const handleViewChangesClick = () => {
+        const isEnteringDiffMode = viewMode === 'edit';
+        setViewMode(isEnteringDiffMode ? 'diff' : 'edit');
+
+        if (isEnteringDiffMode && file.previousContent) {
+            const diff = diffLines(file.previousContent, code);
+            let currentLine = 1;
+            let firstChangeLine: number | null = null;
+            for (const part of diff) {
+                if (part.added) {
+                    firstChangeLine = currentLine;
+                    break;
+                }
+                if (!part.removed) {
+                    currentLine += part.count ?? 0;
+                }
+            }
+            if (firstChangeLine) {
+                setScrollToLine(firstChangeLine);
+            }
+        }
+    };
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
   const hasPreviousVersion = activeCommitIndex > -1 && file.commits ? activeCommitIndex < file.commits.length - 1 : false;
 
-  const analyzeDisabled = isLoading || !hasPreviousVersion;
+  const analyzeDisabled = isLoading || !file.previousContent;
 
   const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
@@ -212,8 +291,8 @@ export function EditorPanel({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setViewMode(viewMode === 'edit' ? 'diff' : 'edit')}
-                  disabled={!hasPreviousVersion}
+                  onClick={handleViewChangesClick}
+                  disabled={!file.previousContent}
                   data-active={viewMode === 'diff'}
                   className="data-[active=true]:bg-accent"
                   aria-label={viewMode === 'edit' ? 'View Changes' : 'Hide Changes'}
@@ -222,7 +301,7 @@ export function EditorPanel({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{!hasPreviousVersion ? 'No previous version to compare' : (viewMode === 'edit' ? 'View Changes' : 'Hide Changes')}</p>
+                <p>{!file.previousContent ? 'No previous version to compare' : (viewMode === 'edit' ? 'View Changes' : 'Hide Changes')}</p>
               </TooltipContent>
             </Tooltip>
             
@@ -239,7 +318,7 @@ export function EditorPanel({
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>{hasPreviousVersion ? 'Analyze Changes' : 'No previous version for analysis'}</p>
+                    <p>{!file.previousContent ? 'No previous version for analysis' : 'Analyze Changes'}</p>
                 </TooltipContent>
             </Tooltip>
 
@@ -301,8 +380,8 @@ export function EditorPanel({
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <div className="relative flex-1 min-h-0">
           <CodeMirror
+              ref={editorRef}
               value={code}
               theme={vscodeDark}
               extensions={extensions}
@@ -320,7 +399,6 @@ export function EditorPanel({
                 fontFamily: 'var(--font-code)',
               }}
             />
-        </div>
       </CardContent>
     </Card>
   );
