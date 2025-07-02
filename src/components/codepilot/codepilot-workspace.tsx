@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { AIOutput, ActionType, CodeFile, Commit } from '@/components/codepilot/types';
@@ -311,10 +312,6 @@ export function SemCoPilotWorkspace() {
         actionName = 'Refactor Code';
         const refactored = await withRetry(() => refactorCode({ model, code, language }), 2, 1000, onRetry);
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
-      } else if (action === 'docs') {
-        actionName = 'Generate Docs';
-        const docsData = await withRetry(() => generateCodeDocs({ model, code }), 2, 1000, onRetry);
-        result = { type: 'docs', data: docsData, title: 'Generated Comments', language };
       } else if (action === 'sdd') {
         actionName = 'Generate SDD';
         const sdd = await withRetry(() => generateSdd({ model, code }), 2, 1000, onRetry);
@@ -504,3 +501,5 @@ export function SemCoPilotWorkspace() {
     </div>
   );
 }
+
+    
