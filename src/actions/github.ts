@@ -203,6 +203,7 @@ export async function getMainBranch(url: string, userId: string): Promise<string
 async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: string, userId: string, path: string): Promise<CodeFile[]> {
     const { host, project, repo } = info;
     const items: CodeFile[] = [];
+    const processedIds = new Set<string>(); // Use a set to track added items and prevent duplicates
     let start = 0;
     let isLastPage = false;
     const fetchParams: RequestInit = { headers: { 'Accept': 'application/json' } };
@@ -217,32 +218,35 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
         const parsedData = BitbucketServerBrowseResponseSchema.parse(data);
 
         for (const item of parsedData.children.values) {
-            const itemName = item.path.name;
-            const apiPath = item.path.toString;
+            const originalNameFromApi = item.path.name;
+            const nameParts = originalNameFromApi.split('/');
+            const directChildName = nameParts[0];
 
-            // Construct the full path manually, as the API might return relative-like paths in some environments.
-            const fullItemPath = path ? `${path}/${itemName}` : itemName;
+            const fullItemPath = path ? `${path}/${directChildName}` : directChildName;
 
-            console.log(`[DEBUG] Adding to tree: name='${itemName}', apiPath='${apiPath}', constructedFullPath='${fullItemPath}'`);
-            
-            if (shouldIgnore(fullItemPath)) continue;
+            if (processedIds.has(fullItemPath) || shouldIgnore(fullItemPath)) {
+                continue;
+            }
 
-            if (item.type === 'DIRECTORY') {
+            const isFolder = nameParts.length > 1 || item.type === 'DIRECTORY';
+
+            if (isFolder) {
                 items.push({
                     id: fullItemPath,
-                    name: itemName,
+                    name: directChildName,
                     type: 'folder',
                     language: 'folder',
                     childrenLoaded: false,
                 });
-            } else {
+            } else { // nameParts.length is 1 and item.type is FILE
                 items.push({
                     id: fullItemPath,
-                    name: itemName,
+                    name: directChildName,
                     type: 'file',
-                    language: itemName.split('.').pop() || 'text',
+                    language: directChildName.split('.').pop() || 'text',
                 });
             }
+            processedIds.add(fullItemPath);
         }
         isLastPage = parsedData.children.isLastPage;
         if (parsedData.children.nextPageStart) start = parsedData.children.nextPageStart;
