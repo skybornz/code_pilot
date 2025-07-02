@@ -9,6 +9,7 @@ import type { AIOutput } from './types';
 import type { FindBugsOutput } from '@/ai/flows/find-bugs';
 import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
 import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
+import type { GenerateSddOutput } from '@/ai/flows/generate-sdd';
 import { CodeBlock } from './code-block';
 import type { AnalyzeDiffOutput, ExplainCodeOutput } from './types';
 import { Input } from '../ui/input';
@@ -246,10 +247,10 @@ export function AIOutputPanel({
           }
 
           if (isFirstChunk) {
-            onMessagesChange(prev => [...prev, { role: 'model', content: chunkValue }]);
+            onMessagesChange((prev: any) => [...prev, { role: 'model', content: chunkValue }]);
             isFirstChunk = false;
           } else {
-            onMessagesChange(prev => {
+            onMessagesChange((prev: any) => {
               const updatedMessages = [...prev];
               const lastMessage = updatedMessages[updatedMessages.length - 1];
               if (lastMessage?.role === 'model') {
