@@ -34,53 +34,54 @@ const buildFileTree = (files: CodeFile[]): FileTreeNode => {
     const root: FileTreeNode = {};
     const nodeMap: { [id: string]: CodeFile & { children?: FileTreeNode } } = {};
 
-    // First pass: create all nodes in a map, and create synthetic parent folders.
+    // First pass: Create nodes for every file and folder, and also create synthetic parent folders.
     files.forEach(file => {
-        // Add the file itself to the map.
-        // If a node already exists (e.g., a synthetic parent), merge with it.
-        const existingNode = nodeMap[file.id];
-        nodeMap[file.id] = {
-            ...existingNode,
-            ...file,
-            children: file.type === 'folder' ? (existingNode?.children || {}) : undefined,
-        };
-
-        // Create synthetic parents if they don't exist.
+        // Create synthetic parents for the current file if they don't exist
         const pathParts = file.id.split('/');
-        let currentPath = '';
+        let parentPath = '';
         for (let i = 0; i < pathParts.length - 1; i++) {
-            currentPath = currentPath ? `${currentPath}/${pathParts[i]}` : pathParts[i];
+            const part = pathParts[i];
+            const currentPath = parentPath ? `${parentPath}/${part}` : part;
             if (!nodeMap[currentPath]) {
                 nodeMap[currentPath] = {
                     id: currentPath,
-                    name: pathParts[i],
+                    name: part,
                     type: 'folder',
                     language: 'folder',
                     childrenLoaded: false,
                     children: {},
                 };
             }
+            parentPath = currentPath;
         }
+
+        // Add or merge the file itself into the map
+        const existingNode = nodeMap[file.id];
+        nodeMap[file.id] = {
+            ...existingNode,
+            ...file,
+            children: file.type === 'folder' ? (existingNode?.children || {}) : undefined,
+        };
     });
 
-    // Second pass: link children to their parents.
+    // Second pass: Link all nodes to their parents
     Object.values(nodeMap).forEach(node => {
         const pathParts = node.id.split('/');
         if (pathParts.length > 1) {
             const parentPath = pathParts.slice(0, -1).join('/');
             const parentNode = nodeMap[parentPath];
-            // Ensure parent exists and is a folder before adding child
-            if (parentNode && parentNode.type === 'folder' && parentNode.children) {
+            if (parentNode?.children) {
                 parentNode.children[node.name] = node;
             }
         } else {
-            // It's a root node.
+            // No parent path means it's a root node.
             root[node.name] = node;
         }
     });
 
     return root;
 };
+
 
 interface FileTreeViewProps {
     tree: FileTreeNode;
