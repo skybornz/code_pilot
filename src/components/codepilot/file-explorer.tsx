@@ -1,20 +1,21 @@
 
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import type { CodeFile } from '@/components/codepilot/types';
 import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical, GitBranch, Loader2 } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Logo } from './logo';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 import type { Project } from '@/lib/project-database';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
 import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
+import Tree from 'rc-tree';
+import type { DataNode, Key } from 'rc-tree/lib/interface';
 
 interface FileExplorerProps {
   files: CodeFile[];
@@ -26,156 +27,131 @@ interface FileExplorerProps {
   branch?: string;
 }
 
-type FileTreeNode = {
-    [key: string]: CodeFile & { children?: FileTreeNode };
-};
+// Convert our CodeFile[] to the DataNode[] format rc-tree expects
+const buildTreeData = (files: CodeFile[]): DataNode[] => {
+    const nodeMap: { [key: string]: DataNode & { children?: DataNode[] } } = {};
+    const rootNodes: DataNode[] = [];
 
-const buildFileTree = (files: CodeFile[]): FileTreeNode => {
-    const treeRoot: FileTreeNode = {};
-    // The directoryMap maps a path string to the 'children' object of that directory node
-    const directoryMap: { [key: string]: FileTreeNode } = { root: treeRoot };
+    // Create a node for each file/folder and store it in a map
+    files.forEach(file => {
+        nodeMap[file.id] = {
+            key: file.id,
+            title: file.name,
+            isLeaf: file.type === 'file',
+            // Custom properties
+            isLoaded: file.childrenLoaded,
+            fileType: file.type,
+        };
+    });
 
-    // Sort files by path to ensure parents are processed before children
-    const sortedFiles = [...files].sort((a, b) => a.id.localeCompare(b.id));
-
-    sortedFiles.forEach(file => {
+    // Link nodes to their parents
+    files.forEach(file => {
         const pathParts = file.id.split('/');
-        const fileName = pathParts.pop()!;
-        const parentPath = pathParts.length > 0 ? pathParts.join('/') : 'root';
-        
-        const parentNode = directoryMap[parentPath];
-        
-        // This check is important. If a parent directory doesn't appear in the `files` list for some reason,
-        // we should not crash. Although with sorting, this should be very rare.
-        if (parentNode) {
-            // Create the new node for the file or folder
-            const newNode: CodeFile & { children?: FileTreeNode } = {
-                ...file,
-                children: file.type === 'folder' ? {} : undefined,
-            };
-            
-            parentNode[fileName] = newNode;
-
-            // If the new node is a folder, add its `children` object to the directory map
-            // so that its own children can find it later in the loop.
-            if (file.type === 'folder') {
-                directoryMap[file.id] = newNode.children!;
+        if (pathParts.length > 1) {
+            const parentPath = pathParts.slice(0, -1).join('/');
+            const parentNode = nodeMap[parentPath];
+            if (parentNode) {
+                if (!parentNode.children) {
+                    parentNode.children = [];
+                }
+                // Check for duplicates before pushing
+                if (!parentNode.children.some(child => child.key === file.id)) {
+                    parentNode.children.push(nodeMap[file.id]);
+                }
+            }
+        } else {
+            // This is a root node
+            if (!rootNodes.some(node => node.key === file.id)) {
+                 rootNodes.push(nodeMap[file.id]);
             }
         }
     });
 
-    return treeRoot;
-};
-
-
-interface FileTreeViewProps {
-    tree: FileTreeNode;
-    activeFileId: string | null;
-    onFileSelect: (fileId: string) => void;
-    onFolderToggle: (node: CodeFile) => Promise<void>;
-    level?: number;
-    openFolders: Record<string, boolean>;
-    loadingFolder: string | null;
-}
-
-const FileTreeView = ({ tree, activeFileId, onFileSelect, onFolderToggle, level = 0, openFolders, loadingFolder }: FileTreeViewProps) => {
-    const sortedEntries = Object.values(tree).sort((aValue, bValue) => {
-        if (aValue.type === 'folder' && bValue.type === 'file') return -1;
-        if (aValue.type === 'file' && bValue.type === 'folder') return 1;
-        return aValue.name.localeCompare(bValue.name);
+    // Sort children at each level
+    Object.values(nodeMap).forEach(node => {
+        if (node.children) {
+            node.children.sort((a: any, b: any) => {
+                if (a.isLeaf && !b.isLeaf) return 1;
+                if (!a.isLeaf && b.isLeaf) return -1;
+                return a.title.localeCompare(b.title);
+            });
+        }
+    });
+    
+    // Sort root nodes
+    rootNodes.sort((a: any, b: any) => {
+        if (a.isLeaf && !b.isLeaf) return 1;
+        if (!a.isLeaf && b.isLeaf) return -1;
+        return a.title.localeCompare(b.title);
     });
 
-    return (
-        <div className="space-y-0.5">
-            {sortedEntries.map((node) => {
-                const isOpen = openFolders[node.id] ?? false;
-                if (node.type === 'folder') {
-                    return (
-                        <Collapsible 
-                            key={node.id} 
-                            open={isOpen}
-                            onOpenChange={() => onFolderToggle(node)}
-                            className="group"
-                        >
-                            <CollapsibleTrigger 
-                                className="w-full flex items-center gap-2 text-left py-1.5 rounded-md hover:bg-sidebar-accent/50 text-sm"
-                                style={{ paddingLeft: `${level * 1.25}rem` }}
-                            >
-                                <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
-                                {loadingFolder === node.id ? (
-                                    <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
-                                ) : (
-                                    <Folder className="w-4 h-4 text-accent flex-shrink-0" />
-                                )}
-                                <span className="truncate">{node.name}</span>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-                                {node.children && (
-                                     <FileTreeView
-                                        tree={node.children}
-                                        activeFileId={activeFileId}
-                                        onFileSelect={onFileSelect}
-                                        onFolderToggle={onFolderToggle}
-                                        level={level + 1}
-                                        openFolders={openFolders}
-                                        loadingFolder={loadingFolder}
-                                    />
-                                )}
-                            </CollapsibleContent>
-                        </Collapsible>
-                    );
-                } else {
-                    return (
-                        <button
-                            key={node.id}
-                            onClick={() => onFileSelect(node.id)}
-                            className={`w-full text-left py-1.5 rounded-md flex items-center gap-2 transition-colors text-sm ${
-                                activeFileId === node.id
-                                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                                    : 'hover:bg-sidebar-accent/50'
-                            }`}
-                            style={{ paddingLeft: `${level * 1.25 + 1.25}rem` }}
-                        >
-                            <FileCode className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate" title={node.name}>{node.name}</span>
-                        </button>
-                    );
-                }
-            })}
-        </div>
-    );
+    return rootNodes;
 };
+
+const SwitcherIcon = ({ expanded, isLeaf }: { expanded: boolean, isLeaf: boolean }) => {
+    if (isLeaf) {
+        return <span className="rc-tree-switcher-icon" style={{ width: '1rem' }} />;
+    }
+    return <ChevronRight className="rc-tree-switcher-icon h-4 w-4 transition-transform" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }} />;
+};
+
+const NodeIcon = ({ isLeaf, expanded, loading }: { isLeaf: boolean, expanded: boolean, loading?: boolean }) => {
+    if (loading) {
+        return <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />;
+    }
+    if (isLeaf) {
+        return <FileCode className="w-4 h-4 flex-shrink-0" />;
+    }
+    return <Folder className="w-4 h-4 text-accent flex-shrink-0" />;
+}
 
 
 export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProject, onFolderExpand, project, branch }: FileExplorerProps) {
-    const fileTree = useMemo(() => buildFileTree(files), [files]);
+    const treeData = useMemo(() => buildTreeData(files), [files]);
     const { user, isAdmin, logout } = useAuth();
-    const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
-    const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = React.useState(false);
-    const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
-    const [loadingFolder, setLoadingFolder] = useState<string | null>(null);
+    const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+    const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = useState(false);
+    const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
 
-    const handleFolderToggle = async (node: CodeFile) => {
-        const isOpen = openFolders[node.id] ?? false;
-        const newOpenState = !isOpen;
+    const handleExpand = (keys: Key[], { expanded, node }: { expanded: boolean, node: DataNode }) => {
+        setExpandedKeys(keys);
+    };
 
-        setOpenFolders(prev => ({ ...prev, [node.id]: newOpenState }));
-
-        if (newOpenState && !node.childrenLoaded) {
-            setLoadingFolder(node.id);
-            await onFolderExpand(node.id);
-            setLoadingFolder(null);
+    const handleSelect = (selectedKeys: Key[]) => {
+        if (selectedKeys.length > 0) {
+            onFileSelect(selectedKeys[0] as string);
         }
     };
-  
+    
+    const loadData = useCallback(async (node: DataNode): Promise<void> => {
+        // The `isLoaded` property comes from our custom buildTreeData function
+        const isAlreadyLoaded = (node as any).isLoaded;
+        if (node.key && !node.isLeaf && !isAlreadyLoaded) {
+            await onFolderExpand(node.key as string);
+        }
+    }, [onFolderExpand]);
+    
+    const memoizedSwitcherIcon = useCallback((props: any) => {
+        return <SwitcherIcon expanded={props.expanded} isLeaf={props.isLeaf} />;
+    }, []);
+
+    const memoizedTitleRenderer = useCallback((node: any) => {
+        return (
+            <div className="flex items-center gap-2">
+                <NodeIcon isLeaf={node.isLeaf} expanded={node.expanded} loading={node.loading} />
+                <span className="truncate">{node.title}</span>
+            </div>
+        );
+    }, []);
+
     return (
     <>
       <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
         <div className="p-4 border-b border-sidebar-border">
           <Logo />
         </div>
-        <div className="flex-1 overflow-auto p-4 min-h-0">
-          <div className="flex justify-between items-center mb-2">
+        <div className="flex-1 overflow-auto p-2 min-h-0">
+          <div className="flex justify-between items-center mb-2 px-2">
               {project && branch ? (
                 <div className="overflow-hidden mr-2">
                   <h2 className="text-lg font-semibold truncate" title={project.name}>{project.name}</h2>
@@ -200,15 +176,22 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                   </Tooltip>
               </TooltipProvider>
           </div>
-          <div className="w-max min-w-full mt-4">
-            <FileTreeView 
-                tree={fileTree} 
-                activeFileId={activeFileId} 
-                onFileSelect={onFileSelect} 
-                onFolderToggle={handleFolderToggle} 
-                openFolders={openFolders}
-                loadingFolder={loadingFolder}
-            />
+          <div className="w-max min-w-full mt-2">
+             <Tree
+                treeData={treeData}
+                onSelect={handleSelect}
+                onExpand={handleExpand}
+                selectedKeys={activeFileId ? [activeFileId] : []}
+                expandedKeys={expandedKeys}
+                loadData={loadData}
+                prefixCls="rc-tree"
+                motion={null}
+                switcherIcon={memoizedSwitcherIcon}
+                titleRender={memoizedTitleRenderer}
+                className="w-full"
+                showLine={false}
+                draggable={false}
+             />
           </div>
         </div>
         <div className="p-2 border-t border-sidebar-border">
