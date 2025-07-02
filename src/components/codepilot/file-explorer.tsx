@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -27,34 +26,32 @@ interface FileExplorerProps {
   branch?: string;
 }
 
-// Convert our CodeFile[] to the DataNode[] format rc-tree expects
+// A more robust algorithm to build the tree structure from a flat list of files.
 const buildTreeData = (files: CodeFile[]): DataNode[] => {
     const nodeMap: { [key: string]: DataNode & { children?: DataNode[] } } = {};
     const rootNodes: DataNode[] = [];
 
-    // Create a node for each file/folder and store it in a map
-    files.forEach(file => {
+    // Sort files by path depth. This ensures parents are created before children.
+    const sortedFiles = [...files].sort((a, b) => a.id.split('/').length - b.id.split('/').length);
+
+    sortedFiles.forEach(file => {
+        // Create the node for the map
         nodeMap[file.id] = {
             key: file.id,
             title: file.name,
             isLeaf: file.type === 'file',
-            // Custom properties
             isLoaded: file.childrenLoaded,
             fileType: file.type,
+            children: file.type === 'folder' ? [] : undefined,
         };
-    });
 
-    // Link nodes to their parents
-    files.forEach(file => {
         const pathParts = file.id.split('/');
         if (pathParts.length > 1) {
             const parentPath = pathParts.slice(0, -1).join('/');
             const parentNode = nodeMap[parentPath];
-            if (parentNode) {
-                if (!parentNode.children) {
-                    parentNode.children = [];
-                }
-                // Check for duplicates before pushing
+            // If parent exists, add the current node as a child
+            if (parentNode && parentNode.children) {
+                // Avoid adding duplicates
                 if (!parentNode.children.some(child => child.key === file.id)) {
                     parentNode.children.push(nodeMap[file.id]);
                 }
@@ -62,23 +59,23 @@ const buildTreeData = (files: CodeFile[]): DataNode[] => {
         } else {
             // This is a root node
             if (!rootNodes.some(node => node.key === file.id)) {
-                 rootNodes.push(nodeMap[file.id]);
+                rootNodes.push(nodeMap[file.id]);
             }
         }
     });
 
-    // Sort children at each level
+    // Sort all children arrays to ensure folders come first, then alphabetically
     Object.values(nodeMap).forEach(node => {
-        if (node.children) {
-            node.children.sort((a: any, b: any) => {
-                if (a.isLeaf && !b.isLeaf) return 1;
-                if (!a.isLeaf && b.isLeaf) return -1;
-                return a.title.localeCompare(b.title);
-            });
-        }
+      if (node.children) {
+        node.children.sort((a: any, b: any) => {
+            if (a.isLeaf && !b.isLeaf) return 1; // files after folders
+            if (!a.isLeaf && b.isLeaf) return -1; // folders before files
+            return a.title.localeCompare(b.title); // alphabetical sort
+        });
+      }
     });
     
-    // Sort root nodes
+    // Sort root nodes as well
     rootNodes.sort((a: any, b: any) => {
         if (a.isLeaf && !b.isLeaf) return 1;
         if (!a.isLeaf && b.isLeaf) return -1;
@@ -117,8 +114,8 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
         setExpandedKeys(keys);
     };
 
-    const handleSelect = (selectedKeys: Key[]) => {
-        if (selectedKeys.length > 0) {
+    const handleSelect = (selectedKeys: Key[], { node }: { node: DataNode }) => {
+        if (selectedKeys.length > 0 && node.isLeaf) {
             onFileSelect(selectedKeys[0] as string);
         }
     };

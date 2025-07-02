@@ -200,9 +200,9 @@ export async function getMainBranch(url: string, userId: string): Promise<string
 }
 
 // Fetches directory contents using Bitbucket's `/browse` endpoint.
-async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: string, userId: string, path: string): Promise<Partial<CodeFile>[]> {
+async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: string, userId: string, path: string): Promise<CodeFile[]> {
     const { host, project, repo } = info;
-    const items: Partial<CodeFile>[] = [];
+    const items: CodeFile[] = [];
     let start = 0;
     let isLastPage = false;
     const fetchParams: RequestInit = { headers: { 'Accept': 'application/json' } };
@@ -247,7 +247,7 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
 }
 
 // Initial load action - only fetches root directory
-export async function loadBitbucketFiles(url: string, branch: string, userId: string): Promise<{ success: boolean; files?: Partial<CodeFile>[]; error?: string }> {
+export async function loadBitbucketFiles(url: string, branch: string, userId: string): Promise<{ success: boolean; files?: CodeFile[]; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);
     if (!bitbucketInfo) return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
     try {
@@ -261,7 +261,7 @@ export async function loadBitbucketFiles(url: string, branch: string, userId: st
 }
 
 // Action to fetch a specific directory's contents
-export async function fetchDirectory(url: string, branch: string, path: string, userId: string): Promise<{ success: boolean; files?: Partial<CodeFile>[]; error?: string }> {
+export async function fetchDirectory(url: string, branch: string, path: string, userId: string): Promise<{ success: boolean; files?: CodeFile[]; error?: string }> {
     const bitbucketInfo = parseBitbucketUrl(url);
     if (!bitbucketInfo) return { success: false, error: 'Invalid Bitbucket Server repository URL.' };
     try {
