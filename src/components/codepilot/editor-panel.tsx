@@ -196,13 +196,13 @@ export function EditorPanel({
   const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText },
     { id: 'test', label: 'Generate Unit Test', icon: TestTube2 },
-    { id: 'refactor', label: 'Refactor Code', icon: Wand2 },
   ];
 
   const copilotAction = { id: 'copilot', label: 'Co-Pilot Chat', icon: Bot };
 
   const secondaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
       { id: 'bugs', label: 'Find Bugs', icon: Bug },
+      { id: 'refactor', label: 'Refactor Code', icon: Wand2 },
       { id: 'sdd', label: 'Generate SDD', icon: FileText },
   ];
 
