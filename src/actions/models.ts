@@ -18,7 +18,7 @@ export async function updateModel(modelData: Model): Promise<{ success: boolean;
     return dbUpdateModel(modelData);
 }
 
-export async function deleteModel(modelId: string): Promise<{ success: boolean }> {
+export async function deleteModel(modelId: string): Promise<{ success: boolean; message?: string }> {
   return dbDeleteModel(modelId);
 }
 
