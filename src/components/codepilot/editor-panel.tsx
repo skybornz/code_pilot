@@ -313,7 +313,6 @@ export function EditorPanel({
                 lineNumbers: true,
                 foldGutter: true,
                 autocompletion: false,
-                editable: viewMode === 'edit',
               }}
               className="h-full"
               style={{
