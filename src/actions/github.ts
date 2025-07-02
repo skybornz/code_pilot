@@ -218,7 +218,12 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
 
         for (const item of parsedData.children.values) {
             const itemName = item.path.name;
-            const fullItemPath = item.path.toString;
+            const apiPath = item.path.toString;
+
+            // Construct the full path manually, as the API might return relative-like paths in some environments.
+            const fullItemPath = path ? `${path}/${itemName}` : itemName;
+
+            console.log(`[DEBUG] Adding to tree: name='${itemName}', apiPath='${apiPath}', constructedFullPath='${fullItemPath}'`);
             
             if (shouldIgnore(fullItemPath)) continue;
 
@@ -243,7 +248,6 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
         if (parsedData.children.nextPageStart) start = parsedData.children.nextPageStart;
         else isLastPage = true;
     }
-    console.log(`[DEBUG] Fetched directory contents for path: '${path || '/'}'. Found paths:`, items.map(i => i.id));
     return items;
 }
 
