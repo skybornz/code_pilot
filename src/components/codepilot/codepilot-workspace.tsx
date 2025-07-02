@@ -19,11 +19,8 @@ import { fetchBitbucketFileCommits, getBitbucketFileContentForCommit, loadBitbuc
 import { CopilotChatPanel } from './copilot-chat-panel';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { useAuth } from '@/context/auth-context';
-import { logUserActivity } from '@/actions/activity';
 import { updateUserLastActive } from '@/actions/users';
-import { getDefaultModel } from '@/actions/models';
-import { withRetry } from '@/lib/utils';
-import { configureAi } from '@/ai/genkit';
+import { performAiAction } from '@/actions/ai';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
 
@@ -258,84 +255,27 @@ export function SemCoPilotWorkspace() {
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
     
-    await configureAi();
+    const result = await performAiAction(user.id, action, code, language, originalCode, activeFile?.name);
 
-    const modelConfig = await getDefaultModel();
-    if (!modelConfig) {
-      toast({
-        variant: 'destructive',
-        title: 'No Default Model Set',
-        description: 'Please set a default AI model in the admin settings.',
-      });
-      setIsLoading(false);
-      return;
-    }
-    
-    const model = modelConfig.type === 'local'
-      ? `ollama/${modelConfig.name}`
-      : `googleai/${modelConfig.name}`;
-    
-    let result: AIOutput | null = null;
-    let actionName: string = 'Unknown AI Action';
-
-    try {
-      if (action === 'analyze-diff' && originalCode !== undefined) {
-        actionName = 'Analyze Diff';
-        const { analyzeDiff } = await import('@/ai/flows/analyze-diff');
-        const analysis = await withRetry(() => analyzeDiff({ model, oldCode: originalCode, newCode: code, language }));
-        result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
-      } else if (action === 'explain') {
-        actionName = 'Explain Code';
-        const { explainCode } = await import('@/ai/flows/explain-code');
-        const explanationData = await withRetry(() => explainCode({ model, code }));
-        result = { type: 'explain', data: explanationData, title: 'Code Explanation' };
-      } else if (action === 'bugs') {
-        actionName = 'Find Bugs';
-        const { findBugs } = await import('@/ai/flows/find-bugs');
-        const bugReport = await withRetry(() => findBugs({ model, code }));
-        result = { type: 'bugs', data: bugReport, title: 'Bug Report' };
-      } else if (action === 'test') {
-        actionName = 'Generate Test';
-        const { generateUnitTest } = await import('@/ai/flows/generate-unit-test');
-        const unitTest = await withRetry(() => generateUnitTest({ model, code, language }));
-        result = { type: 'test', data: unitTest, title: 'Generated Unit Test', language };
-      } else if (action === 'refactor') {
-        actionName = 'Refactor Code';
-        const { refactorCode } = await import('@/ai/flows/refactor-code');
-        const refactored = await withRetry(() => refactorCode({ model, code, language }));
-        result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
-      } else if (action === 'sdd') {
-        actionName = 'Generate SDD';
-        const { generateSdd } = await import('@/ai/flows/generate-sdd');
-        const sdd = await withRetry(() => generateSdd({ model, code }));
-        result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
-      }
-
-      if (result) {
-        if (activeFile) {
-          const outputWithContext: AIOutput = {
-            ...result,
-            fileContext: { id: activeFile.id, name: activeFile.name },
-          };
-          setAiOutput(outputWithContext);
-        } else {
-          setAiOutput(result);
-        }
-        await logUserActivity(user.id, actionName, `Used ${actionName} on file: ${activeFile?.name || 'unknown'}`);
-        await updateUserLastActive(user.id);
-      }
-      
-    } catch (error) {
-      console.error('AI action failed:', error);
+    if ('error' in result) {
       toast({
         variant: 'destructive',
         title: 'AI Action Failed',
-        description:
-          'Could not get a response from the AI model. Please check your model configuration and try again.',
+        description: result.error,
       });
-    } finally {
-      setIsLoading(false);
+    } else {
+      if (activeFile) {
+        const outputWithContext: AIOutput = {
+          ...result,
+          fileContext: { id: activeFile.id, name: activeFile.name },
+        };
+        setAiOutput(outputWithContext);
+      } else {
+        setAiOutput(result);
+      }
     }
+    
+    setIsLoading(false);
   }, [toast, activeFile, user]);
 
   const handleSwitchProject = () => {

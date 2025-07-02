@@ -14,10 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { LogoMark } from './logo-mark';
 import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
-import { getDefaultModel } from '@/actions/models';
 import { useAuth } from '@/context/auth-context';
-import { logUserActivity } from '@/actions/activity';
-import { configureAi } from '@/ai/genkit';
+import { streamCopilotChat } from '@/actions/ai';
 
 
 interface CopilotChatPanelProps {
@@ -47,7 +45,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const currentInput = input;
-    if (!currentInput.trim()) return;
+    if (!currentInput.trim() || !user) return;
 
     const userMessage: Message = { role: 'user', content: currentInput };
     const newMessages: Message[] = [...messages, userMessage];
@@ -56,40 +54,21 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
     setIsChatLoading(true);
 
     try {
-      await configureAi();
-      const { copilotChat } = await import('@/ai/flows/copilot-chat');
-
-      const modelConfig = await getDefaultModel();
-      if (!modelConfig) {
-        toast({
-          variant: 'destructive',
-          title: 'No Default Model Set',
-          description: 'An administrator needs to set a default AI model in the settings.',
-        });
-        setIsChatLoading(false);
-        return;
-      }
-      
-      const model = modelConfig.type === 'local'
-        ? `ollama/${modelConfig.name}`
-        : `googleai/${modelConfig.name}`;
-
       const projectContext = activeFile ? `The user is currently viewing the file "${activeFile.name}" with the following content:\n\n${activeFile.content}` : 'No file is currently active.';
       
       const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
       const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
       
-      const stream = await copilotChat({
-        model,
-        messages: historyForApi,
-        projectContext,
-      });
+      const stream = await streamCopilotChat(
+        user.id,
+        historyForApi,
+        projectContext
+      );
 
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let done = false;
       let isFirstChunk = true;
-      let activityLogged = false;
       
       while (!done) {
           const { value, done: readerDone } = await reader.read();
@@ -97,11 +76,6 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
           const chunkValue = decoder.decode(value);
 
           if (chunkValue) {
-            if (!activityLogged && user) {
-              await logUserActivity(user.id, 'Co-Pilot Chat', `User sent a message in the general chat.`);
-              activityLogged = true;
-            }
-
             if (isFirstChunk) {
                 // On the first chunk, create a new message bubble for the model's response.
                 onMessagesChange(prev => [...prev, { role: 'model', content: chunkValue }]);

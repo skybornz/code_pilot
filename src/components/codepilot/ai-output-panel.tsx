@@ -22,10 +22,8 @@ import { LogoMark } from './logo-mark';
 import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { Separator } from '../ui/separator';
-import { getDefaultModel } from '@/actions/models';
 import { useAuth } from '@/context/auth-context';
-import { logUserActivity } from '@/actions/activity';
-import { configureAi } from '@/ai/genkit';
+import { streamCopilotChat } from '@/actions/ai';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -237,7 +235,7 @@ export function AIOutputPanel({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !output) {
+    if (!input.trim() || !output || !user) {
         return;
     }
 
@@ -248,42 +246,23 @@ export function AIOutputPanel({
     setIsChatLoading(true);
 
     try {
-      await configureAi();
-      const { copilotChat } = await import('@/ai/flows/copilot-chat');
-
-      const modelConfig = await getDefaultModel();
-      if (!modelConfig) {
-        toast({
-          variant: 'destructive',
-          title: 'No Default Model Set',
-          description: 'An administrator needs to set a default AI model in the settings.',
-        });
-        setIsChatLoading(false);
-        return;
-      }
-      
-      const model = modelConfig.type === 'local'
-        ? `ollama/${modelConfig.name}`
-        : `googleai/${modelConfig.name}`;
-
       const projectContext = output.fileContext ? `The user is discussing an analysis on the file "${output.fileContext.name}".` : 'No file context provided.';
       const discussionContext = formatAiOutputForChat(output);
       
       const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
       const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
 
-      const stream = await copilotChat({
-        model,
-        messages: historyForApi,
+      const stream = await streamCopilotChat(
+        user.id,
+        historyForApi,
         projectContext,
-        discussionContext,
-      });
+        discussionContext
+      );
 
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let done = false;
       let isFirstChunk = true;
-      let activityLogged = false;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -291,11 +270,6 @@ export function AIOutputPanel({
         const chunkValue = decoder.decode(value);
 
         if (chunkValue) {
-          if (!activityLogged && user) {
-            await logUserActivity(user.id, 'AI Assistant Chat', `User asked a follow-up about "${output.title}".`);
-            activityLogged = true;
-          }
-
           if (isFirstChunk) {
             onMessagesChange((prev: Message[]) => [...prev, { role: 'model', content: chunkValue }]);
             isFirstChunk = false;
