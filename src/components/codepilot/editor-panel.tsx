@@ -88,6 +88,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
         const diff = diffLines(original, modified);
         const originalClasses: { line: number; class: string }[] = [];
         const modifiedClasses: { line: number; class: string }[] = [];
+
         let originalLineNum = 1;
         let modifiedLineNum = 1;
 
@@ -109,7 +110,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
             }
         });
 
-        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedClasses };
+        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedLineClasses };
     }, [original, modified]);
 
     const originalExtensions = useMemo(() => [

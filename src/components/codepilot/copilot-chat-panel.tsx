@@ -12,7 +12,7 @@ import { copilotChat, type Message } from '@/ai/flows/copilot-chat';
 import type { CodeFile } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { LogoMark } from './logo-mark';
-import { cn, withRetry } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { getDefaultModel } from '@/actions/models';
 import { useAuth } from '@/context/auth-context';
