@@ -216,19 +216,15 @@ async function getBitbucketDirectoryContents(info: BitbucketServerInfo, branch: 
         if (!response.ok) break;
 
         const data = await response.json();
-        console.log('[DEBUG] Raw Bitbucket API Response:', JSON.stringify(data, null, 2));
         const parsedData = BitbucketServerBrowseResponseSchema.parse(data);
-        console.log('[DEBUG] Parsed Bitbucket API Response:', JSON.stringify(parsedData, null, 2));
 
         for (const item of parsedData.children.values) {
-            const originalNameFromApi = item.path.name;
+            const originalNameFromApi = item.path.toString;
             const nameParts = originalNameFromApi.split('/');
             const directChildName = nameParts[0];
 
             const fullItemPath = path ? `${path}/${directChildName}` : directChildName;
             
-            console.log(`[DEBUG] Bitbucket API value: '${originalNameFromApi}', Generated full path: '${fullItemPath}'`);
-
             if (processedIds.has(fullItemPath) || shouldIgnore(fullItemPath)) {
                 continue;
             }
