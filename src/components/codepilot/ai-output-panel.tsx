@@ -159,7 +159,7 @@ const renderOutput = (output: AIOutput) => {
 
 const AIActionLoader = () => {
   const steps = [
-    'Initializing AI Model...',
+    'Connecting to AI model...',
     'Analyzing code context...',
     'Generating insights...',
     'Finalizing response...',

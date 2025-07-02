@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
@@ -18,6 +19,7 @@ import { diffLines, type Change } from 'diff';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 interface EditorPanelProps {
@@ -116,7 +118,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
 
 
     const commonEditorProps = {
-        height: "100%",
+        height: "auto",
         theme: vscodeDark,
         readOnly: true,
         basicSetup: {
@@ -129,16 +131,15 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
             fontSize: '0.875rem',
             fontFamily: 'var(--font-code)',
         },
-        className: "h-full"
     };
 
     return (
-        <div className="flex flex-col h-full gap-2 p-2">
-            <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex flex-col gap-2 p-2">
+            <div className="flex flex-col">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
-                <div className="flex-1 rounded-md border overflow-hidden">
+                <div className="rounded-md border">
                     <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
@@ -146,11 +147,11 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                     />
                 </div>
             </div>
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex flex-col">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
                 </h3>
-                <div className="flex-1 rounded-md border overflow-hidden">
+                <div className="rounded-md border">
                     <CodeMirror
                         value={original}
                         extensions={originalExtensions}
@@ -367,13 +368,15 @@ export function EditorPanel({
               }}
             />
           ) : (
-             <DiffView 
-                original={file.previousContent ?? ''} 
-                modified={code} 
-                language={file.language} 
-                originalCommitHash={previousCommit?.hash}
-                modifiedCommitHash={file.activeCommitHash}
-             />
+            <ScrollArea className="h-full">
+               <DiffView 
+                  original={file.previousContent ?? ''} 
+                  modified={code} 
+                  language={file.language} 
+                  originalCommitHash={previousCommit?.hash}
+                  modifiedCommitHash={file.activeCommitHash}
+               />
+            </ScrollArea>
           )}
         </div>
       </CardContent>
