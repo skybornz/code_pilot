@@ -151,12 +151,12 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     };
 
     return (
-        <div className="flex flex-col gap-2 p-2 h-full">
-            <div className="flex-1 flex flex-col min-h-0 relative">
+        <div className="flex flex-col h-full gap-2 p-2">
+            <div className="flex-1 min-h-0 flex flex-col">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
-                <div className="rounded-md border flex-1">
+                <div className="flex-1 relative rounded-md border">
                      <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
@@ -168,11 +168,11 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                     />
                 </div>
             </div>
-            <div className="flex-1 flex flex-col min-h-0 relative">
+            <div className="flex-1 min-h-0 flex flex-col">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
                 </h3>
-                 <div className="rounded-md border flex-1">
+                 <div className="flex-1 relative rounded-md border">
                     <CodeMirror
                         value={original}
                         extensions={originalExtensions}
