@@ -151,8 +151,8 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     };
 
     return (
-        <div className="flex flex-col h-full gap-2 p-2">
-            <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex flex-row h-full gap-2 p-2">
+            <div className="flex-1 min-w-0 flex flex-col">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
@@ -168,7 +168,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                     />
                 </div>
             </div>
-            <div className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-1 min-w-0 flex flex-col">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
                 </h3>
