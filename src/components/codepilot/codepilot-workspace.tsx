@@ -29,6 +29,7 @@ import { useAuth } from '@/context/auth-context';
 import { logUserActivity } from '@/actions/activity';
 import { updateUserLastActive } from '@/actions/users';
 import { getDefaultModel } from '@/actions/models';
+import { withRetry } from '@/lib/utils';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
 
@@ -284,27 +285,27 @@ export function SemCoPilotWorkspace() {
     try {
       if (action === 'analyze-diff' && originalCode !== undefined) {
         actionName = 'Analyze Diff';
-        const analysis = await analyzeDiff({ model, oldCode: originalCode, newCode: code, language });
+        const analysis = await withRetry(() => analyzeDiff({ model, oldCode: originalCode, newCode: code, language }));
         result = { type: 'analyze-diff', data: analysis, title: 'Change Analysis' };
       } else if (action === 'explain') {
         actionName = 'Explain Code';
-        const explanationData = await explainCode({ model, code });
+        const explanationData = await withRetry(() => explainCode({ model, code }));
         result = { type: 'explain', data: explanationData, title: 'Code Explanation' };
       } else if (action === 'bugs') {
         actionName = 'Find Bugs';
-        const bugReport = await findBugs({ model, code });
+        const bugReport = await withRetry(() => findBugs({ model, code }));
         result = { type: 'bugs', data: bugReport, title: 'Bug Report' };
       } else if (action === 'test') {
         actionName = 'Generate Test';
-        const unitTest = await generateUnitTest({ model, code, language });
+        const unitTest = await withRetry(() => generateUnitTest({ model, code, language }));
         result = { type: 'test', data: unitTest, title: 'Generated Unit Test', language };
       } else if (action === 'refactor') {
         actionName = 'Refactor Code';
-        const refactored = await refactorCode({ model, code, language });
+        const refactored = await withRetry(() => refactorCode({ model, code, language }));
         result = { type: 'refactor', data: refactored, title: 'Refactor Suggestion', language };
       } else if (action === 'sdd') {
         actionName = 'Generate SDD';
-        const sdd = await generateSdd({ model, code });
+        const sdd = await withRetry(() => generateSdd({ model, code }));
         result = { type: 'sdd', data: sdd, title: 'Software Design Document', language: 'markdown' };
       }
 
@@ -377,7 +378,7 @@ export function SemCoPilotWorkspace() {
       onAiAction={handleAiAction}
       isLoading={isLoading}
       onCommitChange={handleCommitChange}
-      onShowCopilotChat={handleShowCopilotChat}
+      onShowCopilotChat={onShowCopilotChat}
       viewMode={editorViewMode}
       setViewMode={setEditorViewMode}
     />

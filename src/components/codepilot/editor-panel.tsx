@@ -88,7 +88,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
         const diff = diffLines(original, modified);
         const originalClasses: { line: number; class: string }[] = [];
         const modifiedClasses: { line: number; class: string }[] = [];
-
+        
         let originalLineNum = 1;
         let modifiedLineNum = 1;
 
@@ -110,7 +110,7 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
             }
         });
 
-        return { originalLineClasses: originalClasses, modifiedLineClasses: modifiedLineClasses };
+        return { originalLineClasses, modifiedLineClasses };
     }, [original, modified]);
 
     const originalExtensions = useMemo(() => [
@@ -120,8 +120,8 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
 
     const modifiedExtensions = useMemo(() => [
         ...getLanguageExtension(language),
-        lineHighlighter(modifiedLineClasses), 
-    ], [modifiedLineClasses, language, original, modified]);
+        lineHighlighter(modifiedLineClasses),
+    ], [modifiedLineClasses, language]);
 
 
     const commonEditorStyle = {
@@ -197,9 +197,7 @@ export function EditorPanel({
     onCodeChange(file.id, value);
   };
   
-  const langExtension = useMemo(() => [
-      ...getLanguageExtension(file.language),
-  ], [file.language]);
+  const langExtension = useMemo(() => getLanguageExtension(file.language), [file.language]);
   
   const activeCommitIndex = file.commits?.findIndex(c => c.hash === file.activeCommitHash) ?? -1;
   const hasPreviousVersion = activeCommitIndex > -1 && file.commits ? activeCommitIndex < file.commits.length - 1 : false;
