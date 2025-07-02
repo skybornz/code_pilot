@@ -117,20 +117,16 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
     const modifiedExtensions = useMemo(() => [lineHighlighter(modifiedLineClasses), ...getLanguageExtension(language)], [modifiedLineClasses, language]);
 
 
-    const commonEditorProps = {
-        height: "auto",
-        theme: vscodeDark,
-        readOnly: true,
-        basicSetup: {
-            lineNumbers: true,
-            foldGutter: true,
-            autocompletion: false,
-            editable: false,
-        },
-        style: {
-            fontSize: '0.875rem',
-            fontFamily: 'var(--font-code)',
-        },
+    const commonEditorStyle = {
+        fontSize: '0.875rem',
+        fontFamily: 'var(--font-code)',
+    };
+    
+    const commonEditorSetup = {
+        lineNumbers: true,
+        foldGutter: true,
+        autocompletion: false,
+        editable: false,
     };
 
     return (
@@ -140,10 +136,14 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
                 <ScrollArea className="rounded-md border flex-1">
-                    <CodeMirror
+                     <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
-                        {...commonEditorProps}
+                        className="h-full"
+                        theme={vscodeDark}
+                        readOnly={true}
+                        basicSetup={commonEditorSetup}
+                        style={commonEditorStyle}
                     />
                 </ScrollArea>
             </div>
@@ -155,7 +155,11 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                     <CodeMirror
                         value={original}
                         extensions={originalExtensions}
-                        {...commonEditorProps}
+                        className="h-full"
+                        theme={vscodeDark}
+                        readOnly={true}
+                        basicSetup={commonEditorSetup}
+                        style={commonEditorStyle}
                     />
                 </ScrollArea>
             </div>
@@ -353,7 +357,6 @@ export function EditorPanel({
             <ScrollArea className="h-full">
                 <CodeMirror
                   value={code}
-                  height="auto"
                   theme={vscodeDark}
                   extensions={langExtension}
                   onChange={handleCodeMirrorChange}

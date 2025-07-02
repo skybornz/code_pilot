@@ -182,15 +182,38 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
     return (
     <>
       <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
-        <div className="p-4 border-b border-sidebar-border">
+        <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           <Logo />
+            {project && (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={onSwitchProject} aria-label="Switch project">
+                                <Upload className="w-4 h-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" align="end">
+                            <p>Switch Project</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )}
         </div>
         <ScrollArea className="flex-1 p-2 min-h-0">
           <div className="flex justify-between items-center mb-2 px-2">
               {project && branch ? (
-                <div className="overflow-hidden mr-2">
+                <div className="overflow-hidden mr-2 flex-1 min-w-0">
                   <h2 className="text-lg font-semibold truncate" title={project.name}>{project.name}</h2>
-                  <p className="text-xs text-muted-foreground truncate">Branch: {branch}</p>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <p className="text-xs text-muted-foreground truncate cursor-default">Branch: {branch}</p>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{branch}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
               ) : (
                 <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -198,18 +221,6 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                     <span>Project Files</span>
                 </h2>
               )}
-              <TooltipProvider>
-                  <Tooltip>
-                      <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={onSwitchProject} aria-label="Switch project">
-                              <Upload className="w-4 h-4" />
-                          </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                          <p>Switch project</p>
-                      </TooltipContent>
-                  </Tooltip>
-              </TooltipProvider>
           </div>
           <div className="space-y-0.5">
             <FileTreeView
