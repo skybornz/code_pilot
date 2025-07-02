@@ -16,7 +16,7 @@ import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import { diffLines, type Change } from 'diff';
-import { Decoration, EditorView, ViewPlugin, type ViewUpdate, hoverTooltip, WidgetType } from '@codemirror/view';
+import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { showMinimap } from "@replit/codemirror-minimap"
@@ -126,19 +126,17 @@ export function EditorPanel({
     onCodeChange(file.id, value);
   };
   
-    const { changeChunks, lineClasses, removedContentByLine } = useMemo(() => {
+    const { changeChunks, lineClasses } = useMemo(() => {
         if (!file.previousContent) {
-            return { changeChunks: [], lineClasses: [], removedContentByLine: new Map() };
+            return { changeChunks: [], lineClasses: [] };
         }
 
         const lineClasses: { line: number; class: string }[] = [];
-        const removedContentByLine = new Map<number, string>();
         const chunks: { startLine: number }[] = [];
         
         const diff = diffLines(file.previousContent, code);
         
         let newLine = 1;
-        let pendingRemovedText = '';
         let inChangeBlock = false;
 
         diff.forEach((part: Change) => {
@@ -148,37 +146,22 @@ export function EditorPanel({
                     chunks.push({ startLine: newLine });
                     inChangeBlock = true;
                 }
-                if (pendingRemovedText) {
-                    removedContentByLine.set(newLine, pendingRemovedText);
-                    pendingRemovedText = '';
-                }
                 for (let i = 0; i < lineCount; i++) {
                     lineClasses.push({ line: newLine + i, class: 'cm-line-bg-added' });
                 }
                 newLine += lineCount;
             } else if (part.removed) {
-                inChangeBlock = true; // A removal is part of a change block
-                pendingRemovedText += part.value;
+                if (!inChangeBlock) {
+                   chunks.push({ startLine: newLine });
+                   inChangeBlock = true;
+                }
             } else { // common part
-                 if (inChangeBlock) { // The change block ended
-                    if (pendingRemovedText) {
-                         // This case handles pure deletions. The line number is the one *after* the deletion.
-                        removedContentByLine.set(newLine, pendingRemovedText);
-                        chunks.push({ startLine: newLine });
-                    }
-                    pendingRemovedText = '';
-                    inChangeBlock = false;
-                 }
+                inChangeBlock = false;
                 newLine += lineCount;
             }
         });
         
-        if (pendingRemovedText) { // Handles trailing deletion
-            removedContentByLine.set(newLine, pendingRemovedText);
-            chunks.push({ startLine: newLine });
-        }
-
-        return { changeChunks: chunks, lineClasses, removedContentByLine };
+        return { changeChunks: chunks, lineClasses };
     }, [file.previousContent, code]);
 
     const changeLines = useMemo(() => {
@@ -231,89 +214,10 @@ export function EditorPanel({
 
     if (viewMode === 'diff' && file.previousContent) {
         baseExtensions.push(lineHighlighter(lineClasses));
-
-        // This plugin adds the "Info" icon widget to added lines that have a corresponding deletion
-        const addInfoIconPlugin = ViewPlugin.fromClass(class {
-            decorations: RangeSet<Decoration>
-
-            constructor(view: EditorView) {
-                this.decorations = this.buildDecorations(view)
-            }
-            update(update: ViewUpdate) {
-                if (update.docChanged || update.viewportChanged) {
-                    this.decorations = this.buildDecorations(update.view)
-                }
-            }
-            buildDecorations(view: EditorView): RangeSet<Decoration> {
-                const builder = new RangeSetBuilder<Decoration>()
-                for (const { line, class: className } of lineClasses) {
-                    // Only add an icon if it's an added line AND there's removed content to show for it
-                    if (className === 'cm-line-bg-added' && removedContentByLine.has(line) && line <= view.state.doc.lines) {
-                        const lineInfo = view.state.doc.line(line);
-                        const iconWidget = Decoration.widget({
-                            widget: new (class extends WidgetType {
-                                toDOM() {
-                                    const span = document.createElement("span");
-                                    span.className = "cm-diff-info-icon";
-                                    const infoIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`;
-                                    span.innerHTML = infoIconSvg;
-                                    return span;
-                                }
-                            })(),
-                            side: 1, // place after content
-                        });
-                        builder.add(lineInfo.to, lineInfo.to, iconWidget);
-                    }
-                }
-                return builder.finish();
-            }
-        }, { decorations: v => v.decorations });
-        
-        baseExtensions.push(addInfoIconPlugin);
-
-        // This tooltip only appears when hovering the icon created above
-        const diffTooltipExtension = hoverTooltip((view, pos) => {
-            const { node } = view.domAtPos(pos);
-            let
-                elt: Node | null = node,
-                isIcon = false;
-        
-            // Ascend the DOM tree to see if we are inside our icon
-            while (elt && elt !== view.dom) {
-                if (elt.nodeName === 'SPAN' && (elt as HTMLElement).classList.contains('cm-diff-info-icon')) {
-                    isIcon = true;
-                    break;
-                }
-                elt = elt.parentNode;
-            }
-        
-            if (!isIcon) return null;
-
-            const line = view.state.doc.lineAt(pos);
-            if (removedContentByLine.has(line.number)) {
-                const removedText = removedContentByLine.get(line.number)!;
-                return {
-                    pos: line.from,
-                    end: line.to,
-                    above: true,
-                    create() {
-                        const dom = document.createElement('div');
-                        dom.className = 'cm-tooltip-diff';
-                        const pre = document.createElement('pre');
-                        pre.className = 'cm-tooltip-diff-pre';
-                        pre.textContent = `--- Removed ---\n${removedText.trimEnd()}`;
-                        dom.appendChild(pre);
-                        return { dom };
-                    },
-                };
-            }
-            return null;
-        });
-        baseExtensions.push(diffTooltipExtension);
     }
     
     return baseExtensions;
-  }, [file.language, viewMode, file.previousContent, code, lineClasses, removedContentByLine, changeChunks]);
+  }, [file.language, viewMode, file.previousContent, lineClasses]);
   
   const analyzeDisabled = isLoading || !file.previousContent;
 
@@ -416,22 +320,24 @@ export function EditorPanel({
               </TooltipContent>
             </Tooltip>
             
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onAiAction('analyze-diff', code, file.language, file.previousContent)}
-                        disabled={analyzeDisabled}
-                        aria-label="Analyze Changes"
-                    >
-                        <Sparkles className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>{!file.previousContent ? 'No previous version for analysis' : 'Analyze Changes'}</p>
-                </TooltipContent>
-            </Tooltip>
+            {viewMode === 'diff' && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onAiAction('analyze-diff', code, file.language, file.previousContent)}
+                            disabled={analyzeDisabled}
+                            aria-label="Analyze Changes"
+                        >
+                            <Sparkles className="h-5 w-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{!file.previousContent ? 'No previous version for analysis' : 'Analyze Changes'}</p>
+                    </TooltipContent>
+                </Tooltip>
+            )}
 
             <div className="w-[1px] h-6 bg-border mx-1"></div>
 

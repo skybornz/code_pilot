@@ -139,36 +139,4 @@
   .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--accent) / 0.8);
   }
-
-  /* Custom tooltip for diff view */
-  .cm-tooltip-diff {
-    background-color: hsl(var(--foreground));
-    color: hsl(var(--background));
-    border: 1px solid hsl(var(--border));
-    padding: 8px 12px;
-    border-radius: var(--radius);
-    max-width: 90ch;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    z-index: 100;
-  }
-  .cm-tooltip-diff-pre {
-    margin: 0;
-    font-family: var(--font-code);
-    font-size: 0.875rem; /* text-sm */
-    white-space: pre-wrap;
-    word-break: break-all;
-    color: hsl(var(--destructive));
-  }
-
-  .cm-diff-info-icon {
-    display: inline-block;
-    margin-left: 8px;
-    cursor: pointer;
-    vertical-align: middle;
-    color: hsl(var(--muted-foreground));
-  }
-
-  .cm-diff-info-icon:hover {
-    color: hsl(var(--accent-foreground));
-  }
 }
