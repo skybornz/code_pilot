@@ -362,7 +362,7 @@ export function EditorPanel({
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <div className="relative flex-1 min-h-0">
+        <div className="relative flex-1 min-h-0 overflow-hidden">
           {viewMode === 'edit' ? (
             <ScrollArea className="h-full" orientation="both">
                 <CodeMirror
