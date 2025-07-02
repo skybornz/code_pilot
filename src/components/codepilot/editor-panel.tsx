@@ -20,7 +20,7 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { showMinimap } from '@replit/codemirror-minimap';
+import { showMinimap } from "@replit/codemirror-minimap"
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -157,33 +157,33 @@ const DiffView = ({ original, modified, language, originalCommitHash, modifiedCo
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Selected Version {modifiedCommitHash && `(${modifiedCommitHash.substring(0,7)})`}
                 </h3>
-                <ScrollArea className="rounded-md border flex-1" orientation="both">
+                <div className="rounded-md border flex-1 overflow-hidden">
                      <CodeMirror
                         value={modified}
                         extensions={modifiedExtensions}
-                        className="h-full"
+                        height="100%"
                         theme={vscodeDark}
                         readOnly={true}
                         basicSetup={commonEditorSetup}
                         style={commonEditorStyle}
                     />
-                </ScrollArea>
+                </div>
             </div>
             <div className="flex flex-col min-h-0 relative">
                 <h3 className="text-sm font-semibold mb-2 text-center text-muted-foreground shrink-0">
                     Previous Version {originalCommitHash && `(${originalCommitHash.substring(0,7)})`}
                 </h3>
-                <ScrollArea className="rounded-md border flex-1" orientation="both">
+                 <div className="rounded-md border flex-1 overflow-hidden">
                     <CodeMirror
                         value={original}
                         extensions={originalExtensions}
-                        className="h-full"
+                        height="100%"
                         theme={vscodeDark}
                         readOnly={true}
                         basicSetup={commonEditorSetup}
                         style={commonEditorStyle}
                     />
-                </ScrollArea>
+                </div>
             </div>
         </div>
     );
@@ -379,24 +379,23 @@ export function EditorPanel({
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
         <div className="relative flex-1 min-h-0 overflow-hidden">
           {viewMode === 'edit' ? (
-            <ScrollArea className="h-full" orientation="both">
-                <CodeMirror
-                  value={code}
-                  theme={vscodeDark}
-                  extensions={extensions}
-                  onChange={handleCodeMirrorChange}
-                  basicSetup={{
-                    lineNumbers: true,
-                    foldGutter: true,
-                    autocompletion: false,
-                  }}
-                  className="h-full"
-                  style={{
-                    fontSize: '0.875rem', // equiv to text-sm
-                    fontFamily: 'var(--font-code)',
-                  }}
-                />
-            </ScrollArea>
+            <CodeMirror
+                value={code}
+                theme={vscodeDark}
+                extensions={extensions}
+                onChange={handleCodeMirrorChange}
+                height="100%"
+                basicSetup={{
+                  lineNumbers: true,
+                  foldGutter: true,
+                  autocompletion: false,
+                }}
+                className="h-full"
+                style={{
+                  fontSize: '0.875rem', // equiv to text-sm
+                  fontFamily: 'var(--font-code)',
+                }}
+              />
           ) : (
             <DiffView 
                 original={file.previousContent ?? ''} 
