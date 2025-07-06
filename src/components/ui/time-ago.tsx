@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface TimeAgoProps {
@@ -9,22 +8,10 @@ interface TimeAgoProps {
 }
 
 export function TimeAgo({ date, addSuffix = true }: TimeAgoProps) {
-  const [timeAgo, setTimeAgo] = useState('');
-
-  useEffect(() => {
-    // This effect runs only on the client, after hydration
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-     if (isNaN(dateObj.getTime())) {
-      // Don't set anything for invalid dates
-      return;
+    if (isNaN(dateObj.getTime())) {
+      return null;
     }
-    setTimeAgo(formatDistanceToNow(dateObj, { addSuffix }));
-  }, [date, addSuffix]);
-
-  if (!timeAgo) {
-    // Render nothing on the server and initial client render
-    return null; 
-  }
-
-  return <>{timeAgo}</>;
+    const timeAgo = formatDistanceToNow(dateObj, { addSuffix });
+    return <>{timeAgo}</>;
 }
