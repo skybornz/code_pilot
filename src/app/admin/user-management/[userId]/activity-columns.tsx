@@ -2,10 +2,10 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import type { UserActivity } from '@/lib/activity-database';
-import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TimeAgo } from '@/components/ui/time-ago';
 
 export const columns: ColumnDef<UserActivity>[] = [
   {
@@ -61,7 +61,7 @@ export const columns: ColumnDef<UserActivity>[] = [
     cell: ({ row }) => {
       const timestamp = row.getValue('timestamp') as Date;
       if (!timestamp) return '-';
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+      return <TimeAgo date={timestamp} />;
     },
   },
 ];

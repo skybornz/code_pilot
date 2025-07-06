@@ -22,7 +22,7 @@ import { useAuth } from '@/context/auth-context';
 import { updateUserLastActive } from '@/actions/users';
 import { performAiAction } from '@/actions/ai';
 
-const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
+const ACTIVE_PROJECT_KEY_PREFIX = 'adlabs_active_project_';
 
 export function ADLabsWorkspace() {
   const { user } = useAuth();
@@ -38,16 +38,11 @@ export function ADLabsWorkspace() {
   const [analysisChatMessages, setAnalysisChatMessages] = useState<Message[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
-  const isMobile = useIsMobile(isClient);
+  const isMobile = useIsMobile();
   const [editorViewMode, setEditorViewMode] = useState<'edit' | 'diff'>('edit');
   
   const activeFile = files.find((f) => f.id === activeFileId);
   const activeProjectKey = user ? `${ACTIVE_PROJECT_KEY_PREFIX}${user.id}` : null;
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const resetCopilotChat = useCallback(() => {
     setCopilotChatMessages([
@@ -303,7 +298,7 @@ export function ADLabsWorkspace() {
     setRightPanelView('copilot-chat');
   };
   
-  if (isInitializing) {
+  if (isInitializing || isMobile === undefined) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -363,14 +358,6 @@ export function ADLabsWorkspace() {
         />;
     }
   };
-  
-  if (!isClient) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
   
   if (isMobile) {
     return (
