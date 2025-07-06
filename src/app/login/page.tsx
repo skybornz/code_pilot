@@ -18,16 +18,21 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { login, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!isAuthLoading && isAuthenticated) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated && isClient) {
       if (isAdmin) {
         router.replace('/admin');
       } else {
         router.replace('/');
       }
     }
-  }, [isAuthenticated, isAuthLoading, router, isAdmin]);
+  }, [isAuthenticated, isAuthLoading, router, isAdmin, isClient]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +51,7 @@ export default function LoginPage() {
     }
   };
 
-  if (isAuthLoading || (!isAuthLoading && isAuthenticated)) {
+  if (!isClient || isAuthLoading || (isAuthenticated && !isAuthLoading)) {
       return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
             <Loader2 className="h-8 w-8 animate-spin" />
