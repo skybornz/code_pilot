@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/auth-context';
@@ -18,6 +19,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { login, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This ensures the component only renders the form on the client, after hydration.
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
@@ -46,7 +53,7 @@ export default function LoginPage() {
     }
   };
 
-  if (isAuthLoading || isAuthenticated) {
+  if (!isClient || isAuthLoading || isAuthenticated) {
       return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
             <Loader2 className="h-8 w-8 animate-spin" />
