@@ -16,19 +16,25 @@ export function LogoMark() {
           <stop offset="100%" style={{ stopColor: "hsl(var(--accent))" }} />
         </linearGradient>
       </defs>
-      {/* A stylized 'A' */}
+      {/* An abstract 3D box representing a building block or module */}
       <path
-        d="M4 19L10 5L16 19"
+        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
         stroke="url(#logo-gradient)"
-        strokeWidth="2.5"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* A stylized 'D' */}
       <path
-        d="M15 19V5C18.866 5 22 8.13401 22 12C22 15.866 18.866 19 15 19Z"
+        d="m3.27 6.96 8.73 5.05 8.73-5.05"
         stroke="url(#logo-gradient)"
-        strokeWidth="2.5"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 22.08V12"
+        stroke="url(#logo-gradient)"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
