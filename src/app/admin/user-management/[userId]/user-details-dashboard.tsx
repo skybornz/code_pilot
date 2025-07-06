@@ -10,10 +10,10 @@ import { getUserActivity } from '@/actions/activity';
 import type { User } from '@/lib/schemas';
 import type { UserActivity } from '@/lib/activity-database';
 import Link from 'next/link';
-import { formatDistanceToNow } from 'date-fns';
 import { columns } from './activity-columns';
 import { DataTable } from '../../data-table';
 import { Badge } from '@/components/ui/badge';
+import { TimeAgo } from '@/components/ui/time-ago';
 
 export function UserDetailsDashboard({ userId }: { userId: string }) {
   const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
@@ -129,7 +129,7 @@ export function UserDetailsDashboard({ userId }: { userId: string }) {
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Last Active</span>
-                    <span className="font-medium">{formatDistanceToNow(new Date(user.lastActive), { addSuffix: true })}</span>
+                    <span className="font-medium">{user.lastActive ? <TimeAgo date={user.lastActive} /> : '-'}</span>
                 </div>
             </CardContent>
         </Card>

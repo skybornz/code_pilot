@@ -14,12 +14,12 @@ import { css } from '@codemirror/lang-css';
 import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatDistanceToNow } from 'date-fns';
 import { diffLines, type Change } from 'diff';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { showMinimap } from "@replit/codemirror-minimap"
+import { TimeAgo } from '@/components/ui/time-ago';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -264,7 +264,7 @@ export function EditorPanel({
                                 <div className="flex flex-col text-left">
                                     <span className="font-medium truncate" title={commit.message}>{commit.message}</span>
                                     <span className="text-xs text-muted-foreground">
-                                        {commit.hash.substring(0, 7)} &bull; {formatDistanceToNow(new Date(commit.date), { addSuffix: true })}
+                                        {commit.hash.substring(0, 7)} &bull; <TimeAgo date={commit.date} />
                                     </span>
                                 </div>
                             </SelectItem>

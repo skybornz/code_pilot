@@ -13,8 +13,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { TimeAgo } from '@/components/ui/time-ago';
 
 type ColumnsProps = {
   onEdit: (user: Omit<User, 'password'>) => void;
@@ -91,8 +91,7 @@ export const columns = ({ onEdit }: ColumnsProps): ColumnDef<Omit<User, 'passwor
     cell: ({ row }) => {
       const lastActive = row.getValue('lastActive') as string;
       if (!lastActive) return <span>-</span>;
-      const date = new Date(lastActive);
-      return <span>{formatDistanceToNow(date, { addSuffix: true })}</span>;
+      return <span><TimeAgo date={lastActive} /></span>;
     },
   },
   {
