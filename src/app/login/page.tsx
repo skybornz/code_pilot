@@ -19,14 +19,9 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { login, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This ensures the component only renders the form on the client, after hydration.
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
+    // Redirect if done loading and authenticated
     if (!isAuthLoading && isAuthenticated) {
       if (isAdmin) {
         router.replace('/admin');
@@ -53,7 +48,9 @@ export default function LoginPage() {
     }
   };
 
-  if (!isClient || isAuthLoading || isAuthenticated) {
+  // If auth state is loading, or if user is authenticated (and will be redirected), show a loader.
+  // This prevents the login form from flashing on screen for an already logged-in user.
+  if (isAuthLoading || isAuthenticated) {
       return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -61,6 +58,7 @@ export default function LoginPage() {
       )
   }
 
+  // Only render the form if auth has loaded and the user is not authenticated.
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8">
