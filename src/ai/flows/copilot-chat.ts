@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview A conversational AI agent for the SemCo-Pilot.
+ * @fileOverview A conversational AI agent for AD Labs.
  *
  * - copilotChat - A function that handles the chat conversation and streams the response.
  * - CopilotChatInput - The input type for the copilotChat function.
@@ -37,7 +37,7 @@ export async function copilotChat(
   input: CopilotChatInput
 ): Promise<ReadableStream<Uint8Array>> {
 
-  const systemPrompt = `You are SemCo-Pilot, an expert software development assistant. Your role is to help users with their coding questions, explain concepts, and provide solutions. Be friendly and helpful.
+  const systemPrompt = `You are an AI assistant from AD Labs, an expert software development assistant. Your role is to help users with their coding questions, explain concepts, and provide solutions. Be friendly and helpful.
 
 You have access to the following context about the user's project:
 ${input.projectContext || 'No context provided.'}

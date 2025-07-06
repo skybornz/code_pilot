@@ -98,9 +98,8 @@ export async function streamCopilotChat(
     });
     
     // Log activity once at the beginning of a successful stream
-    // Note: This logs the initiation, not the completion.
     if (messages.length > 0 && messages[messages.length-1].role === 'user') {
-        await logUserActivity(userId, 'Co-Pilot Chat', `User initiated a chat stream.`);
+        await logUserActivity(userId, 'AD Labs Chat', `User initiated a chat stream.`);
         await updateUserLastActive(userId);
     }
 

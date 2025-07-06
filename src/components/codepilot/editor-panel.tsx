@@ -226,7 +226,7 @@ export function EditorPanel({
     { id: 'test', label: 'Generate Unit Test', icon: TestTube2 },
   ];
 
-  const copilotAction = { id: 'copilot', label: 'Co-Pilot Chat', icon: Bot };
+  const copilotAction = { id: 'copilot', label: 'AD Labs Chat', icon: Bot };
 
   const secondaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
       { id: 'bugs', label: 'Find Bugs', icon: Bug },

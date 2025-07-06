@@ -24,7 +24,7 @@ import { performAiAction } from '@/actions/ai';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'semco_active_project_';
 
-export function SemCoPilotWorkspace() {
+export function ADLabsWorkspace() {
   const { user } = useAuth();
   const [files, setFiles] = useState<CodeFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
@@ -38,16 +38,20 @@ export function SemCoPilotWorkspace() {
   const [analysisChatMessages, setAnalysisChatMessages] = useState<Message[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const [isClient, setIsClient] = useState(false);
+  const isMobile = useIsMobile(isClient);
   const [editorViewMode, setEditorViewMode] = useState<'edit' | 'diff'>('edit');
   
   const activeFile = files.find((f) => f.id === activeFileId);
   const activeProjectKey = user ? `${ACTIVE_PROJECT_KEY_PREFIX}${user.id}` : null;
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const resetCopilotChat = useCallback(() => {
     setCopilotChatMessages([
-      { role: 'model', content: "Hello! I'm SemCo-Pilot. How can I help you with your code today?" }
+      { role: 'model', content: "Hello! I'm the AD Labs assistant. How can I help you with your code today?" }
     ]);
   }, []);
   
@@ -359,6 +363,14 @@ export function SemCoPilotWorkspace() {
         />;
     }
   };
+  
+  if (!isClient) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
   
   if (isMobile) {
     return (

@@ -12,18 +12,25 @@ export function LogoMark() {
     >
       <defs>
         <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))' }} />
-          <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))' }} />
+          <stop offset="0%" style={{ stopColor: "hsl(var(--primary))" }} />
+          <stop offset="100%" style={{ stopColor: "hsl(var(--accent))" }} />
         </linearGradient>
       </defs>
+      {/* A stylized 'A' */}
       <path
-        d="M15 12C15 12 12 8.5 12 6C12 3.5 15 2 15 2L22 8L15 12Z"
-        fill="url(#logo-gradient)"
+        d="M4 19L10 5L16 19"
+        stroke="url(#logo-gradient)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
+      {/* A stylized 'D' */}
       <path
-        d="M9 12C9 12 12 15.5 12 18C12 20.5 9 22 9 22L2 16L9 12Z"
-        fill="url(#logo-gradient)"
-        opacity="0.8"
+        d="M15 19V5C18.866 5 22 8.13401 22 12C22 15.866 18.866 19 15 19Z"
+        stroke="url(#logo-gradient)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
