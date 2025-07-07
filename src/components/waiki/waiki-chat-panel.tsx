@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -105,8 +104,8 @@ export function WaikiChatPanel() {
   };
 
   return (
-    <Card className="h-full flex flex-col shadow-2xl bg-card/80 backdrop-blur-sm">
-      <CardContent className="flex-1 p-0 flex flex-col min-h-0">
+    <div className="h-full flex flex-col">
+      <div className="flex-1 p-0 flex flex-col min-h-0">
         <ScrollArea className="flex-1" ref={scrollAreaRef}>
           <div className="space-y-8 p-4 md:p-6">
             {messages.map((message, index) => (
@@ -142,7 +141,7 @@ export function WaikiChatPanel() {
             )}
           </div>
         </ScrollArea>
-        <CardFooter className="border-t p-4 flex-shrink-0 bg-background/50">
+        <div className="border-t p-4 flex-shrink-0 bg-background/50">
           <form onSubmit={handleSubmit} className="flex gap-2 w-full">
             <Input
               value={input}
@@ -156,8 +155,8 @@ export function WaikiChatPanel() {
               <span className="sr-only">Send</span>
             </Button>
           </form>
-        </CardFooter>
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 }
