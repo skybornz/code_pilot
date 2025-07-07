@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -51,7 +52,7 @@ export function WaikiChatPanel() {
     const userMessage: Message = { role: 'user', content: currentInput };
     const newMessagesForApi = [...messages, userMessage];
     
-    setMessages(newMessagesForApi); // Update UI with user's message
+    setMessages(newMessagesForApi);
     setInput('');
     setIsChatLoading(true);
 
