@@ -8,7 +8,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 const features = [
   {
     title: 'RepoInsight',
-    description: 'Manage your code repositories and analyze project history.',
+    description: 'Manage your bit bucket repositories and analyze the code using AI tools directly',
     icon: FolderGit,
     href: '/repo-insight',
     color: 'text-blue-400',
