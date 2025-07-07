@@ -4,10 +4,10 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { Sidebar, SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 
-export default function AdminLayout({
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -19,13 +19,13 @@ export default function AdminLayout({
     if (!isLoading) {
       if (!isAuthenticated) {
         router.replace('/login');
-      } else if (!isAdmin) {
-        router.replace('/dashboard');
+      } else if (isAdmin) {
+        router.replace('/admin');
       }
     }
   }, [isAuthenticated, isAdmin, isLoading, router]);
 
-  if (isLoading || !isAuthenticated || !isAdmin) {
+  if (isLoading || !isAuthenticated || isAdmin) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -36,9 +36,9 @@ export default function AdminLayout({
   return (
     <SidebarProvider>
       <Sidebar>
-        <AdminSidebar />
+        <DashboardSidebar />
       </Sidebar>
-      <SidebarInset className="p-8">
+      <SidebarInset className="p-4 lg:p-8">
         {children}
       </SidebarInset>
     </SidebarProvider>

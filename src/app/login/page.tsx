@@ -26,7 +26,7 @@ export default function LoginPage() {
       if (isAdmin) {
         router.replace('/admin');
       } else {
-        router.replace('/');
+        router.replace('/dashboard');
       }
     }
   }, [isAuthenticated, isAuthLoading, router, isAdmin]);
@@ -40,7 +40,7 @@ export default function LoginPage() {
       if (result.user.role === 'admin') {
         router.push('/admin');
       } else {
-        router.push('/');
+        router.push('/dashboard');
       }
     } else {
       setError(result.message || 'An unexpected error occurred.');

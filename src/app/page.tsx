@@ -5,9 +5,8 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { ADLabsWorkspace } from '@/components/codepilot/codepilot-workspace';
 
-export default function ADLabsPage() {
+export default function HomePage() {
   const { isAuthenticated, isLoading, isAdmin } = useAuth();
   const router = useRouter();
 
@@ -17,6 +16,8 @@ export default function ADLabsPage() {
         router.replace('/login');
       } else if (isAdmin) {
         router.replace('/admin');
+      } else {
+        router.replace('/dashboard');
       }
     }
   }, [isAuthenticated, isLoading, router, isAdmin]);
@@ -31,6 +32,10 @@ export default function ADLabsPage() {
     );
   }
 
-  // Only render the workspace if auth has loaded, user is authenticated, and is not an admin.
-  return <ADLabsWorkspace />;
+  // Fallback loader while redirecting the authenticated user
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  );
 }
