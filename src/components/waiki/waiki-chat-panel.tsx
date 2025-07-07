@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -46,7 +45,6 @@ export function WaikiChatPanel() {
     setIsChatLoading(true);
 
     try {
-      // For the API call, we only want the history from the first *user* message.
       const firstUserMessageIndex = newMessagesForUi.findIndex(m => m.role === 'user');
       const historyForApi = firstUserMessageIndex !== -1 ? newMessagesForUi.slice(firstUserMessageIndex) : [];
       
@@ -64,16 +62,13 @@ export function WaikiChatPanel() {
 
           if (chunkValue) {
             if (isFirstChunk) {
-                // On the first chunk, add a new message bubble for the model's response.
                 setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
                 isFirstChunk = false;
             } else {
-                // For subsequent chunks, append the text to the last message.
                 setMessages(prev => {
                     const updatedMessages = [...prev];
                     const lastMessage = updatedMessages[updatedMessages.length - 1];
                     if (lastMessage?.role === 'model') {
-                        // Create a new object for the last message to ensure immutability and trigger a re-render.
                         updatedMessages[updatedMessages.length - 1] = {
                             ...lastMessage,
                             content: lastMessage.content + chunkValue,
@@ -124,7 +119,7 @@ export function WaikiChatPanel() {
                     'text-base break-words', 
                     message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 )}>
-                  <MessageContent content={message.content} />
+                  {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
                 </div>
                 {message.role === 'user' && (
                   <Avatar className="h-9 w-9 flex-shrink-0">
