@@ -1,37 +1,44 @@
+import { Markdown } from '@llm-ui/markdown';
 import { CodeBlock } from './code-block';
 
 /**
- * A component that intelligently renders chat message content.
- * It detects markdown code blocks and renders them with proper styling,
- * while displaying regular text normally.
+ * A component that intelligently renders chat message content using @llm-ui/markdown.
+ * It handles various markdown elements and renders code blocks with syntax highlighting.
  */
 export const MessageContent = ({ content }: { content: string }) => {
-    // Regex to split content by markdown-style code blocks, keeping the delimiters.
-    const parts = content.split(/(```[\w-]*\n[\s\S]*?\n```)/g);
-
-    // If no code blocks are found, render as a single block of text.
-    if (parts.length <= 1) {
-        return <p className="whitespace-pre-wrap">{content}</p>;
-    }
-
-    return (
-        <div className="space-y-4">
-            {parts.map((part, index) => {
-                // Don't render empty strings that can result from the split.
-                if (!part.trim()) return null;
-
-                const codeBlockMatch = part.match(/```([\w-]*)\n([\s\S]*?)\n```/);
-
-                if (codeBlockMatch) {
-                    const language = codeBlockMatch[1] || 'text';
-                    const code = codeBlockMatch[2].trim();
-                    // Use the dedicated CodeBlock component for syntax highlighting and styling.
-                    return <CodeBlock key={index} code={code} language={language} />;
-                } else {
-                    // Render plain text parts, preserving whitespace.
-                    return <p key={index} className="whitespace-pre-wrap">{part}</p>;
-                }
-            })}
-        </div>
-    );
+  return (
+    <div className="space-y-4">
+        <Markdown
+            components={{
+                code: ({ node, inline, className, children, ...props }: any) => {
+                    const match = /language-(\w+)/.exec(className || '');
+                    if (!inline && match) {
+                        return (
+                            <CodeBlock
+                                language={match[1]}
+                                code={String(children).trimEnd()}
+                            />
+                        );
+                    }
+                    if (!inline) {
+                         return (
+                            <CodeBlock
+                                language="text"
+                                code={String(children).trimEnd()}
+                            />
+                        );
+                    }
+                    return (
+                        <code className="bg-muted px-1.5 py-1 rounded-md font-mono text-sm" {...props}>
+                            {children}
+                        </code>
+                    );
+                },
+                 p: ({ node, ...props }) => <p className="whitespace-pre-wrap leading-relaxed" {...props} />,
+            }}
+        >
+            {content}
+        </Markdown>
+    </div>
+  );
 };
