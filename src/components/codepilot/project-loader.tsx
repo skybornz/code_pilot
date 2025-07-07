@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -10,10 +11,11 @@ import type { CodeFile } from './types';
 import type { Project, NewProject } from '@/lib/project-database';
 import { getProjects, addProject, deleteProject } from '@/actions/projects';
 import { fetchBitbucketBranches, loadBitbucketFiles } from '@/actions/github';
-import { Loader2, PlusCircle, Trash2, FolderGit2 } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, FolderGit2, GitBranch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { Label } from '../ui/label';
+import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
 
 interface ProjectLoaderProps {
   onFilesLoaded: (files: Partial<CodeFile>[], project: Project, branch: string) => void;
@@ -24,6 +26,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
+  const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     if (!user) return;
@@ -72,23 +75,29 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
             <CardTitle className="text-2xl">My Projects</CardTitle>
             <CardDescription>Select a project to load or add a new one.</CardDescription>
           </div>
-          <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Bitbucket Project</DialogTitle>
-              </DialogHeader>
-              <AddProjectForm onProjectAdded={(project) => {
-                handleAddProject(project);
-                setIsAddProjectDialogOpen(false);
-              }} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)}>
+              <GitBranch className="mr-2 h-4 w-4" />
+              Credentials
+            </Button>
+            <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Project
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Bitbucket Project</DialogTitle>
+                </DialogHeader>
+                <AddProjectForm onProjectAdded={(project) => {
+                  handleAddProject(project);
+                  setIsAddProjectDialogOpen(false);
+                }} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto">
           {projects.length > 0 ? (
@@ -113,6 +122,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
           )}
         </CardContent>
       </Card>
+      <BitbucketCredsDialog open={isBitbucketDialogOpen} onOpenChange={setIsBitbucketDialogOpen} />
     </div>
   );
 }

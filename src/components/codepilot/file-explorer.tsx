@@ -13,7 +13,6 @@ import Link from 'next/link';
 import type { Project } from '@/lib/project-database';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
-import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -177,7 +176,6 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
     const tree = useMemo(() => buildFileTree(files), [files]);
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-    const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = useState(false);
 
     return (
     <>
@@ -203,7 +201,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
         </div>
         <ScrollArea className="flex-1 p-2 min-h-0">
           <div className="flex justify-between items-center mb-2 px-2">
-              {project && branch ? (
+              {project && branch && (
                 <div className="overflow-hidden mr-2 flex-1 min-w-0">
                   <h2 className="text-lg font-semibold truncate" title={project.name}>{project.name}</h2>
                     <TooltipProvider>
@@ -217,11 +215,6 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                         </Tooltip>
                     </TooltipProvider>
                 </div>
-              ) : (
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <Folder className="w-5 h-5" />
-                    <span>Project Files</span>
-                </h2>
               )}
           </div>
           <div className="space-y-0.5">
@@ -262,10 +255,6 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                                       <DropdownMenuSeparator />
                                   </>
                               )}
-                              <DropdownMenuItem onClick={() => setIsBitbucketDialogOpen(true)}>
-                                  <GitBranch className="mr-2 h-4 w-4" />
-                                  <span>Bitbucket Credentials</span>
-                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
                                   <KeyRound className="mr-2 h-4 w-4" />
                                   <span>Change Password</span>
@@ -282,7 +271,6 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
         </div>
       </aside>
       {user && <ChangePasswordDialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen} userId={user.id} />}
-      {user && <BitbucketCredsDialog open={isBitbucketDialogOpen} onOpenChange={setIsBitbucketDialogOpen} />}
     </>
   );
 }
