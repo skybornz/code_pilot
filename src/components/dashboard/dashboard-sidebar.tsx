@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -12,20 +13,18 @@ import {
     SidebarMenuButton,
     SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Users, Settings, GitBranch, LogOut, UserCircle, KeyRound, MoreVertical, LayoutDashboard, FolderGit, FileTerminal, Bot, GitCompare } from 'lucide-react';
+import { Users, Settings, LogOut, UserCircle, KeyRound, MoreVertical, LayoutDashboard, FolderGit, FileTerminal, Bot, GitCompare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
-import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
 
 export function DashboardSidebar() {
     const pathname = usePathname();
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
-    const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = React.useState(false);
 
     const menuItems = [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -87,10 +86,6 @@ export function DashboardSidebar() {
                                           <DropdownMenuSeparator />
                                       </>
                                     )}
-                                    <DropdownMenuItem onClick={() => setIsBitbucketDialogOpen(true)}>
-                                        <GitBranch className="mr-2 h-4 w-4" />
-                                        <span>Bitbucket Credentials</span>
-                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
                                         <KeyRound className="mr-2 h-4 w-4" />
                                         <span>Change Password</span>
@@ -106,7 +101,6 @@ export function DashboardSidebar() {
               )}
             </SidebarFooter>
             {user && <ChangePasswordDialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen} userId={user.id} />}
-            {user && <BitbucketCredsDialog open={isBitbucketDialogOpen} onOpenChange={setIsBitbucketDialogOpen} />}
         </>
     )
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -5,15 +6,13 @@ import { useAuth } from '@/context/auth-context';
 import { Logo } from '@/components/codepilot/logo';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { UserCircle, Settings, GitBranch, KeyRound, LogOut } from 'lucide-react';
+import { UserCircle, Settings, KeyRound, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
-import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
 
 export function DashboardHeader() {
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
-    const [isBitbucketDialogOpen, setIsBitbucketDialogOpen] = React.useState(false);
 
     return (
         <>
@@ -45,10 +44,6 @@ export function DashboardHeader() {
                                       <DropdownMenuSeparator />
                                   </>
                                 )}
-                                <DropdownMenuItem onClick={() => setIsBitbucketDialogOpen(true)}>
-                                    <GitBranch className="mr-2 h-4 w-4" />
-                                    <span>Bitbucket Credentials</span>
-                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
                                     <KeyRound className="mr-2 h-4 w-4" />
                                     <span>Change Password</span>
@@ -64,7 +59,6 @@ export function DashboardHeader() {
                 </div>
             </header>
             {user && <ChangePasswordDialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen} userId={user.id} />}
-            {user && <BitbucketCredsDialog open={isBitbucketDialogOpen} onOpenChange={setIsBitbucketDialogOpen} />}
         </>
     )
 }

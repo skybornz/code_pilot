@@ -78,7 +78,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)}>
               <GitBranch className="mr-2 h-4 w-4" />
-              Credentials
+              Configuration
             </Button>
             <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
               <DialogTrigger asChild>
