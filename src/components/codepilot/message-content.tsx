@@ -1,29 +1,23 @@
-import { Markdown } from '@llm-ui/markdown';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './code-block';
 
 /**
- * A component that intelligently renders chat message content using @llm-ui/markdown.
+ * A component that intelligently renders chat message content using react-markdown.
  * It handles various markdown elements and renders code blocks with syntax highlighting.
  */
 export const MessageContent = ({ content }: { content: string }) => {
   return (
     <div className="space-y-4">
-        <Markdown
+        <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
-                code: ({ node, inline, className, children, ...props }: any) => {
+                code: ({ node, inline, className, children, ...props }) => {
                     const match = /language-(\w+)/.exec(className || '');
-                    if (!inline && match) {
+                    if (!inline) {
                         return (
                             <CodeBlock
-                                language={match[1]}
-                                code={String(children).trimEnd()}
-                            />
-                        );
-                    }
-                    if (!inline) {
-                         return (
-                            <CodeBlock
-                                language="text"
+                                language={match ? match[1] : 'text'}
                                 code={String(children).trimEnd()}
                             />
                         );
@@ -38,7 +32,7 @@ export const MessageContent = ({ content }: { content: string }) => {
             }}
         >
             {content}
-        </Markdown>
+        </ReactMarkdown>
     </div>
   );
 };
