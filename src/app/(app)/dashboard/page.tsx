@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
 const features = [
   {
-    title: 'Repo Insight',
+    title: 'My Projects',
     description: 'Connect to your Bitbucket projects to browse code, gain AI-driven insights, and refactor seamlessly.',
     icon: FolderGit,
     href: '/repo-insight',

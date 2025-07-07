@@ -28,7 +28,7 @@ export function DashboardSidebar() {
 
     const menuItems = [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/repo-insight', label: 'RepoInsight', icon: FolderGit },
+        { href: '/repo-insight', label: 'My Projects', icon: FolderGit },
         { href: '/codepilot', label: 'CodePilot', icon: FileTerminal },
         { href: '/waiki', label: 'W.A.I.K.I', icon: Bot },
         { href: '/code-compare', label: 'CodeCompare', icon: GitCompare },

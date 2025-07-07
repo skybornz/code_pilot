@@ -84,39 +84,10 @@ export function ADLabsWorkspace() {
   }, [resetCopilotChat]);
 
   useEffect(() => {
-    const loadProjectFromStorage = async () => {
-      if (!activeProjectKey || !user) {
-        setIsInitializing(false);
-        return;
-      }
-      try {
-        const storedInfo = localStorage.getItem(activeProjectKey);
-        if (storedInfo) {
-          const { project, branch } = JSON.parse(storedInfo);
-          const result = await loadBitbucketFiles(project.url, branch, user.id);
-          if (result.success && result.files) {
-            await handleFilesLoaded(result.files, project, branch);
-          } else {
-            toast({ variant: 'destructive', title: 'Failed to auto-reload project', description: result.error });
-            localStorage.removeItem(activeProjectKey);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load project from storage:', error);
-        if (activeProjectKey) {
-          localStorage.removeItem(activeProjectKey);
-        }
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    if (user) {
-      loadProjectFromStorage();
-    } else {
-      setIsInitializing(false);
-    }
-  }, [handleFilesLoaded, toast, user, activeProjectKey]);
+    // We no longer automatically load the project from local storage.
+    // This ensures the user always sees the project selection screen first.
+    setIsInitializing(false);
+  }, []);
 
   const handleFileSelect = useCallback(async (fileId: string) => {
     if (!user || !loadedProjectInfo) return;

@@ -308,7 +308,7 @@ export function AIOutputPanel({
       <CardHeader className="flex-shrink-0 border-b p-4">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Wand2 className="h-5 w-5 text-accent" />
-          <span>AI Assistant</span>
+          <span>{output ? output.title : 'AI Assistant'}</span>
         </CardTitle>
         {output && output.fileContext && (
           <p className="text-xs text-muted-foreground pt-1 truncate" title={output.fileContext.name}>
@@ -328,7 +328,6 @@ export function AIOutputPanel({
             )}
             {!isLoading && output && (
               <div>
-                <h3 className="font-medium mb-3 text-accent">{output.title}</h3>
                 {renderOutput(output)}
               </div>
             )}
