@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,24 +16,14 @@ import { useAuth } from '@/context/auth-context';
 import { streamWaikiChat } from '@/actions/ai';
 
 export function WaikiChatPanel() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'model', content: "Hello! I'm W.A.I.K.I. How can I help you today?" }
+  ]);
   const [input, setInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-
-  const setInitialMessage = useCallback(() => {
-    if (messages.length === 0) {
-      setMessages([
-        { role: 'model', content: "Hello! I'm W.A.I.K.I. How can I help you today?" }
-      ]);
-    }
-  }, [messages.length]);
-
-  useEffect(() => {
-    setInitialMessage();
-  }, [setInitialMessage]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -50,15 +40,15 @@ export function WaikiChatPanel() {
     if (!currentInput.trim() || !user) return;
 
     const userMessage: Message = { role: 'user', content: currentInput };
-    const newMessagesForApi = [...messages, userMessage];
-    
-    setMessages(newMessagesForApi);
+    const newMessagesForUi = [...messages, userMessage]; 
+    setMessages(newMessagesForUi);
     setInput('');
     setIsChatLoading(true);
 
     try {
-      const firstUserMessageIndex = newMessagesForApi.findIndex(m => m.role === 'user');
-      const historyForApi = firstUserMessageIndex !== -1 ? newMessagesForApi.slice(firstUserMessageIndex) : [];
+      // For the API call, we only want the history from the first *user* message.
+      const firstUserMessageIndex = newMessagesForUi.findIndex(m => m.role === 'user');
+      const historyForApi = firstUserMessageIndex !== -1 ? newMessagesForUi.slice(firstUserMessageIndex) : [];
       
       const stream = await streamWaikiChat(user.id, historyForApi);
 
@@ -117,7 +107,7 @@ export function WaikiChatPanel() {
       hasStartedChat ? 'justify-between' : 'justify-center'
     )}>
        <div className={cn(
-          "w-full flex flex-col",
+          "w-full flex flex-col h-full",
           hasStartedChat ? 'flex-1 min-h-0' : 'max-w-4xl'
       )}>
         <ScrollArea className={cn(hasStartedChat && "flex-1")} ref={scrollAreaRef}>
