@@ -34,8 +34,8 @@ export default function AppLayout({
     );
   }
 
-  // RepoInsight provides its own full-page layout, so we don't wrap it with the main sidebar.
-  if (pathname === '/repo-insight') {
+  // RepoInsight and Dashboard have their own full-page layouts, so we don't wrap them with the main sidebar.
+  if (pathname === '/repo-insight' || pathname.startsWith('/dashboard')) {
     return <>{children}</>;
   }
 

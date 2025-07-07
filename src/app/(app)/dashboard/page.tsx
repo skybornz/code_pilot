@@ -3,6 +3,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Bot, FileTerminal, FolderGit, GitCompare } from 'lucide-react';
 import Link from 'next/link';
+import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
 const features = [
   {
@@ -37,28 +38,31 @@ const features = [
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col h-full">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to AD Labs. Select a tool to get started.</p>
-      </header>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {features.map((feature) => (
-          <Link href={feature.href} key={feature.title} className="group">
-            <Card className="h-full hover:border-primary transition-colors duration-300 hover:shadow-lg hover:-translate-y-1">
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <feature.icon className={`w-8 h-8 ${feature.color}`} />
-                  <CardTitle>{feature.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>{feature.description}</CardDescription>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <DashboardHeader />
+      <main className="flex-1 container mx-auto p-8">
+        <div className="mb-12 text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">Welcome to AD Labs</h1>
+            <p className="mt-4 text-lg text-muted-foreground">Your integrated suite for AI-powered development. Select a tool to begin.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((feature) => (
+            <Link href={feature.href} key={feature.title} className="group">
+              <Card className="h-full hover:border-primary transition-colors duration-300 hover:shadow-lg hover:-translate-y-1">
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <feature.icon className={`w-8 h-8 ${feature.color}`} />
+                    <CardTitle>{feature.title}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{feature.description}</CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
