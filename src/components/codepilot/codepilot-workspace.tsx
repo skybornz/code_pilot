@@ -21,6 +21,7 @@ import type { Message } from '@/ai/flows/copilot-chat';
 import { useAuth } from '@/context/auth-context';
 import { updateUserLastActive } from '@/actions/users';
 import { performAiAction } from '@/actions/ai';
+import { DashboardHeader } from '../dashboard/dashboard-header';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'adlabs_active_project_';
 
@@ -306,6 +307,19 @@ export function ADLabsWorkspace() {
     );
   }
 
+  // If no project is loaded, show the project loader inside the main dashboard layout.
+  if (!loadedProjectInfo) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <DashboardHeader />
+        <main className="flex-1">
+          <ProjectLoader onFilesLoaded={handleFilesLoaded} />
+        </main>
+      </div>
+    );
+  }
+
+  // If a project is loaded, render the full IDE experience.
   const editor = (isFileLoading && activeFile?.type === 'file') ? (
      <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -384,20 +398,14 @@ export function ADLabsWorkspace() {
           </Sheet>
         </header>
         <main className="flex-1 overflow-y-auto p-4">
-          {loadedProjectInfo ? (
-            <>
-              <div className="h-[50vh]">
-                {editor}
-              </div>
-              <div className="mt-4 h-[calc(50vh-6rem)]">
-                {rightPanelContent()}
-              </div>
-            </>
-           ) : (
-            <div className="h-full flex items-center justify-center">
-              <ProjectLoader onFilesLoaded={handleFilesLoaded} />
+          <>
+            <div className="h-[50vh]">
+              {editor}
             </div>
-           )}
+            <div className="mt-4 h-[calc(50vh-6rem)]">
+              {rightPanelContent()}
+            </div>
+          </>
         </main>
       </div>
     )
@@ -415,20 +423,14 @@ export function ADLabsWorkspace() {
         branch={loadedProjectInfo?.branch}
       />
       <main className="flex-1 flex gap-4 p-4 overflow-hidden">
-        {loadedProjectInfo ? (
-          <>
-            <div className="flex-1 flex flex-col min-w-0">
-              {editor}
-            </div>
-            <div className="flex-1 flex flex-col min-w-0">
-              {rightPanelContent()}
-            </div>
-          </>
-        ) : (
-          <div className="w-full h-full">
-             <ProjectLoader onFilesLoaded={handleFilesLoaded} />
+        <>
+          <div className="flex-1 flex flex-col min-w-0">
+            {editor}
           </div>
-        )}
+          <div className="flex-1 flex flex-col min-w-0">
+            {rightPanelContent()}
+          </div>
+        </>
       </main>
     </div>
   );

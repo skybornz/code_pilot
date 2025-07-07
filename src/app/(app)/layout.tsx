@@ -34,8 +34,9 @@ export default function AppLayout({
     );
   }
 
-  // RepoInsight and Dashboard have their own full-page layouts, so we don't wrap them with the main sidebar.
-  if (pathname === '/repo-insight' || pathname.startsWith('/dashboard')) {
+  // Certain pages have their own full-page layouts and don't need the main sidebar.
+  const fullPageLayouts = ['/repo-insight', '/dashboard', '/codepilot', '/waiki', '/code-compare'];
+  if (fullPageLayouts.some(p => pathname.startsWith(p))) {
     return <>{children}</>;
   }
 
