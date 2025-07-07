@@ -23,16 +23,17 @@ export function WaikiChatPanel() {
   const { user } = useAuth();
 
   const setInitialMessage = useCallback(() => {
-    setMessages([
-      { role: 'model', content: "Hello! I'm W.A.I.K.I. How can I help you today?" }
-    ]);
-  }, []);
+    if (messages.length === 0) {
+      setMessages([
+        { role: 'model', content: "Hello! I'm W.A.I.K.I. How can I help you today?" }
+      ]);
+    }
+  }, [messages.length]);
 
   useEffect(() => {
     setInitialMessage();
   }, [setInitialMessage]);
 
-  // Auto-scroll to the bottom when new messages are added.
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -102,11 +103,19 @@ export function WaikiChatPanel() {
       setIsChatLoading(false);
     }
   };
+  
+  const hasStartedChat = messages.length > 1;
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 p-0 flex flex-col min-h-0">
-        <ScrollArea className="flex-1" ref={scrollAreaRef}>
+    <div className={cn(
+      "h-full flex flex-col items-center",
+      hasStartedChat ? 'justify-between' : 'justify-center'
+    )}>
+       <div className={cn(
+          "w-full flex flex-col",
+          hasStartedChat ? 'flex-1 min-h-0' : 'max-w-4xl'
+      )}>
+        <ScrollArea className={cn(hasStartedChat && "flex-1")} ref={scrollAreaRef}>
           <div className="space-y-8 p-4 md:p-6">
             {messages.map((message, index) => (
               <div key={index} className={cn('flex items-start gap-4 w-full', message.role === 'user' && 'justify-end')}>
@@ -141,20 +150,26 @@ export function WaikiChatPanel() {
             )}
           </div>
         </ScrollArea>
-        <div className="border-t p-4 flex-shrink-0 bg-background/50">
-          <form onSubmit={handleSubmit} className="flex gap-2 w-full">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask W.A.I.K.I anything..."
-              disabled={isChatLoading}
-              className="h-12 text-base"
-            />
-            <Button type="submit" disabled={isChatLoading || !input.trim()} size="lg">
-              <Send className="h-5 w-5" />
-              <span className="sr-only">Send</span>
-            </Button>
-          </form>
+        
+        <div className={cn(
+          "w-full px-4 pb-4 md:px-6 md:pb-6 flex-shrink-0",
+           hasStartedChat ? 'bg-background/80 backdrop-blur-sm' : 'bg-transparent',
+        )}>
+           <div className="max-w-4xl mx-auto">
+              <form onSubmit={handleSubmit} className="flex gap-2 w-full bg-muted/80 p-2 rounded-full border">
+                  <Input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Ask W.A.I.K.I anything..."
+                      disabled={isChatLoading}
+                      className="h-12 text-base bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                  <Button type="submit" disabled={isChatLoading || !input.trim()} size="icon" className="h-12 w-12 rounded-full">
+                      <Send className="h-5 w-5" />
+                      <span className="sr-only">Send</span>
+                  </Button>
+              </form>
+            </div>
         </div>
       </div>
     </div>
