@@ -28,7 +28,7 @@ export const MessageContent = ({ content }: { content: string }) => {
                         </code>
                     );
                 },
-                 p: ({ node, ...props }) => <p className="whitespace-pre-wrap leading-relaxed" {...props} />,
+                 p: ({ node, ...props }) => <div className="whitespace-pre-wrap leading-relaxed" {...props} />,
             }}
         >
             {content}
