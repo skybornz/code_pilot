@@ -14,18 +14,18 @@ const features = [
     color: 'text-blue-400',
   },
   {
+    title: 'W.A.I.K.I',
+    description: 'Web-based AI for Knowledge & Interaction',
+    icon: Bot,
+    href: '/waiki',
+    color: 'text-green-400',
+  },
+  {
     title: 'Code Pilot',
     description: 'Get AI-powered analysis on any code snippet or file.',
     icon: FileTerminal,
     href: '/codepilot',
     color: 'text-purple-400',
-  },
-  {
-    title: 'W.A.I.K.I',
-    description: 'Your personal AI chat assistant for all things code.',
-    icon: Bot,
-    href: '/waiki',
-    color: 'text-green-400',
   },
   {
     title: 'Code Compare',
