@@ -71,7 +71,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
     <div className="h-full w-full container mx-auto p-8 flex flex-col">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-4">
             <div>
-                <h1 className="text-[2em] font-normal tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                <h1 className="text-[1.5em] font-normal tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                     My Projects
                 </h1>
                 <p className="mt-2 text-lg text-muted-foreground">
