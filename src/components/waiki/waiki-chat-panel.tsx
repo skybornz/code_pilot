@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { streamWaikiChat } from '@/actions/ai';
@@ -22,12 +22,14 @@ type Message = {
 
 export function WaikiChatPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [streamingResponse, setStreamingResponse] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [input, setInput] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to bottom when messages or streaming response changes
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -35,53 +37,32 @@ export function WaikiChatPanel() {
         behavior: 'smooth',
       });
     }
-  }, [messages]);
+  }, [messages, streamingResponse]);
 
-  const handleSend = async (e?: React.FormEvent) => {
+  const handleSend = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!input.trim() || !user) return;
+    if (!input.trim() || !user || isChatLoading) return;
 
     const currentInput = input;
     const userMessage: WaikiMessage = { role: 'user', content: currentInput };
     const newMessages: WaikiMessage[] = [...messages, userMessage];
-    
-    // Update UI with the user's message immediately
+
     setMessages(newMessages);
     setInput('');
     setIsChatLoading(true);
+    setStreamingResponse('');
 
     try {
       const stream = await streamWaikiChat(user.id, newMessages);
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let isFirstChunk = true;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunkValue = decoder.decode(value);
-
-        if (chunkValue) {
-          if (isFirstChunk) {
-            // On the first chunk, create a new message bubble for the model.
-            setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
-            isFirstChunk = false;
-          } else {
-            // For subsequent chunks, append the text to the last message.
-            setMessages(prev => {
-              const updatedMessages = [...prev];
-              const lastMessage = updatedMessages[updatedMessages.length - 1];
-              if (lastMessage?.role === 'model') {
-                updatedMessages[updatedMessages.length - 1] = {
-                  ...lastMessage,
-                  content: lastMessage.content + chunkValue,
-                };
-              }
-              return updatedMessages;
-            });
-          }
-        }
+        setStreamingResponse(prev => prev + chunkValue);
       }
     } catch (error) {
       console.error('Chat failed:', error);
@@ -90,24 +71,30 @@ export function WaikiChatPanel() {
         title: 'Chat Error',
         description: 'Could not get a response from the AI model. Please check your model configuration.',
       });
-      // Add an error message to the chat
-      setMessages(prev => [...prev, { role: 'model', content: 'Sorry, I encountered an error.' }]);
+      setStreamingResponse('Sorry, I encountered an error.');
     } finally {
       setIsChatLoading(false);
     }
-  };
+  }, [input, user, isChatLoading, messages, toast]);
 
+  // Effect to commit the streaming response to the messages list when done
+  useEffect(() => {
+    if (!isChatLoading && streamingResponse) {
+      setMessages(prev => [...prev, { role: 'model', content: streamingResponse }]);
+      setStreamingResponse('');
+    }
+  }, [isChatLoading, streamingResponse]);
 
-  const hasMessages = messages.length > 0;
+  const hasContent = messages.length > 0 || streamingResponse;
 
   return (
     <div
       className={cn(
         'h-full flex flex-col',
-        !hasMessages && 'items-center justify-center'
+        !hasContent && 'items-center justify-center'
       )}
     >
-      {hasMessages ? (
+      {hasContent ? (
         <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
           <div className="space-y-6 max-w-3xl mx-auto w-full py-6">
             {messages.map((message, index) => (
@@ -142,13 +129,20 @@ export function WaikiChatPanel() {
                 )}
               </div>
             ))}
-             {isChatLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
+            {isChatLoading && (
               <div className="flex items-start gap-3">
                  <Avatar className="h-9 w-9 border bg-background flex-shrink-0">
                     <AvatarFallback className="bg-transparent"><LogoMark /></AvatarFallback>
                   </Avatar>
-                <div className="p-3 rounded-lg bg-muted flex items-center">
-                    <Loader2 className="h-5 w-5 animate-spin"/>
+                <div className={cn(
+                    'p-3 rounded-lg max-w-[85%]',
+                    'text-sm break-words bg-muted'
+                  )}>
+                    {streamingResponse ? (
+                      <MessageContent content={streamingResponse} />
+                    ) : (
+                      <Loader2 className="h-5 w-5 animate-spin"/>
+                    )}
                 </div>
               </div>
             )}
@@ -166,7 +160,7 @@ export function WaikiChatPanel() {
       <div
         className={cn(
           'w-full flex-shrink-0 px-4 pb-4 pt-2',
-          hasMessages ? 'mt-auto' : 'mt-8'
+          hasContent ? 'mt-auto' : 'mt-8'
         )}
       >
         <form
