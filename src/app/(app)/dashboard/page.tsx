@@ -7,14 +7,14 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
 const features = [
   {
-    title: 'RepoInsight',
+    title: 'Repo Insight',
     description: 'Manage your bit bucket repositories and analyze the code using AI tools directly',
     icon: FolderGit,
     href: '/repo-insight',
     color: 'text-blue-400',
   },
   {
-    title: 'CodePilot',
+    title: 'Code Pilot',
     description: 'Get AI-powered analysis on any code snippet or file.',
     icon: FileTerminal,
     href: '/codepilot',
@@ -28,7 +28,7 @@ const features = [
     color: 'text-green-400',
   },
   {
-    title: 'CodeCompare',
+    title: 'Code Compare',
     description: 'Perform an extensive, AI-driven comparison between two files.',
     icon: GitCompare,
     href: '/code-compare',
