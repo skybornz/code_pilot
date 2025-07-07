@@ -41,26 +41,21 @@ export function WaikiChatPanel() {
     e?.preventDefault();
     if (!input.trim() || !user) return;
 
-    const userMessage: Message = { role: 'user', content: input };
-    
-    // Add user message to the state and prepare history for the API in one go
-    // This is the correct way to avoid race conditions with state updates
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    const currentInput = input;
+    const userMessage: WaikiMessage = { role: 'user', content: currentInput };
+    const historyForApi: WaikiMessage[] = [...messages, userMessage];
+
+    // Immediately update the UI with the user's message
+    // and an empty placeholder for the model's response.
+    setMessages(prev => [...prev, userMessage, { role: 'model', content: '' }]);
     setInput('');
     setIsChatLoading(true);
-
-    const historyForApi: WaikiMessage[] = newMessages.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    }));
 
     try {
       const stream = await streamWaikiChat(user.id, historyForApi);
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let isFirstChunk = true;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -68,25 +63,12 @@ export function WaikiChatPanel() {
         const chunkValue = decoder.decode(value);
 
         if (chunkValue) {
-          if (isFirstChunk) {
-            // On the first chunk, create a new message bubble for the model's response.
-            setMessages((prev) => [...prev, { role: 'model', content: chunkValue }]);
-            isFirstChunk = false;
-          } else {
-            // For subsequent chunks, append the text to the last message.
-            setMessages((prev) => {
-              const updatedMessages = [...prev];
-              const lastMessage = updatedMessages[updatedMessages.length - 1];
-              if (lastMessage?.role === 'model') {
-                // Create a new object for the last message to ensure immutability
-                updatedMessages[updatedMessages.length - 1] = {
-                  ...lastMessage,
-                  content: lastMessage.content + chunkValue,
-                };
-              }
-              return updatedMessages;
-            });
-          }
+          // Append the new chunk to the last message (the model's placeholder)
+          setMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1].content += chunkValue;
+            return newMessages;
+          });
         }
       }
     } catch (error) {
@@ -96,11 +78,17 @@ export function WaikiChatPanel() {
         title: 'Chat Error',
         description: 'Could not get a response from the AI model. Please check your model configuration.',
       });
-      setMessages((prev) => [...prev, { role: 'model', content: 'Sorry, I encountered an error.' }]);
+      // Replace the placeholder with an error message
+      setMessages(prev => {
+         const newMessages = [...prev];
+         newMessages[newMessages.length - 1].content = 'Sorry, I encountered an error.';
+         return newMessages;
+      });
     } finally {
       setIsChatLoading(false);
     }
   };
+
 
   const hasMessages = messages.length > 0;
 
@@ -135,7 +123,11 @@ export function WaikiChatPanel() {
                       : 'bg-muted'
                   )}
                 >
-                  <MessageContent content={message.content} />
+                  {isChatLoading && index === messages.length - 1 && message.content === '' ? (
+                     <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <MessageContent content={message.content} />
+                  )}
                 </div>
                 {message.role === 'user' && (
                   <Avatar className="h-9 w-9 flex-shrink-0">
@@ -146,18 +138,6 @@ export function WaikiChatPanel() {
                 )}
               </div>
             ))}
-            {isChatLoading && messages[messages.length - 1]?.role === 'user' && (
-              <div className="flex items-start gap-4">
-                <Avatar className="h-9 w-9 border bg-background flex-shrink-0">
-                  <AvatarFallback className="bg-transparent">
-                    <LogoMark />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="p-3 rounded-lg bg-muted flex items-center">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                </div>
-              </div>
-            )}
           </div>
         </ScrollArea>
       ) : (
