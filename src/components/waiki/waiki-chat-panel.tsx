@@ -57,9 +57,7 @@ export function WaikiChatPanel() {
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let done = false;
-
-      // Add an empty model message bubble to start, which we will populate
-      setMessages((prev) => [...prev, { role: 'model', content: '' }]);
+      let isFirstChunk = true;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -67,18 +65,22 @@ export function WaikiChatPanel() {
         const chunkValue = decoder.decode(value);
 
         if (chunkValue) {
-          // Append the chunk to the last message (which is our new model message)
-          setMessages((prev) => {
-            const updatedMessages = [...prev];
-            const lastMessage = updatedMessages[updatedMessages.length - 1];
-            if (lastMessage?.role === 'model') {
-              updatedMessages[updatedMessages.length - 1] = {
-                ...lastMessage,
-                content: lastMessage.content + chunkValue,
-              };
-            }
-            return updatedMessages;
-          });
+          if (isFirstChunk) {
+            setMessages((prev) => [...prev, { role: 'model', content: chunkValue }]);
+            isFirstChunk = false;
+          } else {
+            setMessages((prev) => {
+              const updatedMessages = [...prev];
+              const lastMessage = updatedMessages[updatedMessages.length - 1];
+              if (lastMessage?.role === 'model') {
+                updatedMessages[updatedMessages.length - 1] = {
+                  ...lastMessage,
+                  content: lastMessage.content + chunkValue,
+                };
+              }
+              return updatedMessages;
+            });
+          }
         }
       }
     } catch (error) {
@@ -88,20 +90,7 @@ export function WaikiChatPanel() {
         title: 'Chat Error',
         description: 'Could not get a response from the AI model. Please check your model configuration.',
       });
-      // Replace the empty message with an error message
-      setMessages((prev) => {
-        const updatedMessages = [...prev];
-        const lastMessage = updatedMessages[updatedMessages.length - 1];
-        if (lastMessage?.role === 'model' && lastMessage.content === '') {
-            updatedMessages[updatedMessages.length - 1] = {
-                ...lastMessage,
-                content: 'Sorry, I encountered an error.',
-            };
-        } else {
-            updatedMessages.push({ role: 'model', content: 'Sorry, I encountered an error.' });
-        }
-        return updatedMessages;
-      });
+      setMessages((prev) => [...prev, { role: 'model', content: 'Sorry, I encountered an error.' }]);
     } finally {
       setIsChatLoading(false);
     }
