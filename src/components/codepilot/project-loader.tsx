@@ -68,60 +68,64 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   }
 
   return (
-    <div className="h-full w-full p-4">
-      <Card className="w-full h-full flex flex-col shadow-2xl bg-card/80 backdrop-blur-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl">My Projects</CardTitle>
-            <CardDescription>Select a project to load or add a new one.</CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)}>
-              <GitBranch className="mr-2 h-4 w-4" />
-              Configuration
-            </Button>
-            <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Project
+    <div className="h-full w-full container mx-auto p-8 flex flex-col">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-4">
+            <div>
+                <h1 className="text-[2em] font-normal tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    My Projects
+                </h1>
+                <p className="mt-2 text-lg text-muted-foreground">
+                    Select a project to load or add a new one.
+                </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+                <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)}>
+                    <GitBranch className="mr-2 h-4 w-4" />
+                    Configuration
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Bitbucket Project</DialogTitle>
-                </DialogHeader>
-                <AddProjectForm onProjectAdded={(project) => {
-                  handleAddProject(project);
-                  setIsAddProjectDialogOpen(false);
-                }} />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto">
-          {projects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projects.map(project => (
-                <ProjectCard 
-                  key={project.id} 
-                  project={project}
-                  onDelete={handleDeleteProject}
-                  onFilesLoaded={onFilesLoaded}
-                />
-              ))}
+                <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Project
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                        <DialogTitle>Add New Bitbucket Project</DialogTitle>
+                        </DialogHeader>
+                        <AddProjectForm onProjectAdded={(project) => {
+                        handleAddProject(project);
+                        setIsAddProjectDialogOpen(false);
+                        }} />
+                    </DialogContent>
+                </Dialog>
             </div>
-          ) : (
-            <div className="flex h-full items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <FolderGit2 className="mx-auto h-12 w-12 mb-4" />
-                  <p>No projects yet.</p>
-                  <p>Click "Add Project" to get started.</p>
+        </div>
+      
+        <div className="flex-1">
+            {projects.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projects.map(project => (
+                    <ProjectCard 
+                    key={project.id} 
+                    project={project}
+                    onDelete={handleDeleteProject}
+                    onFilesLoaded={onFilesLoaded}
+                    />
+                ))}
                 </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+                <div className="flex h-full items-center justify-center -mt-24">
+                    <div className="text-center text-muted-foreground">
+                    <FolderGit2 className="mx-auto h-12 w-12 mb-4" />
+                    <p>No projects yet.</p>
+                    <p>Click "Add Project" to get started.</p>
+                    </div>
+                </div>
+            )}
+        </div>
+
       <BitbucketCredsDialog open={isBitbucketDialogOpen} onOpenChange={setIsBitbucketDialogOpen} />
     </div>
   );
