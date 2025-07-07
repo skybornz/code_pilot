@@ -38,7 +38,9 @@ export function DashboardSidebar() {
     return (
         <>
             <SidebarHeader>
-                <Logo />
+                <Link href="/dashboard">
+                    <Logo />
+                </Link>
             </SidebarHeader>
             <SidebarSeparator />
             <SidebarContent className="p-2">

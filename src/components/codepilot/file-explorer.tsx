@@ -183,7 +183,9 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
     <>
       <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
-          <Logo />
+          <Link href="/dashboard" aria-label="Back to Dashboard">
+            <Logo />
+          </Link>
             {project && (
                 <TooltipProvider>
                     <Tooltip>
