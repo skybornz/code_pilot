@@ -49,14 +49,15 @@ export function WaikiChatPanel() {
     if (!currentInput.trim() || !user) return;
 
     const userMessage: Message = { role: 'user', content: currentInput };
-    const newMessages: Message[] = [...messages, userMessage];
-    setMessages(newMessages);
+    const newMessagesForApi = [...messages, userMessage];
+    
+    setMessages(newMessagesForApi); // Update UI with user's message
     setInput('');
     setIsChatLoading(true);
 
     try {
-      const firstUserMessageIndex = newMessages.findIndex(m => m.role === 'user');
-      const historyForApi = firstUserMessageIndex !== -1 ? newMessages.slice(firstUserMessageIndex) : [];
+      const firstUserMessageIndex = newMessagesForApi.findIndex(m => m.role === 'user');
+      const historyForApi = firstUserMessageIndex !== -1 ? newMessagesForApi.slice(firstUserMessageIndex) : [];
       
       const stream = await streamWaikiChat(user.id, historyForApi);
 
@@ -72,13 +73,16 @@ export function WaikiChatPanel() {
 
           if (chunkValue) {
             if (isFirstChunk) {
+                // On the first chunk, add a new message bubble for the model's response.
                 setMessages(prev => [...prev, { role: 'model', content: chunkValue }]);
                 isFirstChunk = false;
             } else {
+                // For subsequent chunks, append the text to the last message.
                 setMessages(prev => {
                     const updatedMessages = [...prev];
                     const lastMessage = updatedMessages[updatedMessages.length - 1];
                     if (lastMessage?.role === 'model') {
+                        // Create a new object for the last message to ensure immutability and trigger a re-render.
                         updatedMessages[updatedMessages.length - 1] = {
                             ...lastMessage,
                             content: lastMessage.content + chunkValue,
@@ -98,7 +102,7 @@ export function WaikiChatPanel() {
         description: 'Could not get a response from the AI model. Please check your model configuration and try again.',
       });
        const errorMessage: Message = { role: 'model', content: "Sorry, I encountered an error. Please try again." };
-       setMessages([...newMessages, errorMessage]);
+       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsChatLoading(false);
     }
