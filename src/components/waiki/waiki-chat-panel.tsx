@@ -42,6 +42,9 @@ export function WaikiChatPanel() {
     if (!input.trim() || !user) return;
 
     const userMessage: Message = { role: 'user', content: input };
+    
+    // Add user message to the state and prepare history for the API in one go
+    // This is the correct way to avoid race conditions with state updates
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
@@ -66,13 +69,16 @@ export function WaikiChatPanel() {
 
         if (chunkValue) {
           if (isFirstChunk) {
+            // On the first chunk, create a new message bubble for the model's response.
             setMessages((prev) => [...prev, { role: 'model', content: chunkValue }]);
             isFirstChunk = false;
           } else {
+            // For subsequent chunks, append the text to the last message.
             setMessages((prev) => {
               const updatedMessages = [...prev];
               const lastMessage = updatedMessages[updatedMessages.length - 1];
               if (lastMessage?.role === 'model') {
+                // Create a new object for the last message to ensure immutability
                 updatedMessages[updatedMessages.length - 1] = {
                   ...lastMessage,
                   content: lastMessage.content + chunkValue,
