@@ -1,10 +1,11 @@
+import { cn } from '@/lib/utils';
 import { LogoMark } from './logo-mark';
 
-export function Logo() {
+export function Logo({ className }: { className?: string }) {
   return (
-    <div className="flex items-center gap-2" aria-label="AD Labs Logo">
+    <div className={cn("flex items-center gap-2", className)} aria-label="AD Labs Logo">
       <LogoMark />
-      <h1 className="text-2xl font-bold font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+      <h1 className="text-2xl font-bold font-headline">
         AD Labs
       </h1>
     </div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -38,12 +39,12 @@ export function DashboardHeader() {
             <header className="sticky top-0 z-50 p-4 border-b bg-card/50 backdrop-blur-sm">
                 <div className="container mx-auto flex justify-between items-center">
                     <Link href="/dashboard">
-                        <Logo />
+                        <Logo className={themeColorClass} />
                     </Link>
                     {user && (
                          <div className="flex items-center gap-2">
                              {pathname !== '/dashboard' && (
-                                <Button asChild variant="ghost" className={cn(themeColorClass, 'hover:text-primary-foreground')}>
+                                <Button asChild variant="ghost" className={cn(themeColorClass, 'hover:text-primary-foreground hover:bg-transparent')}>
                                     <Link href="/dashboard">
                                         <LayoutDashboard className="mr-2 h-4 w-4" />
                                         Dashboard
@@ -52,7 +53,7 @@ export function DashboardHeader() {
                              )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className={cn("flex items-center gap-2 h-12", themeColorClass, 'hover:text-primary-foreground')}>
+                                    <Button variant="ghost" className={cn("flex items-center gap-2 h-12", themeColorClass, 'hover:text-primary-foreground hover:bg-transparent')}>
                                         <UserCircle className="w-8 h-8" />
                                         <div className="text-left leading-tight hidden md:block">
                                             <p className="font-semibold truncate" title={userName}>{userName}</p>

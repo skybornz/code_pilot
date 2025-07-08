@@ -10,30 +10,24 @@ export function LogoMark() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <defs>
-        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: "hsl(var(--primary))" }} />
-          <stop offset="100%" style={{ stopColor: "hsl(var(--accent))" }} />
-        </linearGradient>
-      </defs>
       {/* An abstract 3D box representing a building block or module */}
       <path
         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-        stroke="url(#logo-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="m3.27 6.96 8.73 5.05 8.73-5.05"
-        stroke="url(#logo-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M12 22.08V12"
-        stroke="url(#logo-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

@@ -84,7 +84,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
                 </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-                <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)}>
+                <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)} className="text-blue-400 border-current hover:bg-blue-500/10 hover:text-blue-400">
                     <GitBranch className="mr-2 h-4 w-4" />
                     Configuration
                 </Button>
