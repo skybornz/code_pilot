@@ -79,7 +79,7 @@ export default function DebugAssistPage() {
               />
             </CardContent>
             <CardFooter>
-              <Button onClick={handleAnalyze} disabled={!errorMessage || isLoading}>
+              <Button onClick={handleAnalyze} disabled={!errorMessage || isLoading} className="bg-red-600 hover:bg-red-700 text-white">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -98,15 +98,15 @@ export default function DebugAssistPage() {
           {(isLoading || analysis) && (
             <Card className="bg-card/50">
               <CardHeader>
-                  <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent flex items-center gap-2">
-                    <Lightbulb className="text-accent" />
+                  <CardTitle className="text-2xl font-semibold text-red-400 flex items-center gap-2">
+                    <Lightbulb className="h-6 w-6" />
                     Analysis & Suggestions
                   </CardTitle>
               </CardHeader>
               <CardContent>
                   {isLoading && (
                        <div className="text-center text-muted-foreground p-8">
-                          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-red-400" />
                           <p>Generating suggestions...</p>
                       </div>
                   )}

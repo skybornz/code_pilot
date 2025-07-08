@@ -90,7 +90,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
                 </Button>
                 <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Project
                         </Button>
@@ -213,7 +213,7 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
         <DialogClose asChild>
           <Button variant="ghost">Cancel</Button>
         </DialogClose>
-        <Button onClick={handleValidateAndAdd} disabled={isLoading || !repoName.trim() || !projectKey.trim()}>
+        <Button onClick={handleValidateAndAdd} disabled={isLoading || !repoName.trim() || !projectKey.trim()} className="bg-blue-600 hover:bg-blue-700 text-white">
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Add Project
         </Button>
@@ -285,13 +285,13 @@ function ProjectCard({ project, onDelete, onFilesLoaded }: { project: Project, o
                 {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button onClick={handleLoadProject} disabled={isLoadingFiles || !selectedBranch}>
+            <Button onClick={handleLoadProject} disabled={isLoadingFiles || !selectedBranch} className="bg-blue-600 hover:bg-blue-700 text-white">
               {isLoadingFiles && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Load Project
             </Button>
           </>
         ) : (
-          <Button onClick={handleFetchBranches} disabled={isLoadingBranches}>
+          <Button onClick={handleFetchBranches} disabled={isLoadingBranches} className="bg-blue-600 hover:bg-blue-700 text-white">
             {isLoadingBranches && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Select Branch to Load
           </Button>

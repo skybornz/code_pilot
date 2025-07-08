@@ -92,7 +92,7 @@ export default function SmartMatchPage() {
                 />
               </div>
               <div className="mt-4 flex justify-center">
-                <Button onClick={handleCompareAndAnalyze} disabled={(!textA && !textB) || isAnalyzing}>
+                <Button onClick={handleCompareAndAnalyze} disabled={(!textA && !textB) || isAnalyzing} className="bg-orange-600 hover:bg-orange-700 text-white">
                   {isAnalyzing ? (
                       <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -112,7 +112,7 @@ export default function SmartMatchPage() {
           {diffResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary"><GitCompare className="h-5 w-5" />Comparison Result</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-orange-400"><GitCompare className="h-5 w-5" />Comparison Result</CardTitle>
                 <CardDescription>Lines in red were removed, and lines in green were added. Unchanged lines are also shown for context.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -148,10 +148,10 @@ export default function SmartMatchPage() {
           {isAnalyzing && !analysisResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-accent"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center p-12">
-                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
                 <p className="ml-4 text-muted-foreground">AI is analyzing the changes...</p>
               </CardContent>
             </Card>
@@ -160,7 +160,7 @@ export default function SmartMatchPage() {
           {analysisResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-accent"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
                 <CardDescription>An AI-powered summary and analysis of the changes.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
