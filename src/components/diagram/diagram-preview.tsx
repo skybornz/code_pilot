@@ -57,13 +57,14 @@ export function DiagramPreview({ code, diagramKey }: DiagramPreviewProps) {
       theme: 'dark',
       securityLevel: 'loose',
       themeVariables: {
-        background: 'hsl(var(--card))',
-        primaryColor: 'hsl(var(--muted))',
-        primaryTextColor: 'hsl(var(--foreground))',
-        primaryBorderColor: 'hsl(var(--accent))',
-        lineColor: 'hsl(var(--accent))',
-        secondaryColor: 'hsl(var(--secondary))',
-        tertiaryColor: 'hsl(var(--background))'
+        // Using hardcoded hex values that match the dark theme
+        background: '#1f1f29', // card
+        primaryColor: '#333340', // muted
+        primaryTextColor: '#f9fafb', // foreground
+        primaryBorderColor: '#aa00ff', // accent
+        lineColor: '#aa00ff', // accent
+        secondaryColor: '#333340', // secondary
+        tertiaryColor: '#14141f', // background
       },
     });
   }, []);
