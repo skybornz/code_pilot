@@ -32,7 +32,7 @@ export function DashboardHeader() {
                     {user && (
                          <div className="flex items-center gap-2">
                              {pathname !== '/dashboard' && (
-                                <Button asChild variant="ghost">
+                                <Button asChild variant="ghost" className="text-primary hover:text-primary/90">
                                     <Link href="/dashboard">
                                         <LayoutDashboard className="mr-2 h-4 w-4" />
                                         Dashboard
@@ -41,7 +41,7 @@ export function DashboardHeader() {
                              )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="flex items-center gap-2 h-12">
+                                    <Button variant="ghost" className="flex items-center gap-2 h-12 text-primary hover:text-primary/90">
                                         <UserCircle className="w-8 h-8" />
                                         <div className="text-left leading-tight hidden md:block">
                                             <p className="font-semibold truncate" title={userName}>{userName}</p>
