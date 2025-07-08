@@ -15,6 +15,13 @@ export function DashboardHeader() {
     const { user, isAdmin, logout } = useAuth();
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
     const pathname = usePathname();
+    
+    const userName = React.useMemo(() => {
+        if (!user?.email) return '';
+        return user.email.split('@')[0]
+            .replace(/[._]/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+    }, [user?.email]);
 
     return (
         <>
@@ -38,8 +45,8 @@ export function DashboardHeader() {
                                     <Button variant="ghost" className="flex items-center gap-2 h-12">
                                         <UserCircle className="w-8 h-8" />
                                         <div className="text-left leading-tight hidden md:block">
-                                            <p className="font-semibold">{user.email}</p>
-                                            <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                                            <p className="font-semibold truncate" title={userName}>{userName}</p>
+                                            <p className="text-xs text-muted-foreground truncate" title={user.email}>{user.email}</p>
                                         </div>
                                     </Button>
                                 </DropdownMenuTrigger>

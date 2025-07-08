@@ -98,7 +98,10 @@ export default function DebugAssistPage() {
           {(isLoading || analysis) && (
             <Card className="bg-card/50">
               <CardHeader>
-                  <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Analysis & Suggestions</CardTitle>
+                  <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent flex items-center gap-2">
+                    <Lightbulb className="text-accent" />
+                    Analysis & Suggestions
+                  </CardTitle>
               </CardHeader>
               <CardContent>
                   {isLoading && (

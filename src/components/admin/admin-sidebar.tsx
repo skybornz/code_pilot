@@ -31,6 +31,13 @@ export function AdminSidebar() {
         { href: '/admin/user-management', label: 'Users', icon: Users },
         { href: '/admin/model-settings', label: 'Model Settings', icon: Settings },
     ];
+    
+    const userName = React.useMemo(() => {
+        if (!user?.email) return '';
+        return user.email.split('@')[0]
+            .replace(/[._]/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+    }, [user?.email]);
 
     return (
         <>
@@ -62,8 +69,8 @@ export function AdminSidebar() {
                           <div className="flex items-center gap-2 overflow-hidden">
                               <UserCircle className="w-6 h-6 flex-shrink-0" />
                               <div className="text-sm overflow-hidden">
-                                  <p className="font-semibold truncate">{user.email}</p>
-                                  <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                                  <p className="font-semibold truncate" title={userName}>{userName}</p>
+                                  <p className="text-xs text-muted-foreground truncate" title={user.email}>{user.email}</p>
                               </div>
                           </div>
                             <DropdownMenu>
