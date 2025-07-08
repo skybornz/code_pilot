@@ -42,7 +42,7 @@ export function DiagramPreview({ code }: DiagramPreviewProps) {
         setError(null);
       } catch (e: any) {
         console.error('Mermaid render error:', e);
-        setError(e.message || 'Invalid diagram syntax.');
+        setError('Invalid diagram syntax. Please check the generated code for errors.');
         if (containerRef.current) {
           // Clear the container on error to avoid showing a broken diagram
           containerRef.current.innerHTML = '';

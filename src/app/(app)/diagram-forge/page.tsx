@@ -18,6 +18,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { EditorView } from '@codemirror/view';
+import { cn } from '@/lib/utils';
 
 const diagramTypes = [
   { value: 'flowchart', label: 'Flowchart' },
@@ -59,6 +60,7 @@ export default function DiagramForgePage() {
   
   const handleCodeChange = (code: string) => {
     setGeneratedCode(code);
+    setDiagramKey(k => k + 1);
   };
 
   const handleDownload = () => {
@@ -66,7 +68,20 @@ export default function DiagramForgePage() {
     if (svgElement) {
         // Add XML namespace to the SVG element for proper rendering in some viewers
         svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        const svgData = new XMLSerializer().serializeToString(svgElement);
+        let svgData = new XMLSerializer().serializeToString(svgElement);
+
+        // Create a light-mode version for download by replacing dark theme colors
+        const replacements = {
+            '#1f1f29': '#ffffff', // card bg -> white
+            '#14141f': '#ffffff', // page bg -> white
+            '#f9fafb': '#000000', // foreground text -> black
+            '#333340': '#f1f5f9', // muted bg -> slate-100
+        };
+
+        for (const [darkColor, lightColor] of Object.entries(replacements)) {
+            svgData = svgData.replace(new RegExp(darkColor, 'gi'), lightColor);
+        }
+
         const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -181,9 +196,9 @@ export default function DiagramForgePage() {
                 <Card className="bg-card/50 h-full flex flex-col">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg font-semibold text-cyan-400">Preview</CardTitle>
-                    <Button variant="outline" size="sm" onClick={handleDownload} disabled={!generatedCode}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Download SVG
+                    <Button variant="ghost" size="icon" onClick={handleDownload} disabled={!generatedCode} className="text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-400">
+                        <Download className="h-5 w-5" />
+                        <span className="sr-only">Download SVG</span>
                     </Button>
                   </CardHeader>
                    <div id="diagram-preview-container" className="flex-1 min-h-0 p-4">
