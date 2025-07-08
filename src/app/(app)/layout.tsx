@@ -38,7 +38,13 @@ export default function AppLayout({
   // Certain pages have their own full-page layouts and don't need the main sidebar.
   const fullPageLayouts = ['/repo-insight', '/dashboard', '/codepilot', '/waiki', '/code-compare', '/regex-wizard', '/diagram-forge'];
   if (fullPageLayouts.some(p => pathname.startsWith(p))) {
-    return <>{children}</>;
+    // This wrapper ensures that the loading.tsx file is properly centered.
+    // The page components themselves have flex containers, so this won't break them.
+    return (
+        <div className="flex flex-col min-h-screen">
+            {children}
+        </div>
+    );
   }
 
   return (
