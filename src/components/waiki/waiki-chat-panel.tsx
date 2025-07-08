@@ -1,1 +1,4 @@
-// This component has been temporarily disabled while we improve the chat experience.
+/**
+ * This file is intentionally left blank.
+ * The W.A.I.K.I feature has been removed and replaced by Debug Assist.
+ */

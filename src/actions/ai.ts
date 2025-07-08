@@ -5,7 +5,6 @@ import { getDefaultModel } from './models';
 import { withRetry } from '@/lib/utils';
 import type { ActionType, AIOutput } from '@/components/codepilot/types';
 import type { Message } from '@/ai/flows/copilot-chat';
-import type { Message as WaikiMessage } from '@/ai/flows/waiki-chat';
 import { logUserActivity } from './activity';
 import { updateUserLastActive } from './users';
 
@@ -101,28 +100,6 @@ export async function streamCopilotChat(
     // Log activity once at the beginning of a successful stream
     if (messages.length > 0 && messages[messages.length-1].role === 'user') {
         await logUserActivity(userId, 'AD Labs Chat', `User initiated a chat stream.`);
-        await updateUserLastActive(userId);
-    }
-
-    return stream;
-}
-
-export async function streamWaikiChat(
-    userId: string,
-    messages: WaikiMessage[],
-): Promise<ReadableStream<Uint8Array>> {
-    await configureAi();
-
-    const { waikiChat } = await import('@/ai/flows/waiki-chat');
-    const model = await getModelName();
-
-    const stream = await waikiChat({
-        model,
-        messages,
-    });
-    
-    if (messages.length > 0 && messages[messages.length-1].role === 'user') {
-        await logUserActivity(userId, 'W.A.I.K.I Chat', `User initiated a chat stream.`);
         await updateUserLastActive(userId);
     }
 

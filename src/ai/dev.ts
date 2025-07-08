@@ -16,7 +16,6 @@ async function initialize() {
     await import('@/ai/flows/generate-sdd');
     await import('@/ai/flows/analyze-diff');
     await import('@/ai/flows/copilot-chat');
-    await import('@/ai/flows/waiki-chat');
     await import('@/ai/flows/check-model-status');
 }
 

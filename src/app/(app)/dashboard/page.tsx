@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Bot, FileTerminal, FolderGit, GitCompare } from 'lucide-react';
+import { FileTerminal, FolderGit, GitCompare, LifeBuoy } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
@@ -15,11 +15,11 @@ const features = [
     color: 'text-blue-400',
   },
   {
-    title: 'W.A.I.K.I',
-    description: 'Web-based AI for Knowledge & Interaction',
-    icon: Bot,
+    title: 'Debug Assist',
+    description: 'Analyzes error messages and suggests potential solutions.',
+    icon: LifeBuoy,
     href: '/waiki',
-    color: 'text-green-400',
+    color: 'text-red-400',
   },
   {
     title: 'Code Pilot',

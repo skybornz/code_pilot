@@ -13,7 +13,7 @@ import {
     SidebarMenuButton,
     SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Users, Settings, LogOut, UserCircle, KeyRound, MoreVertical, LayoutDashboard, FolderGit, FileTerminal, Bot, GitCompare } from 'lucide-react';
+import { Users, Settings, LogOut, UserCircle, KeyRound, MoreVertical, LayoutDashboard, FolderGit, FileTerminal, LifeBuoy, GitCompare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -30,7 +30,7 @@ export function DashboardSidebar() {
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/repo-insight', label: 'My Projects', icon: FolderGit },
         { href: '/codepilot', label: 'CodePilot', icon: FileTerminal },
-        { href: '/waiki', label: 'W.A.I.K.I', icon: Bot },
+        { href: '/waiki', label: 'Debug Assist', icon: LifeBuoy },
         { href: '/code-compare', label: 'CodeCompare', icon: GitCompare },
     ];
 
