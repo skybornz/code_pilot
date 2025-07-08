@@ -53,7 +53,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
 
   if (!user) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="flex flex-1 w-full items-center justify-center">
         <LoadingSpinner text="Waiting for user session..." />
       </div>
     );
@@ -61,7 +61,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="flex flex-1 w-full items-center justify-center">
         <LoadingSpinner text="Loading projects..." />
       </div>
     );
