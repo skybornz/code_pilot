@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -7,18 +8,11 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
 const features = [
   {
-    title: 'My Projects',
+    title: 'Repo Analyzer',
     description: 'Connect to your Bitbucket projects to browse code, gain AI-driven insights, and refactor seamlessly.',
     icon: FolderGit,
     href: '/repo-insight',
     color: 'text-blue-400',
-  },
-  {
-    title: 'Debug Assist',
-    description: 'Analyzes error messages and suggests potential solutions.',
-    icon: LifeBuoy,
-    href: '/waiki',
-    color: 'text-red-400',
   },
   {
     title: 'Code Pilot',
@@ -26,6 +20,13 @@ const features = [
     icon: FileTerminal,
     href: '/codepilot',
     color: 'text-purple-400',
+  },
+  {
+    title: 'Debug Assist',
+    description: 'Analyzes error messages and suggests potential solutions.',
+    icon: LifeBuoy,
+    href: '/waiki',
+    color: 'text-red-400',
   },
   {
     title: 'Smart Match',

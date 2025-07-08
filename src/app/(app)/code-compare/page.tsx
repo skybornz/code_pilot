@@ -112,7 +112,7 @@ export default function SmartMatchPage() {
           {diffResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle>Comparison Result</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-primary"><GitCompare className="h-5 w-5" />Comparison Result</CardTitle>
                 <CardDescription>Lines in red were removed, and lines in green were added. Unchanged lines are also shown for context.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -148,7 +148,7 @@ export default function SmartMatchPage() {
           {isAnalyzing && !analysisResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-accent" /> AI Analysis</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-accent"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center p-12">
                 <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -160,7 +160,7 @@ export default function SmartMatchPage() {
           {analysisResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-accent" /> AI Analysis</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-accent"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
                 <CardDescription>An AI-powered summary and analysis of the changes.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
