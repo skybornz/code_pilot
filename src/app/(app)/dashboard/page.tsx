@@ -28,8 +28,8 @@ const features = [
     color: 'text-purple-400',
   },
   {
-    title: 'Code Compare',
-    description: 'Perform an extensive, AI-driven comparison between two files.',
+    title: 'Smart Match',
+    description: 'Compare two code snippets or text blocks to see a line-by-line analysis of the differences.',
     icon: GitCompare,
     href: '/code-compare',
     color: 'text-orange-400',
