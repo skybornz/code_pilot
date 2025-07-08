@@ -4,7 +4,7 @@
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function HomePage() {
   const { isAuthenticated, isLoading, isAdmin } = useAuth();
@@ -27,7 +27,7 @@ export default function HomePage() {
   if (isLoading || !isAuthenticated || isAdmin) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <LoadingSpinner text="Loading..." />
       </div>
     );
   }
@@ -35,7 +35,7 @@ export default function HomePage() {
   // Fallback loader while redirecting the authenticated user
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background">
-      <Loader2 className="h-8 w-8 animate-spin" />
+      <LoadingSpinner text="Redirecting..." />
     </div>
   );
 }

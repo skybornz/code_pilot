@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Menu, Loader2 } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
@@ -22,6 +22,7 @@ import { useAuth } from '@/context/auth-context';
 import { updateUserLastActive } from '@/actions/users';
 import { performAiAction } from '@/actions/ai';
 import { DashboardHeader } from '../dashboard/dashboard-header';
+import { LoadingSpinner } from '../ui/loading-spinner';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'adlabs_active_project_';
 
@@ -273,7 +274,7 @@ export function ADLabsWorkspace() {
   if (isInitializing || isMobile === undefined) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <LoadingSpinner text="Initializing workspace..." />
       </div>
     );
   }
@@ -293,8 +294,7 @@ export function ADLabsWorkspace() {
   // If a project is loaded, render the full IDE experience.
   const editor = (isFileLoading && activeFile?.type === 'file') ? (
      <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground mt-4">Loading file content...</p>
+        <LoadingSpinner text="Loading file content..." />
     </Card>
   ) : activeFile && activeFile.type === 'file' ? (
     <EditorPanel

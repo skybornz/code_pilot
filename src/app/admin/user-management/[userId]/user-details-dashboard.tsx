@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, User, Wand2, Star, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, User, Wand2, Star, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUserById } from '@/actions/users';
 import { getUserActivity } from '@/actions/activity';
@@ -14,6 +14,7 @@ import { columns } from './activity-columns';
 import { DataTable } from '../../data-table';
 import { Badge } from '@/components/ui/badge';
 import { TimeAgo } from '@/components/ui/time-ago';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export function UserDetailsDashboard({ userId }: { userId: string }) {
   const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
@@ -77,7 +78,7 @@ export function UserDetailsDashboard({ userId }: { userId: string }) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <LoadingSpinner text="Loading user data..." />
       </div>
     );
   }

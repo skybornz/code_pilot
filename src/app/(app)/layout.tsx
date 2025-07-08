@@ -3,9 +3,9 @@
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
 import { Sidebar, SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function AppLayout({
   children,
@@ -29,7 +29,7 @@ export default function AppLayout({
   if (isLoading || !isAuthenticated || isAdmin) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <LoadingSpinner text="Authenticating..." />
       </div>
     );
   }

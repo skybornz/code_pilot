@@ -32,7 +32,16 @@ export function DashboardHeader() {
         return 'text-primary';
     };
 
+    const getThemeFocusClass = () => {
+        if (pathname.startsWith('/repo-insight')) return 'focus:bg-blue-400/90 focus:text-white';
+        if (pathname.startsWith('/codepilot')) return 'focus:bg-purple-400/90 focus:text-white';
+        if (pathname.startsWith('/waiki')) return 'focus:bg-red-400/90 focus:text-white';
+        if (pathname.startsWith('/code-compare')) return 'focus:bg-orange-400/90 focus:text-white';
+        return 'focus:bg-primary focus:text-primary-foreground';
+    };
+
     const themeColorClass = getThemeColorClass();
+    const themeFocusClass = getThemeFocusClass();
 
     return (
         <>
@@ -57,14 +66,14 @@ export function DashboardHeader() {
                                         <UserCircle className="w-8 h-8" />
                                         <div className="text-left leading-tight hidden md:block">
                                             <p className="font-semibold truncate" title={userName}>{userName}</p>
-                                            <p className="text-xs truncate" title={user.email}>{user.email}</p>
+                                            <p className={cn("text-xs truncate", themeColorClass)} title={user.email}>{user.email}</p>
                                         </div>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56">
                                     {isAdmin && (
                                     <>
-                                        <DropdownMenuItem asChild>
+                                        <DropdownMenuItem asChild className={themeFocusClass}>
                                             <Link href="/admin">
                                                 <Settings className={cn("mr-2 h-4 w-4", themeColorClass)} />
                                                 <span>Admin Dashboard</span>
@@ -73,12 +82,12 @@ export function DashboardHeader() {
                                         <DropdownMenuSeparator />
                                     </>
                                     )}
-                                    <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
+                                    <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)} className={themeFocusClass}>
                                         <KeyRound className={cn("mr-2 h-4 w-4", themeColorClass)} />
                                         <span>Change Password</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => logout()}>
+                                    <DropdownMenuItem onClick={() => logout()} className={themeFocusClass}>
                                         <LogOut className={cn("mr-2 h-4 w-4", themeColorClass)} />
                                         <span>Logout</span>
                                     </DropdownMenuItem>

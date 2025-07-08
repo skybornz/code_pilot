@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { UserForm } from '../user-form';
 import type { User } from '@/lib/schemas';
 import { getUsers } from '@/actions/users';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<Omit<User, 'password'>[]>([]);
@@ -77,7 +78,7 @@ export default function UserManagementPage() {
             <CardContent>
                 {isLoading ? (
                     <div className="flex justify-center items-center h-64">
-                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <LoadingSpinner text="Loading users..." />
                     </div>
                 ) : (
                     <DataTable columns={memoizedColumns} data={users} />

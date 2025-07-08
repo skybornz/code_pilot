@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { checkDefaultModelStatus } from '@/actions/status';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 function ConnectionStatus({ status, message }: { status: 'idle' | 'checking' | 'connected' | 'error', message?: string }) {
     if (status === 'checking') {
@@ -184,7 +185,7 @@ export default function ModelSettingsPage() {
             <CardContent>
                 {isLoading ? (
                     <div className="flex justify-center items-center h-48">
-                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <LoadingSpinner text="Loading models..." />
                     </div>
                 ) : models.length > 0 ? (
                     <div className="grid gap-4 md:grid-cols-2">

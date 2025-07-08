@@ -3,9 +3,9 @@
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { Sidebar, SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function AdminLayout({
   children,
@@ -28,7 +28,7 @@ export default function AdminLayout({
   if (isLoading || !isAuthenticated || !isAdmin) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <LoadingSpinner text="Verifying permissions..." />
       </div>
     );
   }
