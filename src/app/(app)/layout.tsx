@@ -35,7 +35,7 @@ export default function AppLayout({
   }
 
   // Certain pages have their own full-page layouts and don't need the main sidebar.
-  const fullPageLayouts = ['/repo-insight', '/dashboard', '/codepilot', '/waiki', '/code-compare'];
+  const fullPageLayouts = ['/repo-insight', '/dashboard', '/codepilot', '/waiki', '/code-compare', '/regex-wizard'];
   if (fullPageLayouts.some(p => pathname.startsWith(p))) {
     return <>{children}</>;
   }

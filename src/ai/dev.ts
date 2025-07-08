@@ -18,6 +18,7 @@ async function initialize() {
     await import('@/ai/flows/copilot-chat');
     await import('@/ai/flows/check-model-status');
     await import('@/ai/flows/debug-error');
+    await import('@/ai/flows/generate-regex');
 }
 
 initialize().catch(err => {

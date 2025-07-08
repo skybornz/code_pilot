@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { FileTerminal, FolderGit, GitCompare, LifeBuoy } from 'lucide-react';
+import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
@@ -35,6 +35,13 @@ const features = [
     href: '/code-compare',
     color: 'text-orange-400',
   },
+  {
+    title: 'Regex Wizard',
+    description: 'Converts plain English to battle-tested regex, with live testing and explanations.',
+    icon: Wand2,
+    href: '/regex-wizard',
+    color: 'text-green-400',
+  },
 ];
 
 export default function DashboardPage() {
@@ -46,7 +53,7 @@ export default function DashboardPage() {
             <h1 className="text-[2em] font-normal tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Welcome to AD Labs</h1>
             <p className="mt-4 text-lg text-muted-foreground">Your integrated suite for AI-powered development. Select a tool to begin.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => (
             <Link href={feature.href} key={feature.title} className="group">
               <Card className="h-full hover:border-primary transition-colors duration-300 hover:shadow-lg hover:-translate-y-1">

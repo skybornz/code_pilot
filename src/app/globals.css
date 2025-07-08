@@ -79,6 +79,7 @@
   .theme-codepilot { --ring: 274 100% 50%; }
   .theme-waiki { --ring: 0 84.2% 60.2%; }
   .theme-code-compare { --ring: 24.6 95% 53.1%; }
+  .theme-regex-wizard { --ring: 142.1 76.2% 36.3%; }
 }
 
 @layer base {
