@@ -9,6 +9,7 @@ import { UserCircle, Settings, KeyRound, LogOut, LayoutDashboard } from 'lucide-
 import Link from 'next/link';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
 import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export function DashboardHeader() {
     const { user, isAdmin, logout } = useAuth();
@@ -22,6 +23,16 @@ export function DashboardHeader() {
             .replace(/\b\w/g, l => l.toUpperCase());
     }, [user?.email]);
 
+    const getThemeColorClass = () => {
+        if (pathname.startsWith('/repo-insight')) return 'text-blue-400';
+        if (pathname.startsWith('/codepilot')) return 'text-purple-400';
+        if (pathname.startsWith('/waiki')) return 'text-red-400';
+        if (pathname.startsWith('/code-compare')) return 'text-orange-400';
+        return 'text-primary';
+    };
+
+    const themeColorClass = getThemeColorClass();
+
     return (
         <>
             <header className="sticky top-0 z-50 p-4 border-b bg-card/50 backdrop-blur-sm">
@@ -32,7 +43,7 @@ export function DashboardHeader() {
                     {user && (
                          <div className="flex items-center gap-2">
                              {pathname !== '/dashboard' && (
-                                <Button asChild variant="ghost" className="text-primary hover:text-primary-foreground">
+                                <Button asChild variant="ghost" className={cn(themeColorClass, 'hover:text-primary-foreground')}>
                                     <Link href="/dashboard">
                                         <LayoutDashboard className="mr-2 h-4 w-4" />
                                         Dashboard
@@ -41,7 +52,7 @@ export function DashboardHeader() {
                              )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="flex items-center gap-2 h-12 text-primary hover:text-primary-foreground">
+                                    <Button variant="ghost" className={cn("flex items-center gap-2 h-12", themeColorClass, 'hover:text-primary-foreground')}>
                                         <UserCircle className="w-8 h-8" />
                                         <div className="text-left leading-tight hidden md:block">
                                             <p className="font-semibold truncate" title={userName}>{userName}</p>

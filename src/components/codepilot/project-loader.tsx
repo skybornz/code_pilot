@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import type { CodeFile } from './types';
 import type { Project, NewProject } from '@/lib/project-database';
 import { getProjects, addProject, deleteProject } from '@/actions/projects';
@@ -162,7 +162,6 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
     
     setIsLoading(true);
 
-    // The 'url' property is a dummy value here. The server action will construct the real one.
     const newProjectData: NewProject = { 
         name: repoName, 
         projectKey: projectKey,
