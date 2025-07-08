@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { Label } from '../ui/label';
 import { BitbucketCredsDialog } from '../profile/bitbucket-creds-dialog';
+import { LoadingSpinner } from '../ui/loading-spinner';
 
 interface ProjectLoaderProps {
   onFilesLoaded: (files: Partial<CodeFile>[], project: Project, branch: string) => void;
@@ -53,8 +54,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   if (!user) {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <p className="ml-2">Waiting for user session...</p>
+        <LoadingSpinner text="Waiting for user session..." />
       </div>
     );
   }
@@ -62,7 +62,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   if (isLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <LoadingSpinner text="Loading projects..." />
       </div>
     );
   }
