@@ -138,44 +138,46 @@ export default function CodePilotPage() {
     return (
         <div className="theme-codepilot min-h-screen flex flex-col bg-background">
             <DashboardHeader />
-            <main className="flex-1 flex flex-col gap-4 p-4 overflow-hidden">
-                <div className="flex-shrink-0 flex items-center justify-between gap-4 border-b pb-4">
-                     <h1 className="text-lg font-semibold text-purple-400">Code Pilot</h1>
-                     <div className="flex items-center gap-4">
-                        <div className="w-48">
-                            <Select value={activeFile.language} onValueChange={handleLanguageChange}>
-                               <SelectTrigger>
-                                    <SelectValue placeholder="Select language..." />
-                               </SelectTrigger>
-                               <SelectContent>
-                                    {supportedLanguages.map(lang => (
-                                        <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
-                                    ))}
-                               </SelectContent>
-                            </Select>
+            <main className="flex-1 flex p-4 overflow-hidden">
+                <div className="container mx-auto flex flex-col flex-1 gap-4">
+                    <div className="flex-shrink-0 flex items-center justify-between gap-4 border-b pb-4">
+                        <h1 className="text-lg font-semibold text-purple-400">Code Pilot</h1>
+                        <div className="flex items-center gap-4">
+                            <div className="w-48">
+                                <Select value={activeFile.language} onValueChange={handleLanguageChange}>
+                                <SelectTrigger>
+                                        <SelectValue placeholder="Select language..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                        {supportedLanguages.map(lang => (
+                                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                                        ))}
+                                </SelectContent>
+                                </Select>
+                            </div>
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                            <Button variant="outline" onClick={triggerFileLoad}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload File
+                            </Button>
                         </div>
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-                        <Button variant="outline" onClick={triggerFileLoad}>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload File
-                        </Button>
-                     </div>
-                </div>
-                <div className="flex-1 flex gap-4 min-h-0">
-                    <div className="flex-1 flex flex-col min-w-0">
-                        <EditorPanel
-                            file={activeFile}
-                            onCodeChange={handleCodeChange}
-                            onAiAction={handleAiAction}
-                            isLoading={isLoading}
-                            onCommitChange={() => {}} // Not used in this context
-                            handleShowCopilotChat={handleShowCopilotChat}
-                            viewMode={'edit'}
-                            setViewMode={() => {}} // Not used in this context
-                        />
                     </div>
-                    <div className="flex-1 flex flex-col min-w-0">
-                        {rightPanelContent()}
+                    <div className="flex-1 flex gap-4 min-h-0">
+                        <div className="flex-1 flex flex-col min-w-0">
+                            <EditorPanel
+                                file={activeFile}
+                                onCodeChange={handleCodeChange}
+                                onAiAction={handleAiAction}
+                                isLoading={isLoading}
+                                onCommitChange={() => {}} // Not used in this context
+                                handleShowCopilotChat={handleShowCopilotChat}
+                                viewMode={'edit'}
+                                setViewMode={() => {}} // Not used in this context
+                            />
+                        </div>
+                        <div className="flex-1 flex flex-col min-w-0">
+                            {rightPanelContent()}
+                        </div>
                     </div>
                 </div>
             </main>
