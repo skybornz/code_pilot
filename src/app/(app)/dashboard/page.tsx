@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -53,7 +52,7 @@ export default function DashboardPage() {
                 <CardHeader>
                   <div className="flex items-center gap-4">
                     <feature.icon className={`w-8 h-8 ${feature.color}`} />
-                    <CardTitle>{feature.title}</CardTitle>
+                    <CardTitle className={`font-normal ${feature.color}`}>{feature.title}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -25,7 +24,7 @@ export function DashboardHeader() {
 
     return (
         <>
-            <header className="p-4 border-b bg-card/20">
+            <header className="sticky top-0 z-50 p-4 border-b bg-card/50 backdrop-blur-sm">
                 <div className="container mx-auto flex justify-between items-center">
                     <Link href="/dashboard">
                         <Logo />
