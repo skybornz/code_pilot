@@ -69,7 +69,7 @@ export default function SmartMatchPage() {
                       <GitCompare className="h-8 w-8 text-orange-400" />
                   </div>
                   <div>
-                      <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Smart Match</CardTitle>
+                      <CardTitle className="text-2xl font-semibold text-orange-400">Smart Match</CardTitle>
                       <CardDescription>Paste content into the two panes below to see a line-by-line analysis and an AI-powered summary of the differences.</CardDescription>
                   </div>
               </div>

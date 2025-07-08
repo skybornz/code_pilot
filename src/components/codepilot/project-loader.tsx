@@ -11,7 +11,7 @@ import type { CodeFile } from './types';
 import type { Project, NewProject } from '@/lib/project-database';
 import { getProjects, addProject, deleteProject } from '@/actions/projects';
 import { fetchBitbucketBranches, loadBitbucketFiles } from '@/actions/github';
-import { Loader2, PlusCircle, Trash2, FolderGit2, GitBranch } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, FolderGit2, GitBranch, FolderGit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { Label } from '../ui/label';
@@ -70,13 +70,18 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
   return (
     <div className="h-full w-full container mx-auto p-8 flex flex-col">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-4">
-            <div>
-                <h1 className="text-[1.5em] font-normal tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Repo Analyzer
-                </h1>
-                <p className="mt-2 text-lg text-muted-foreground">
-                    Select a project to load or add a new one.
-                </p>
+            <div className="flex items-start gap-4">
+                <div className="p-2 bg-blue-500/10 rounded-full">
+                    <FolderGit className="h-8 w-8 text-blue-400" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-semibold text-blue-400">
+                        Repo Analyzer
+                    </h1>
+                    <p className="mt-1 text-lg text-muted-foreground">
+                        Select a project to load or add a new one.
+                    </p>
+                </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
                 <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)}>

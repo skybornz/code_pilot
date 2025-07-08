@@ -64,7 +64,7 @@ export default function DebugAssistPage() {
                   <LifeBuoy className="h-8 w-8 text-red-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Debug Assist</CardTitle>
+                  <CardTitle className="text-2xl font-semibold text-red-400">Debug Assist</CardTitle>
                   <CardDescription>Paste an error message or stack trace to get AI-powered analysis and solutions.</CardDescription>
                 </div>
               </div>
