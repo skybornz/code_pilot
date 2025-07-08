@@ -17,6 +17,7 @@ async function initialize() {
     await import('@/ai/flows/analyze-diff');
     await import('@/ai/flows/copilot-chat');
     await import('@/ai/flows/check-model-status');
+    await import('@/ai/flows/debug-error');
 }
 
 initialize().catch(err => {
