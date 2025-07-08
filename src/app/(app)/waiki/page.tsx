@@ -56,15 +56,15 @@ export default function DebugAssistPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <DashboardHeader />
       <main className="flex-1 container mx-auto p-8 flex justify-center">
-        <div className="w-full max-w-4xl space-y-8">
-          <Card>
+        <div className="w-full max-w-6xl space-y-8">
+          <Card className="bg-card/50">
             <CardHeader>
               <div className="flex items-start gap-4">
                 <div className="p-2 bg-red-500/10 rounded-full">
                   <LifeBuoy className="h-8 w-8 text-red-400" />
                 </div>
                 <div>
-                  <CardTitle>Debug Assist</CardTitle>
+                  <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Debug Assist</CardTitle>
                   <CardDescription>Paste an error message or stack trace to get AI-powered analysis and solutions.</CardDescription>
                 </div>
               </div>
@@ -96,9 +96,9 @@ export default function DebugAssistPage() {
           </Card>
 
           {(isLoading || analysis) && (
-            <Card>
+            <Card className="bg-card/50">
               <CardHeader>
-                  <CardTitle>Analysis & Suggestions</CardTitle>
+                  <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Analysis & Suggestions</CardTitle>
               </CardHeader>
               <CardContent>
                   {isLoading && (

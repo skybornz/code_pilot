@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -12,7 +13,7 @@ import {
     SidebarMenuButton,
     SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Users, Settings, BarChart2, LogOut, UserCircle, KeyRound, MoreVertical } from 'lucide-react';
+import { Users, Settings, BarChart2, LogOut, UserCircle, KeyRound, MoreVertical, LayoutDashboard } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -72,6 +73,13 @@ export function AdminSidebar() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/dashboard">
+                                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                                            <span>View Dashboard</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
                                         <KeyRound className="mr-2 h-4 w-4" />
                                         <span>Change Password</span>

@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState, useCallback } from 'react';
 import type { CodeFile } from '@/components/codepilot/types';
-import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical, GitBranch, Loader2 } from 'lucide-react';
+import { FileCode, Folder, Upload, ChevronRight, UserCircle, LogOut, Settings, KeyRound, MoreVertical, LayoutDashboard, Loader2 } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Logo } from './logo';
 import { Button } from '../ui/button';
@@ -255,10 +255,17 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                                       <DropdownMenuSeparator />
                                   </>
                               )}
+                              <DropdownMenuItem asChild>
+                                <Link href="/dashboard">
+                                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                                    <span>Dashboard</span>
+                                </Link>
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
                                   <KeyRound className="mr-2 h-4 w-4" />
                                   <span>Change Password</span>
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={logout}>
                                   <LogOut className="mr-2 h-4 w-4" />
                                   <span>Logout</span>
