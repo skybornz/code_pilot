@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 function RegexTestResult({ testString, regex }: { testString: string; regex: string }) {
   const highlighted = useMemo(() => {
     if (!testString || !regex) {
-      return <span>{testString}</span>;
+      return <span className="text-muted-foreground">Your highlighted matches will appear here.</span>;
     }
     try {
       const re = new RegExp(regex, 'g');
@@ -108,36 +108,27 @@ export default function RegexWizardPage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="prompt-input" className="mb-2 block">Describe your pattern</Label>
-                <Input
-                  id="prompt-input"
-                  placeholder='Try: "Match prices in USD but not EUR"'
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-               <div>
-                <Label htmlFor="test-string-input" className="mb-2 block">Test your regex</Label>
-                <Textarea
-                  id="test-string-input"
-                  placeholder="Paste your sample text here to see live matching..."
-                  className="min-h-[150px] font-mono text-xs"
-                  value={testString}
-                  onChange={(e) => setTestString(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="flex justify-center">
-                <Button onClick={handleGenerate} disabled={!prompt || isLoading} className="bg-green-600 hover:bg-green-700 text-white">
-                  {isLoading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</>
-                  ) : (
-                    <><Wand2 className="mr-2 h-4 w-4" /> Generate Regex</>
-                  )}
-                </Button>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="prompt-input" className="mb-2 block">Describe your pattern</Label>
+                  <Input
+                    id="prompt-input"
+                    placeholder='Try: "Match prices in USD but not EUR"'
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex justify-center pt-2">
+                  <Button onClick={handleGenerate} disabled={!prompt || isLoading} className="bg-green-600 hover:bg-green-700 text-white">
+                    {isLoading ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</>
+                    ) : (
+                      <><Wand2 className="mr-2 h-4 w-4" /> Generate Regex</>
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -171,9 +162,22 @@ export default function RegexWizardPage() {
                   </div>
                 </div>
 
-                <div>
-                    <h3 className="font-semibold mb-2">Live Test Results</h3>
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Test Area</h3>
+                   <div>
+                    <Label htmlFor="test-string-input" className="text-sm text-muted-foreground">Paste your sample text here to see live matching.</Label>
+                    <Textarea
+                      id="test-string-input"
+                      placeholder="e.g. Price: $10.99, but not €5.00"
+                      className="min-h-[150px] font-mono text-xs mt-2"
+                      value={testString}
+                      onChange={(e) => setTestString(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-medium">Live Matches</Label>
                     <RegexTestResult testString={testString} regex={result.regex} />
+                  </div>
                 </div>
 
                 <Alert>
