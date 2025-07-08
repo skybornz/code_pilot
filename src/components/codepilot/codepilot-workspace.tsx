@@ -284,7 +284,7 @@ export function ADLabsWorkspace() {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <DashboardHeader />
-        <main className="flex-1">
+        <main className="flex-1 flex flex-col">
           <ProjectLoader onFilesLoaded={handleFilesLoaded} />
         </main>
       </div>
