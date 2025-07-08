@@ -66,7 +66,7 @@ export function DashboardHeader() {
                                     <>
                                         <DropdownMenuItem asChild>
                                             <Link href="/admin">
-                                                <Settings className="mr-2 h-4 w-4" />
+                                                <Settings className={cn("mr-2 h-4 w-4", themeColorClass)} />
                                                 <span>Admin Dashboard</span>
                                             </Link>
                                         </DropdownMenuItem>
@@ -74,12 +74,12 @@ export function DashboardHeader() {
                                     </>
                                     )}
                                     <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
-                                        <KeyRound className="mr-2 h-4 w-4" />
+                                        <KeyRound className={cn("mr-2 h-4 w-4", themeColorClass)} />
                                         <span>Change Password</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => logout()}>
-                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <LogOut className={cn("mr-2 h-4 w-4", themeColorClass)} />
                                         <span>Logout</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
