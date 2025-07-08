@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/auth-context';
@@ -35,7 +36,7 @@ export default function AppLayout({
   }
 
   // Certain pages have their own full-page layouts and don't need the main sidebar.
-  const fullPageLayouts = ['/repo-insight', '/dashboard', '/codepilot', '/waiki', '/code-compare', '/regex-wizard'];
+  const fullPageLayouts = ['/repo-insight', '/dashboard', '/codepilot', '/waiki', '/code-compare', '/regex-wizard', '/diagram-forge'];
   if (fullPageLayouts.some(p => pathname.startsWith(p))) {
     return <>{children}</>;
   }

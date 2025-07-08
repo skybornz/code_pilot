@@ -80,6 +80,7 @@
   .theme-waiki { --ring: 0 84.2% 60.2%; }
   .theme-code-compare { --ring: 24.6 95% 53.1%; }
   .theme-regex-wizard { --ring: 142.1 76.2% 36.3%; }
+  .theme-diagram-forge { --ring: 180 88% 41%; }
 }
 
 @layer base {
