@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Workflow, Sparkles, Loader2, FilePenLine } from 'lucide-react';
+import { Workflow, Sparkles, Loader2, FilePenLine, Download } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { generateDiagramFromPrompt } from '@/actions/diagram';
@@ -58,6 +59,30 @@ export default function DiagramForgePage() {
   
   const handleCodeChange = (code: string) => {
     setGeneratedCode(code);
+  };
+
+  const handleDownload = () => {
+    const svgElement = document.querySelector('#diagram-preview-container .mermaid > svg');
+    if (svgElement) {
+        // Add XML namespace to the SVG element for proper rendering in some viewers
+        svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'diagram.svg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Download Error',
+            description: 'Could not find the diagram SVG to download. Please generate a diagram first.'
+        });
+    }
   };
 
   return (
@@ -153,9 +178,18 @@ export default function DiagramForgePage() {
                 </Card>
 
                 {/* Right Side: Preview */}
-                <div className="min-h-[400px]">
-                  <DiagramPreview code={generatedCode} diagramKey={diagramKey} />
-                </div>
+                <Card className="bg-card/50 h-full flex flex-col">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg font-semibold text-cyan-400">Preview</CardTitle>
+                    <Button variant="outline" size="sm" onClick={handleDownload} disabled={!generatedCode}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Download SVG
+                    </Button>
+                  </CardHeader>
+                   <div id="diagram-preview-container" className="flex-1 min-h-0 p-4">
+                     <DiagramPreview key={diagramKey} code={generatedCode} />
+                   </div>
+                </Card>
             </div>
           )}
         </div>
