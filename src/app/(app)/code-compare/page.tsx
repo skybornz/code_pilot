@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { performAiAction } from '@/actions/ai';
 import type { AnalyzeDiffOutput } from '@/components/codepilot/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function SmartMatchPage() {
   const [textA, setTextA] = useState('');
@@ -151,8 +152,7 @@ export default function SmartMatchPage() {
                 <CardTitle className="flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center p-12">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
-                <p className="ml-4 text-muted-foreground">AI is analyzing the changes...</p>
+                <LoadingSpinner text="AI is analyzing the changes..." />
               </CardContent>
             </Card>
           )}

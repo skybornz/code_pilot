@@ -15,6 +15,7 @@ import type { DebugErrorOutput } from '@/ai/flows/debug-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CodeBlock } from '@/components/codepilot/code-block';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 
 export default function DebugAssistPage() {
@@ -106,8 +107,7 @@ export default function DebugAssistPage() {
               <CardContent>
                   {isLoading && (
                        <div className="text-center text-muted-foreground p-8">
-                          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-red-400" />
-                          <p>Generating suggestions...</p>
+                          <LoadingSpinner text="Generating suggestions..." />
                       </div>
                   )}
                   {!isLoading && analysis && (
