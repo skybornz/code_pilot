@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
 export default function CodePilotPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-codepilot min-h-screen flex flex-col bg-background">
       <DashboardHeader />
       <main className="flex-1 flex items-center justify-center container mx-auto p-8">
         <Card className="w-full max-w-md text-center">

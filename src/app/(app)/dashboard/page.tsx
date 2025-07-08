@@ -39,7 +39,7 @@ const features = [
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-dashboard min-h-screen flex flex-col bg-background">
       <DashboardHeader />
       <main className="flex-1 container mx-auto p-8">
         <div className="mb-12 text-center">

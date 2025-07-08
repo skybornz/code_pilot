@@ -53,7 +53,7 @@ export default function DebugAssistPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-waiki min-h-screen flex flex-col bg-background">
       <DashboardHeader />
       <main className="flex-1 container mx-auto p-8 flex justify-center">
         <div className="w-full max-w-6xl space-y-8">

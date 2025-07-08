@@ -73,6 +73,12 @@
     --sidebar-border: 233 20% 25%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .theme-dashboard { --ring: 274 100% 50%; }
+  .theme-repo-insight { --ring: 221.2 83.1% 53.4%; }
+  .theme-codepilot { --ring: 274 100% 50%; }
+  .theme-waiki { --ring: 0 84.2% 60.2%; }
+  .theme-code-compare { --ring: 24.6 95% 53.1%; }
 }
 
 @layer base {

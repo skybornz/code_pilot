@@ -58,7 +58,7 @@ export default function SmartMatchPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-code-compare min-h-screen flex flex-col bg-background">
       <DashboardHeader />
       <main className="flex-1 container mx-auto p-8">
         <div className="w-full max-w-7xl mx-auto space-y-8">
