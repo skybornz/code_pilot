@@ -38,13 +38,14 @@ const getLanguageExtension = (language: string) => {
     case 'typescript':
     case 'tsx':
     case 'jsx':
+    case 'json':
       return [javascript({ jsx: true, typescript: true })];
     case 'css':
       return [css()];
     case 'python':
       return [python()];
     default:
-      // Fallback for languages like json, html, etc.
+      // Fallback for languages like html, plaintext, etc.
       return [javascript({ jsx: true, typescript: true })];
   }
 };
@@ -301,26 +302,28 @@ export function EditorPanel({
         )}
 
           <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleViewChangesClick}
-                  disabled={!file.previousContent}
-                  data-active={viewMode === 'diff'}
-                  className="data-[active=true]:bg-accent"
-                  aria-label={viewMode === 'edit' ? 'View Changes' : 'Hide Changes'}
-                >
-                  <GitCompare className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{!file.previousContent ? 'No previous version to compare' : (viewMode === 'edit' ? 'View Changes' : 'Hide Changes')}</p>
-              </TooltipContent>
-            </Tooltip>
+            {file.previousContent !== undefined && (
+                <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleViewChangesClick}
+                    disabled={!file.previousContent}
+                    data-active={viewMode === 'diff'}
+                    className="data-[active=true]:bg-accent"
+                    aria-label={viewMode === 'edit' ? 'View Changes' : 'Hide Changes'}
+                    >
+                    <GitCompare className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{!file.previousContent ? 'No previous version to compare' : (viewMode === 'edit' ? 'View Changes' : 'Hide Changes')}</p>
+                </TooltipContent>
+                </Tooltip>
+            )}
             
-            {viewMode === 'diff' && (
+            {viewMode === 'diff' && file.previousContent !== undefined && (
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button

@@ -16,7 +16,7 @@ const features = [
   },
   {
     title: 'Code Pilot',
-    description: 'Get AI-powered analysis on any code snippet or file.',
+    description: 'Paste or upload any code snippet for instant AI analysis, refactoring, and unit test generation.',
     icon: FileTerminal,
     href: '/codepilot',
     color: 'text-purple-400',
