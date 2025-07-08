@@ -55,7 +55,7 @@ export default function DashboardPage() {
   return (
     <div className="theme-dashboard min-h-screen flex flex-col bg-background">
       <DashboardHeader />
-      <main className="flex-1 container mx-auto p-8">
+      <main className="flex-1 container mx-auto p-8 flex flex-col justify-center">
         <div className="mb-12 text-center">
             <h1 className="text-[2em] font-normal tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Welcome to AD Labs</h1>
             <p className="mt-4 text-lg text-muted-foreground">Your integrated suite for AI-powered development. Select a tool to begin.</p>
