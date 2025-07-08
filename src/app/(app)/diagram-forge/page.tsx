@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Workflow, Sparkles, Loader2, FilePenLine, Download } from 'lucide-react';
+import { Workflow, Sparkles, Loader2, FilePenLine, Download, Image } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { generateDiagramFromPrompt } from '@/actions/diagram';
@@ -18,7 +18,6 @@ import CodeMirror from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { EditorView } from '@codemirror/view';
-import { cn } from '@/lib/utils';
 
 const diagramTypes = [
   { value: 'flowchart', label: 'Flowchart' },
@@ -66,22 +65,8 @@ export default function DiagramForgePage() {
   const handleDownload = () => {
     const svgElement = document.querySelector('#diagram-preview-container .mermaid > svg');
     if (svgElement) {
-        // Add XML namespace to the SVG element for proper rendering in some viewers
         svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        let svgData = new XMLSerializer().serializeToString(svgElement);
-
-        // Create a light-mode version for download by replacing dark theme colors
-        const replacements = {
-            '#1f1f29': '#ffffff', // card bg -> white
-            '#14141f': '#ffffff', // page bg -> white
-            '#f9fafb': '#000000', // foreground text -> black
-            '#333340': '#f1f5f9', // muted bg -> slate-100
-        };
-
-        for (const [darkColor, lightColor] of Object.entries(replacements)) {
-            svgData = svgData.replace(new RegExp(darkColor, 'gi'), lightColor);
-        }
-
+        const svgData = new XMLSerializer().serializeToString(svgElement);
         const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -194,16 +179,24 @@ export default function DiagramForgePage() {
 
                 {/* Right Side: Preview */}
                 <Card className="bg-card/50 h-full flex flex-col">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-cyan-400">Preview</CardTitle>
+                  <CardHeader className="flex flex-row items-start justify-between">
+                    <div>
+                        <CardTitle className="text-lg font-semibold text-cyan-400 flex items-center gap-2">
+                            <Image className="h-5 w-5" />
+                            Preview
+                        </CardTitle>
+                        <CardDescription>Your rendered diagram appears here.</CardDescription>
+                    </div>
                     <Button variant="ghost" size="icon" onClick={handleDownload} disabled={!generatedCode} className="text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-400">
                         <Download className="h-5 w-5" />
                         <span className="sr-only">Download SVG</span>
                     </Button>
                   </CardHeader>
-                   <div id="diagram-preview-container" className="flex-1 min-h-0 p-4">
-                     <DiagramPreview key={diagramKey} code={generatedCode} />
-                   </div>
+                  <CardContent className="flex-1 min-h-0 p-4">
+                     <div id="diagram-preview-container" className="h-full w-full rounded-md bg-white p-4">
+                        <DiagramPreview key={diagramKey} code={generatedCode} />
+                     </div>
+                  </CardContent>
                 </Card>
             </div>
           )}

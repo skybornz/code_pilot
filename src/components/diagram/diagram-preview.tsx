@@ -59,16 +59,16 @@ export function DiagramPreview({ code }: DiagramPreviewProps) {
   useEffect(() => {
      mermaid.initialize({
       startOnLoad: false,
-      theme: 'dark',
+      theme: 'base', // Use the 'base' (light) theme for rendering
       securityLevel: 'loose',
       themeVariables: {
-        background: '#1f1f29', // card
-        primaryColor: '#333340', // muted
-        primaryTextColor: '#f9fafb', // foreground
-        primaryBorderColor: '#2dd4bf', // accent (cyan-400)
-        lineColor: '#2dd4bf', // accent (cyan-400)
-        secondaryColor: '#333340', // secondary
-        tertiaryColor: '#14141f', // background
+        background: '#ffffff', // white
+        primaryColor: '#f1f5f9', // slate-100
+        primaryTextColor: '#020617', // slate-950
+        primaryBorderColor: '#06b6d4', // cyan-500
+        lineColor: '#020617', // slate-950
+        secondaryColor: '#e2e8f0', // slate-200
+        tertiaryColor: '#f8fafc', // slate-50
       },
     });
   }, []);
@@ -76,12 +76,12 @@ export function DiagramPreview({ code }: DiagramPreviewProps) {
   return (
     <div className="h-full w-full relative">
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-card/50 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       )}
       {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-card/80 z-10 p-4">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10 p-4">
               <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Diagram Error</AlertTitle>
