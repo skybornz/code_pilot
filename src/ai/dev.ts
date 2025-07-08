@@ -19,6 +19,7 @@ async function initialize() {
     await import('@/ai/flows/check-model-status');
     await import('@/ai/flows/debug-error');
     await import('@/ai/flows/generate-regex');
+    await import('@/ai/flows/generate-diagram');
 }
 
 initialize().catch(err => {
