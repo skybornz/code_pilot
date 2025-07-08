@@ -61,21 +61,24 @@ export default function DashboardPage() {
             <p className="mt-4 text-lg text-muted-foreground">Your integrated suite for AI-powered development. Select a tool to begin.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature) => (
-            <Link href={feature.href} key={feature.title} className="group">
-              <Card className="h-full hover:border-primary transition-colors duration-300 hover:shadow-lg hover:-translate-y-1">
-                <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <feature.icon className={`w-8 h-8 ${feature.color}`} />
-                    <CardTitle className={`font-normal ${feature.color}`}>{feature.title}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <Link href={feature.href} key={feature.title} className="group">
+                <Card className="h-full hover:border-primary transition-colors duration-300 hover:shadow-lg hover:-translate-y-1">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <Icon className={`w-8 h-8 ${feature.color}`} />
+                      <CardTitle className={`font-normal ${feature.color}`}>{feature.title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       </main>
     </div>
