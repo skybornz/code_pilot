@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Sitemap } from 'lucide-react';
+import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Workflow } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
@@ -45,7 +45,7 @@ const features = [
    {
     title: 'Diagram Forge',
     description: 'Convert text descriptions into professional diagrams with real-time preview and editing.',
-    icon: Sitemap,
+    icon: Workflow,
     href: '/diagram-forge',
     color: 'text-cyan-400',
   },
