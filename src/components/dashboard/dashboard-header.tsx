@@ -31,6 +31,7 @@ export function DashboardHeader() {
         if (pathname.startsWith('/code-compare')) return 'text-orange-400';
         if (pathname.startsWith('/regex-wizard')) return 'text-green-400';
         if (pathname.startsWith('/diagram-forge')) return 'text-cyan-400';
+        if (pathname.startsWith('/code-gpt')) return 'text-pink-400';
         return 'text-primary';
     };
 
@@ -41,6 +42,7 @@ export function DashboardHeader() {
         if (pathname.startsWith('/code-compare')) return 'focus:bg-orange-400/90 focus:text-white';
         if (pathname.startsWith('/regex-wizard')) return 'focus:bg-green-400/90 focus:text-white';
         if (pathname.startsWith('/diagram-forge')) return 'focus:bg-cyan-400/90 focus:text-white';
+        if (pathname.startsWith('/code-gpt')) return 'focus:bg-pink-400/90 focus:text-white';
         return 'focus:bg-primary focus:text-primary-foreground';
     };
 

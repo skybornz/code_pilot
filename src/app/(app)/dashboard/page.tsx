@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Workflow } from 'lucide-react';
+import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Workflow, TerminalSquare } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
@@ -20,6 +20,13 @@ const features = [
     icon: FileTerminal,
     href: '/codepilot',
     color: 'text-purple-400',
+  },
+  {
+    title: 'Code GPT',
+    description: 'Generates context-aware code blocks based on natural language for any supported language.',
+    icon: TerminalSquare,
+    href: '/code-gpt',
+    color: 'text-pink-400',
   },
   {
     title: 'Debug Assist',
