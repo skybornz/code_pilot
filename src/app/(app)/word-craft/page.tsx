@@ -85,20 +85,18 @@ export default function WordCraftPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="md:col-span-3 space-y-2">
-                        <Label htmlFor="content-type-select">Content Type</Label>
-                        <Select value={contentType} onValueChange={setContentType} disabled={isLoading}>
-                            <SelectTrigger id="content-type-select">
-                                <SelectValue placeholder="Select a content type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {contentTypes.map((type) => (
-                                <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <div className="space-y-2">
+                    <Label htmlFor="content-type-select">Content Type</Label>
+                    <Select value={contentType} onValueChange={setContentType} disabled={isLoading}>
+                        <SelectTrigger id="content-type-select">
+                            <SelectValue placeholder="Select a content type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {contentTypes.map((type) => (
+                            <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="space-y-2">
