@@ -33,6 +33,7 @@ export function DashboardHeader() {
         if (pathname.startsWith('/diagram-forge')) return 'text-cyan-400';
         if (pathname.startsWith('/code-gpt')) return 'text-pink-400';
         if (pathname.startsWith('/code-fiddle')) return 'text-yellow-400';
+        if (pathname.startsWith('/word-craft')) return 'text-indigo-400';
         return 'text-primary';
     };
 
@@ -45,6 +46,7 @@ export function DashboardHeader() {
         if (pathname.startsWith('/diagram-forge')) return 'focus:bg-cyan-400/90 focus:text-white';
         if (pathname.startsWith('/code-gpt')) return 'focus:bg-pink-400/90 focus:text-white';
         if (pathname.startsWith('/code-fiddle')) return 'focus:bg-yellow-400/90 focus:text-white';
+        if (pathname.startsWith('/word-craft')) return 'focus:bg-indigo-400/90 focus:text-white';
         return 'focus:bg-primary focus:text-primary-foreground';
     };
 

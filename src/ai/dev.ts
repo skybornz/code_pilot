@@ -23,6 +23,7 @@ async function initialize() {
     await import('@/ai/flows/generate-diagram');
     await import('@/ai/flows/generate-code-snippet');
     await import('@/ai/flows/execute-python-code');
+    await import('@/ai/flows/refine-text');
 }
 
 initialize().catch(err => {

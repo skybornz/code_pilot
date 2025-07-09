@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Workflow, TerminalSquare, FlaskConical } from 'lucide-react';
+import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Workflow, TerminalSquare, FlaskConical, FilePenLine } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
@@ -29,6 +29,13 @@ const features = [
     color: 'text-pink-400',
   },
   {
+    title: 'Diagram Forge',
+    description: 'Convert text descriptions into professional diagrams with real-time preview and editing.',
+    icon: Workflow,
+    href: '/diagram-forge',
+    color: 'text-cyan-400',
+  },
+  {
     title: 'Code Fiddle',
     description: 'A code playground to quickly test snippets for various languages with real-time feedback.',
     icon: FlaskConical,
@@ -43,13 +50,6 @@ const features = [
     color: 'text-red-400',
   },
   {
-    title: 'Diagram Forge',
-    description: 'Convert text descriptions into professional diagrams with real-time preview and editing.',
-    icon: Workflow,
-    href: '/diagram-forge',
-    color: 'text-cyan-400',
-  },
-  {
     title: 'Smart Match',
     description: 'Compare two code snippets or text blocks to see a line-by-line analysis of the differences.',
     icon: GitCompare,
@@ -62,6 +62,13 @@ const features = [
     icon: Wand2,
     href: '/regex-wizard',
     color: 'text-green-400',
+  },
+  {
+    title: 'Word Craft',
+    description: 'An AI-powered text refinement tool for reports, emails, and more.',
+    icon: FilePenLine,
+    href: '/word-craft',
+    color: 'text-indigo-400',
   },
 ];
 
