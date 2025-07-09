@@ -177,11 +177,24 @@ export default function DiagramForgePage() {
                                   </div>
                                   <div className="grid gap-2 text-xs">
                                     <h5 className="font-semibold">Flowchart</h5>
-                                    <pre className="p-2 rounded-md bg-muted"><code>graph TD;{`\n`}    A[Start] --&gt; B(Process);{`\n`}    B --&gt; C{{Decision}};{`\n`}    C --&gt;|Yes| D[End];{`\n`}    C --&gt;|No| B;</code></pre>
+                                    <pre className="p-2 rounded-md bg-muted"><code>{`graph TD;
+    A[Start] --> B(Process);
+    B --> C{{Decision}};
+    C -->|Yes| D[End];
+    C -->|No| B;`}</code></pre>
                                     <h5 className="font-semibold mt-2">Sequence Diagram</h5>
-                                    <pre className="p-2 rounded-md bg-muted"><code>sequenceDiagram;{`\n`}    User-&gt;&gt;API: Request;{`\n`}    API-&gt;&gt;DB: Query;{`\n`}    DB--&gt;&gt;API: Results;{`\n`}    API--&gt;&gt;User: Response;</code></pre>
+                                    <pre className="p-2 rounded-md bg-muted"><code>{`sequenceDiagram;
+    User->>API: Request;
+    API->>DB: Query;
+    DB-->>API: Results;
+    API-->>User: Response;`}</code></pre>
                                     <h5 className="font-semibold mt-2">Gantt Chart</h5>
-                                    <pre className="p-2 rounded-md bg-muted"><code>gantt{`\n`}    title A Gantt Diagram{`\n`}    dateFormat  YYYY-MM-DD{`\n`}    section Section{`\n`}    A task: a1, 2024-01-01, 30d{`\n`}    Another task: after a1, 20d;</code></pre>
+                                    <pre className="p-2 rounded-md bg-muted"><code>{`gantt
+    title A Gantt Diagram
+    dateFormat  YYYY-MM-DD
+    section Section
+    A task: a1, 2024-01-01, 30d
+    Another task: after a1, 20d;`}</code></pre>
                                   </div>
                                 </div>
                             </PopoverContent>
