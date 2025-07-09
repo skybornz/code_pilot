@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Workflow, Sparkles, Loader2, FilePenLine, Download, Image } from 'lucide-react';
+import { Workflow, Sparkles, Loader2, FilePenLine, Download, Image, Info } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { generateDiagramFromPrompt } from '@/actions/diagram';
@@ -18,6 +18,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { EditorView } from '@codemirror/view';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const diagramTypes = [
   { value: 'flowchart', label: 'Flowchart' },
@@ -65,8 +66,12 @@ export default function DiagramForgePage() {
   const handleDownload = () => {
     const svgElement = document.querySelector('#diagram-preview-container .mermaid > svg');
     if (svgElement) {
-        svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        const svgData = new XMLSerializer().serializeToString(svgElement);
+        // Create a temporary clone to modify for light theme download
+        const lightSvg = svgElement.cloneNode(true) as SVGSVGElement;
+        lightSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        lightSvg.style.backgroundColor = 'white'; // Explicitly set background
+        
+        const svgData = new XMLSerializer().serializeToString(lightSvg);
         const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -147,12 +152,40 @@ export default function DiagramForgePage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Side: Editor */}
                 <Card className="bg-card/50">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-semibold text-cyan-400 flex items-center gap-2">
-                            <FilePenLine />
-                            Mermaid Code Editor
-                        </CardTitle>
-                        <CardDescription>You can edit the generated code here to refine your diagram.</CardDescription>
+                    <CardHeader className="flex flex-row items-start justify-between">
+                        <div>
+                            <CardTitle className="text-lg font-semibold text-cyan-400 flex items-center gap-2">
+                                <FilePenLine />
+                                Mermaid Code Editor
+                            </CardTitle>
+                            <CardDescription>You can edit the generated code here to refine your diagram.</CardDescription>
+                        </div>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-400">
+                                    <Info className="h-5 w-5" />
+                                    <span className="sr-only">Mermaid Syntax Info</span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-96" side="left" align="start">
+                                <div className="grid gap-4">
+                                  <div className="space-y-2">
+                                    <h4 className="font-medium leading-none">Mermaid Cheatsheet</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      Basic syntax for common diagrams.
+                                    </p>
+                                  </div>
+                                  <div className="grid gap-2 text-xs">
+                                    <h5 className="font-semibold">Flowchart</h5>
+                                    <pre className="p-2 rounded-md bg-muted"><code>graph TD;{`\n`}    A[Start] --&gt; B(Process);{`\n`}    B --&gt; C{{Decision}};{`\n`}    C --&gt;|Yes| D[End];{`\n`}    C --&gt;|No| B;</code></pre>
+                                    <h5 className="font-semibold mt-2">Sequence Diagram</h5>
+                                    <pre className="p-2 rounded-md bg-muted"><code>sequenceDiagram;{`\n`}    User-&gt;&gt;API: Request;{`\n`}    API-&gt;&gt;DB: Query;{`\n`}    DB--&gt;&gt;API: Results;{`\n`}    API--&gt;&gt;User: Response;</code></pre>
+                                    <h5 className="font-semibold mt-2">Gantt Chart</h5>
+                                    <pre className="p-2 rounded-md bg-muted"><code>gantt{`\n`}    title A Gantt Diagram{`\n`}    dateFormat  YYYY-MM-DD{`\n`}    section Section{`\n`}    A task: a1, 2024-01-01, 30d{`\n`}    Another task: after a1, 20d;</code></pre>
+                                  </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     </CardHeader>
                     <CardContent>
                        {isLoading && !generatedCode ? (
