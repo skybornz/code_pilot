@@ -3,26 +3,27 @@
 
 import { configureAi } from '@/ai/genkit';
 import { withRetry } from '@/lib/utils';
-import type { ExecutePythonCodeOutput } from '@/ai/flows/execute-python-code';
+import type { ExecuteCodeOutput } from '@/ai/flows/execute-python-code';
 import { logUserActivity } from './activity';
 import { updateUserLastActive } from './users';
 
-export async function simulatePythonExecution(
+export async function simulateCodeExecution(
     userId: string,
     code: string,
-): Promise<ExecutePythonCodeOutput | { error: string }> {
+    language: string
+): Promise<ExecuteCodeOutput | { error: string }> {
     await configureAi();
 
     try {
-        const { executePythonCode } = await import('@/ai/flows/execute-python-code');
-        const result = await withRetry(() => executePythonCode({ code }));
+        const { executeCode } = await import('@/ai/flows/execute-python-code');
+        const result = await withRetry(() => executeCode({ code, language }));
 
-        await logUserActivity(userId, 'Code Fiddle', `User executed a Python snippet.`);
+        await logUserActivity(userId, 'Code Fiddle', `User executed a ${language} snippet.`);
         await updateUserLastActive(userId);
 
         return result;
     } catch (error: any) {
-        console.error('Code Fiddle Python execution failed in server action:', error);
-        return { error: error.message || 'An unexpected error occurred while processing the Python code.' };
+        console.error('Code Fiddle execution failed in server action:', error);
+        return { error: error.message || 'An unexpected error occurred while processing the code.' };
     }
 }

@@ -13,13 +13,17 @@ import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { EditorView } from '@codemirror/view';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { simulatePythonExecution } from '@/actions/code-fiddle';
+import { simulateCodeExecution } from '@/actions/code-fiddle';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
 const supportedLanguages = [
     { value: 'javascript', label: 'JavaScript' },
     { value: 'python', label: 'Python' },
+    { value: 'c', label: 'C' },
+    { value: 'cpp', label: 'C++' },
+    { value: 'csharp', label: 'C#' },
+    { value: 'java', label: 'Java' },
 ];
 
 const getLanguageExtension = (language: string) => {
@@ -27,6 +31,10 @@ const getLanguageExtension = (language: string) => {
         case 'python':
             return [python()];
         case 'javascript':
+        case 'c':
+        case 'cpp':
+        case 'csharp':
+        case 'java':
         default:
             return [javascript({ jsx: true, typescript: true })];
     }
@@ -46,10 +54,28 @@ export default function CodeFiddlePage() {
     
     const handleLanguageChange = (lang: string) => {
         setLanguage(lang);
-        if (lang === 'python') {
-            setCode('print("Hello from Python!")');
-        } else if (lang === 'javascript') {
-            setCode('console.log("Hello from JavaScript!");');
+        switch(lang) {
+            case 'python':
+                setCode('print("Hello from Python!")');
+                break;
+            case 'javascript':
+                setCode('console.log("Hello from JavaScript!");');
+                break;
+            case 'c':
+                setCode('#include <stdio.h>\\n\\nint main() {\\n   printf("Hello from C!\\\\n");\\n   return 0;\\n}');
+                break;
+            case 'cpp':
+                setCode('#include <iostream>\\n\\nint main() {\\n   std::cout << "Hello from C++!" << std::endl;\\n   return 0;\\n}');
+                break;
+            case 'csharp':
+                setCode('using System;\\n\\nclass Program {\\n   static void Main() {\\n      Console.WriteLine("Hello from C#!");\\n   }\\n}');
+                break;
+            case 'java':
+                setCode('public class HelloWorld {\\n   public static void main(String[] args) {\\n      System.out.println("Hello from Java!");\\n   }\\n}');
+                break;
+            default:
+                setCode('');
+                break;
         }
     };
 
@@ -59,11 +85,11 @@ export default function CodeFiddlePage() {
 
         if (language === 'javascript') {
             runJavaScript();
-        } else if (language === 'python') {
-            await runPython();
+            setIsRunning(false);
+        } else {
+            await runOnServer();
+            setIsRunning(false);
         }
-        
-        setIsRunning(false);
     };
     
     const runJavaScript = () => {
@@ -91,14 +117,14 @@ export default function CodeFiddlePage() {
             setConsoleOutput(capturedLogs);
         }
     };
-    
-    const runPython = async () => {
+
+    const runOnServer = async () => {
         if (!user) {
-            toast({ variant: 'destructive', title: 'You must be logged in to run Python code.' });
+            toast({ variant: 'destructive', title: `You must be logged in to run ${language} code.` });
             return;
         }
-
-        const result = await simulatePythonExecution(user.id, code);
+        
+        const result = await simulateCodeExecution(user.id, code, language);
 
         if ('error' in result && result.error !== null) {
              setConsoleOutput([`Execution Error: ${result.error}`]);
