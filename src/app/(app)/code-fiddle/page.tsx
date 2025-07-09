@@ -1,44 +1,73 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FlaskConical, Play, Terminal, Trash2 } from 'lucide-react';
+import { FlaskConical, Play, Terminal, Trash2, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { EditorView } from '@codemirror/view';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { simulatePythonExecution } from '@/actions/code-fiddle';
+import { useAuth } from '@/context/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
-// For now, only JS is supported for client-side execution
 const supportedLanguages = [
     { value: 'javascript', label: 'JavaScript' },
+    { value: 'python', label: 'Python' },
 ];
 
+const getLanguageExtension = (language: string) => {
+    switch (language) {
+        case 'python':
+            return [python()];
+        case 'javascript':
+        default:
+            return [javascript({ jsx: true, typescript: true })];
+    }
+};
+
 export default function CodeFiddlePage() {
-    const [code, setCode] = useState('console.log("Hello, Fiddle!");\nconsole.log({ a: 1, b: "test" });');
-    const [language, setLanguage] = useState('javascript');
+    const [code, setCode] = useState('print("Hello from Python!")');
+    const [language, setLanguage] = useState('python');
     const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
     const [isRunning, setIsRunning] = useState(false);
+    const { user } = useAuth();
+    const { toast } = useToast();
 
     const onCodeChange = useCallback((value: string) => {
         setCode(value);
     }, []);
-
-    const handleRunCode = () => {
-        if (language !== 'javascript') {
-            setConsoleOutput(['Only JavaScript execution is currently supported.']);
-            return;
+    
+    const handleLanguageChange = (lang: string) => {
+        setLanguage(lang);
+        if (lang === 'python') {
+            setCode('print("Hello from Python!")');
+        } else if (lang === 'javascript') {
+            setCode('console.log("Hello from JavaScript!");');
         }
+    };
 
+    const handleRunCode = async () => {
         setIsRunning(true);
         setConsoleOutput([]);
-        const capturedLogs: string[] = [];
 
-        // Temporarily override console.log to capture output
+        if (language === 'javascript') {
+            runJavaScript();
+        } else if (language === 'python') {
+            await runPython();
+        }
+        
+        setIsRunning(false);
+    };
+    
+    const runJavaScript = () => {
+        const capturedLogs: string[] = [];
         const originalConsoleLog = console.log;
         console.log = (...args: any[]) => {
             const formattedArgs = args.map(arg => {
@@ -53,23 +82,41 @@ export default function CodeFiddlePage() {
             }).join(' ');
             capturedLogs.push(formattedArgs);
         };
-
         try {
-            // Use Function constructor to safely execute the code
             new Function(code)();
         } catch (error: any) {
             capturedLogs.push(`Error: ${error.message}`);
         } finally {
-            // Restore original console.log and update state
             console.log = originalConsoleLog;
             setConsoleOutput(capturedLogs);
-            setIsRunning(false);
+        }
+    };
+    
+    const runPython = async () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'You must be logged in to run Python code.' });
+            return;
+        }
+
+        const result = await simulatePythonExecution(user.id, code);
+
+        if ('error' in result && result.error !== null) {
+             setConsoleOutput([`Execution Error: ${result.error}`]);
+        } else if ('output' in result) {
+             setConsoleOutput([result.output]);
+        } else {
+             setConsoleOutput(['An unexpected error occurred.']);
         }
     };
 
     const handleClearConsole = () => {
         setConsoleOutput([]);
     }
+    
+    const extensions = useMemo(() => [
+        ...getLanguageExtension(language),
+        EditorView.lineWrapping,
+    ], [language]);
 
     return (
         <div className="theme-code-fiddle min-h-screen flex flex-col bg-background">
@@ -101,7 +148,7 @@ export default function CodeFiddlePage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="w-40">
-                                        <Select value={language} onValueChange={setLanguage}>
+                                        <Select value={language} onValueChange={handleLanguageChange}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select language" />
                                             </SelectTrigger>
@@ -113,7 +160,7 @@ export default function CodeFiddlePage() {
                                         </Select>
                                     </div>
                                     <Button onClick={handleRunCode} disabled={isRunning} className="bg-yellow-600 hover:bg-yellow-700 text-white">
-                                        <Play className="mr-2 h-4 w-4" />
+                                        {isRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                                         Run
                                     </Button>
                                 </div>
@@ -123,7 +170,7 @@ export default function CodeFiddlePage() {
                                     value={code}
                                     height="100%"
                                     theme={vscodeDark}
-                                    extensions={[javascript({ jsx: true, typescript: true }), EditorView.lineWrapping]}
+                                    extensions={extensions}
                                     onChange={onCodeChange}
                                     basicSetup={{ lineNumbers: true, foldGutter: true, autocompletion: true }}
                                     className="h-full"
@@ -150,7 +197,7 @@ export default function CodeFiddlePage() {
                                             <p className="text-muted-foreground">Output will appear here...</p>
                                         ) : (
                                             consoleOutput.map((line, index) => (
-                                                <div key={index} className={`whitespace-pre-wrap border-b border-border/50 py-1 ${line.startsWith('Error:') ? 'text-red-400' : ''}`}>
+                                                <div key={index} className={`whitespace-pre-wrap border-b border-border/50 py-1 ${line.toLowerCase().includes('error') ? 'text-red-400' : ''}`}>
                                                     {line}
                                                 </div>
                                             ))
