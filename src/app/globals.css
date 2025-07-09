@@ -83,6 +83,7 @@
   .theme-regex-wizard { --ring: 142.1 76.2% 36.3%; }
   .theme-diagram-forge { --ring: 180 88% 41%; }
   .theme-code-gpt { --ring: 346.8 98.4% 61.2%; }
+  .theme-code-fiddle { --ring: 48 96% 50%; }
 }
 
 @layer base {

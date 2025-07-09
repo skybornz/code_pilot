@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Workflow, TerminalSquare } from 'lucide-react';
+import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Workflow, TerminalSquare, FlaskConical } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
@@ -27,6 +27,13 @@ const features = [
     icon: TerminalSquare,
     href: '/code-gpt',
     color: 'text-pink-400',
+  },
+  {
+    title: 'Code Fiddle',
+    description: 'A code playground to quickly test snippets for various languages with real-time feedback.',
+    icon: FlaskConical,
+    href: '/code-fiddle',
+    color: 'text-yellow-400',
   },
   {
     title: 'Debug Assist',
