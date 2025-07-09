@@ -158,7 +158,10 @@ export default function CodeFiddlePage() {
                                 <div>
                                     <CardTitle className="text-2xl font-semibold text-yellow-400">Code Fiddle</CardTitle>
                                     <CardDescription>
-                                        A lightweight playground to write, run, and test code snippets directly in your browser.
+                                        A lightweight playground to write, run, and test code snippets. For many languages, AI simulates the output.
+                                    </CardDescription>
+                                    <CardDescription className="text-xs pt-2">
+                                        Disclaimer: AI simulations can be incorrect. Always verify critical code.
                                     </CardDescription>
                                 </div>
                             </div>
