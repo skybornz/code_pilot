@@ -20,6 +20,7 @@ import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
+import { ThemeToggle } from '../ui/theme-toggle';
 
 export function AdminSidebar() {
     const pathname = usePathname();
@@ -41,10 +42,11 @@ export function AdminSidebar() {
 
     return (
         <>
-            <SidebarHeader>
+            <SidebarHeader className='flex-row items-center justify-between'>
                 <Link href="/admin">
                     <Logo />
                 </Link>
+                <ThemeToggle />
             </SidebarHeader>
             <SidebarSeparator />
             <SidebarContent className="p-2">

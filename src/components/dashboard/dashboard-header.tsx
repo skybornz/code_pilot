@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { ChangePasswordDialog } from '../profile/change-password-dialog';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '../ui/theme-toggle';
 
 export function DashboardHeader() {
     const { user, isAdmin, logout } = useAuth();
@@ -62,6 +63,7 @@ export function DashboardHeader() {
                     </Link>
                     {user && (
                          <div className="flex items-center gap-2">
+                            <ThemeToggle />
                              {pathname !== '/dashboard' && (
                                 <Button asChild variant="ghost" className={cn(themeColorClass, 'hover:text-primary-foreground hover:bg-transparent')}>
                                     <Link href="/dashboard">
