@@ -63,7 +63,7 @@ export function DashboardHeader() {
                     </Link>
                     {user && (
                          <div className="flex items-center gap-2">
-                            <ThemeToggle />
+                            <ThemeToggle className={cn(themeColorClass, 'hover:text-primary-foreground hover:bg-transparent')} />
                              {pathname !== '/dashboard' && (
                                 <Button asChild variant="ghost" className={cn(themeColorClass, 'hover:text-primary-foreground hover:bg-transparent')}>
                                     <Link href="/dashboard">

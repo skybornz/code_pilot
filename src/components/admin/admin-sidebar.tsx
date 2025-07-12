@@ -46,7 +46,7 @@ export function AdminSidebar() {
                 <Link href="/admin">
                     <Logo />
                 </Link>
-                <ThemeToggle />
+                <ThemeToggle className="text-primary hover:text-primary/90" />
             </SidebarHeader>
             <SidebarSeparator />
             <SidebarContent className="p-2">

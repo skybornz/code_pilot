@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { Logo } from '@/components/codepilot/logo';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -62,6 +63,9 @@ export default function LoginPage() {
   // Only render the form if auth has loaded and the user is not authenticated.
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="mb-8">
         <Logo />
       </div>
