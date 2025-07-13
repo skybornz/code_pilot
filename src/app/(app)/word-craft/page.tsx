@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -88,7 +89,7 @@ export default function WordCraftPage() {
                 <div className="space-y-2">
                     <Label htmlFor="content-type-select">Content Type</Label>
                     <Select value={contentType} onValueChange={setContentType} disabled={isLoading}>
-                        <SelectTrigger id="content-type-select">
+                        <SelectTrigger id="content-type-select" className="max-w-md">
                             <SelectValue placeholder="Select a content type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -98,37 +99,7 @@ export default function WordCraftPage() {
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="original-text">Original Text</Label>
-                        <Textarea
-                            id="original-text"
-                            placeholder="Paste your draft here..."
-                            className="min-h-[300px] font-sans"
-                            value={originalText}
-                            onChange={(e) => setOriginalText(e.target.value)}
-                            disabled={isLoading}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="refined-text">Refined Text</Label>
-                        <div className="relative">
-                            <Textarea
-                                id="refined-text"
-                                placeholder="Refined text will appear here..."
-                                className="min-h-[300px] font-sans"
-                                value={refinedText}
-                                readOnly
-                                disabled={isLoading}
-                            />
-                            {refinedText && (
-                                <Button variant="ghost" size="icon" onClick={handleCopy} className="absolute top-2 right-2 h-7 w-7">
-                                    {isCopied ? <ClipboardCheck className="h-4 w-4 text-green-400" /> : <Clipboard className="h-4 w-4" />}
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                </div>
+
                 <div className="mt-4 flex justify-center">
                   <Button onClick={handleRefine} disabled={!originalText || isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                     {isLoading ? (
@@ -141,14 +112,53 @@ export default function WordCraftPage() {
               </div>
             </CardContent>
           </Card>
+          
+           {(isLoading || refinedText) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <Card className="bg-card/50">
+                      <CardHeader>
+                          <CardTitle>Original Text</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                          <Textarea
+                              placeholder="Paste your draft here..."
+                              className="min-h-[300px] font-sans"
+                              value={originalText}
+                              onChange={(e) => setOriginalText(e.target.value)}
+                              disabled={isLoading}
+                          />
+                      </CardContent>
+                  </Card>
+                  <Card className="bg-card/50">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                          <CardTitle>Refined Text</CardTitle>
+                           {refinedText && !isLoading && (
+                              <Button variant="ghost" size="icon" onClick={handleCopy} className="h-7 w-7">
+                                  {isCopied ? <ClipboardCheck className="h-4 w-4 text-green-400" /> : <Clipboard className="h-4 w-4" />}
+                              </Button>
+                          )}
+                      </CardHeader>
+                      <CardContent>
+                        {isLoading ? (
+                             <div className="flex items-center justify-center h-full min-h-[300px]">
+                                <LoadingSpinner text="The AI is refining your text..." />
+                            </div>
+                        ) : (
+                          <div className="relative">
+                              <Textarea
+                                  placeholder="Refined text will appear here..."
+                                  className="min-h-[300px] font-sans"
+                                  value={refinedText}
+                                  readOnly
+                              />
+                          </div>
+                        )}
+                      </CardContent>
+                  </Card>
+              </div>
+           )}
 
-          {isLoading && (
-            <Card className="bg-card/50">
-              <CardContent className="flex items-center justify-center p-12">
-                <LoadingSpinner text="The AI is refining your text..." />
-              </CardContent>
-            </Card>
-          )}
+
         </div>
       </main>
     </div>
