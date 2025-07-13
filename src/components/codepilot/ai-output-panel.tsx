@@ -69,7 +69,7 @@ const renderOutput = (output: AIOutput) => {
       <div className="space-y-4">
         <div>
           <h4 className="font-semibold mb-2">Summary</h4>
-          <p className="text-muted-foreground whitespace-pre-wrap">{explanation.summary}</p>
+          <div className="text-muted-foreground"><MessageContent content={explanation.summary} /></div>
         </div>
         <div>
           <h4 className="font-semibold mb-2">Breakdown</h4>
@@ -91,7 +91,7 @@ const renderOutput = (output: AIOutput) => {
       <div className="space-y-4">
         <div>
           <h4 className="font-semibold mb-2">Summary of Changes:</h4>
-          <p className="text-muted-foreground whitespace-pre-wrap">{analysis.summary}</p>
+          <div className="text-muted-foreground"><MessageContent content={analysis.summary} /></div>
         </div>
         <div>
           <h4 className="font-semibold mb-2">Detailed Analysis:</h4>
@@ -108,22 +108,20 @@ const renderOutput = (output: AIOutput) => {
   if (type === 'bugs') {
     const bugReport = data as FindBugsOutput;
     return (
-      <>
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Bugs Found:</h4>
-            {bugReport.bugs.length > 0 ? (
-                <ul className="list-disc list-inside space-y-1 bg-muted/50 p-3 rounded-md">
-                    {bugReport.bugs.map((bug, index) => <li key={index}>{bug}</li>)}
-                </ul>
-            ) : <p className="text-muted-foreground">No bugs found.</p>}
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">Explanation & Fixes:</h4>
-            <p className="text-muted-foreground whitespace-pre-wrap">{bugReport.explanation}</p>
-          </div>
+      <div className="space-y-4">
+        <div>
+          <h4 className="font-semibold mb-2">Bugs Found:</h4>
+          {bugReport.bugs.length > 0 ? (
+              <ul className="list-disc list-inside space-y-1 bg-muted/50 p-3 rounded-md">
+                  {bugReport.bugs.map((bug, index) => <li key={index}>{bug}</li>)}
+              </ul>
+          ) : <p className="text-muted-foreground">No bugs found.</p>}
         </div>
-      </>
+        <div>
+          <h4 className="font-semibold mb-2">Explanation & Fixes:</h4>
+          <div className="text-muted-foreground"><MessageContent content={bugReport.explanation} /></div>
+        </div>
+      </div>
     );
   }
 
@@ -137,7 +135,7 @@ const renderOutput = (output: AIOutput) => {
         </div>
         <div>
           <h4 className="font-semibold mb-2">Explanation:</h4>
-          <p className="text-muted-foreground whitespace-pre-wrap">{refactorData.explanation}</p>
+          <div className="text-muted-foreground"><MessageContent content={refactorData.explanation} /></div>
         </div>
       </div>
     );
@@ -150,7 +148,7 @@ const renderOutput = (output: AIOutput) => {
   
   if (type === 'sdd') {
     const sddData = data as GenerateSddOutput;
-    return <CodeBlock code={sddData.sdd} language={language} />;
+    return <MessageContent content={sddData.sdd} />;
   }
 
   return <p className="whitespace-pre-wrap">{String(data)}</p>;
