@@ -30,10 +30,7 @@ export function DiagramPreview({ code }: DiagramPreviewProps) {
       setError(null);
 
       try {
-        // We need a unique ID for mermaid to render into, to avoid conflicts.
         const uniqueId = `mermaid-graph-${Date.now()}`;
-        
-        // mermaid.render returns the SVG code as a string.
         const { svg } = await mermaid.render(uniqueId, code);
 
         if (containerRef.current) {
@@ -42,9 +39,15 @@ export function DiagramPreview({ code }: DiagramPreviewProps) {
         setError(null);
       } catch (e: any) {
         console.error('Mermaid render error:', e);
-        setError('Invalid diagram syntax. Please check the generated code for errors.');
+        
+        let errorMessage = 'Invalid diagram syntax. Please check the generated code for errors.';
+        if (typeof e.str === 'string' && e.str.includes('classDiagram')) {
+            errorMessage = 'Invalid Class Diagram syntax. Please check for correct class definitions (e.g., `class Name { }`) and relationships (e.g., `ClassA --|> ClassB`).';
+        }
+
+        setError(errorMessage);
+
         if (containerRef.current) {
-          // Clear the container on error to avoid showing a broken diagram
           containerRef.current.innerHTML = '';
         }
       } finally {
@@ -55,20 +58,19 @@ export function DiagramPreview({ code }: DiagramPreviewProps) {
     renderDiagram();
   }, [code]);
   
-  // Initialize mermaid on component mount
   useEffect(() => {
      mermaid.initialize({
       startOnLoad: false,
-      theme: 'base', // Use the 'base' (light) theme for rendering
+      theme: 'base',
       securityLevel: 'loose',
       themeVariables: {
-        background: '#ffffff', // white
-        primaryColor: '#f1f5f9', // slate-100
-        primaryTextColor: '#020617', // slate-950
-        primaryBorderColor: '#06b6d4', // cyan-500
-        lineColor: '#020617', // slate-950
-        secondaryColor: '#e2e8f0', // slate-200
-        tertiaryColor: '#f8fafc', // slate-50
+        background: '#ffffff',
+        primaryColor: '#f1f5f9',
+        primaryTextColor: '#020617',
+        primaryBorderColor: '#06b6d4',
+        lineColor: '#020617',
+        secondaryColor: '#e2e8f0',
+        tertiaryColor: '#f8fafc',
       },
     });
   }, []);
