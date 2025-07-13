@@ -12,6 +12,9 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getDefaultModel } from '@/actions/models';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const DebugErrorInputSchema = z.object({
   errorMessage: z.string().describe('The full error message or stack trace to be analyzed.'),
@@ -48,6 +51,21 @@ const DebugErrorFlowInputSchema = DebugErrorInputSchema.extend({
     model: z.string().describe('The AI model to use for the analysis.'),
 });
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const debugErrorFlow = ai.defineFlow(
   {
     name: 'debugErrorFlow',
@@ -55,20 +73,12 @@ const debugErrorFlow = ai.defineFlow(
     outputSchema: DebugErrorOutputSchema,
   },
   async (input) => {
+    const promptTemplate = await getCompiledPrompt('debug-error');
+    const finalPrompt = promptTemplate({ errorMessage: input.errorMessage });
+
     const { output } = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert software developer and debugger. A user has provided the following error message or stack trace.
-Analyze it carefully.
-
-Error:
-\`\`\`
-${input.errorMessage}
-\`\`\`
-
-Your task is to:
-1.  Identify the most likely root cause of the error. Explain it clearly in the 'potentialCause' field.
-2.  Provide a list of actionable, recommended fixes. Rank them by how likely they are to solve the problem. For each fix, provide a clear description and an optional code snippet if it's relevant.
-`,
+        prompt: finalPrompt,
         output: { schema: DebugErrorOutputSchema },
     });
     return output!;
