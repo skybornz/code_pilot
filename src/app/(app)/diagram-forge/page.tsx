@@ -188,6 +188,18 @@ export default function DiagramForgePage() {
     API->>DB: Query;
     DB-->>API: Results;
     API-->>User: Response;`}</code></pre>
+                                    <h5 className="font-semibold mt-2">Class Diagram</h5>
+                                    <pre className="p-2 rounded-md bg-muted"><code>{`classDiagram
+class Animal {
+    +String name
+    +int age
+    +void makeSound()
+}
+class Dog {
+    +String breed
+    +void wagTail()
+}
+Animal <|-- Dog`}</code></pre>
                                     <h5 className="font-semibold mt-2">Pie Chart</h5>
                                     <pre className="p-2 rounded-md bg-muted"><code>{`pie
     title Page Views
