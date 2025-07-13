@@ -149,7 +149,7 @@ export default function WordCraftPage() {
                         <div className="space-y-2">
                             <Label htmlFor="analyze-type-select">Analysis Type</Label>
                             <Select value={analyzeType} onValueChange={setAnalyzeType} disabled={isLoading}>
-                                <SelectTrigger id="analyze-type-select">
+                                <SelectTrigger id="analyze-type-select" className="w-full">
                                     <SelectValue placeholder="Select an analysis type" />
                                 </SelectTrigger>
                                 <SelectContent>
