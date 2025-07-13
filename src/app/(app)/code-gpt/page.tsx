@@ -24,8 +24,6 @@ const supportedLanguages = [
     { value: 'csharp', label: 'C#' },
     { value: 'c', label: 'C' },
     { value: 'cpp', label: 'C++' },
-    { value: 'go', label: 'Go' },
-    { value: 'rust', label: 'Rust' },
     { value: 'sql', label: 'SQL' },
     { value: 'html', label: 'HTML' },
     { value: 'css', label: 'CSS' },
