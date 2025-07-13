@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -11,6 +12,9 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getDefaultModel } from '@/actions/models';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const GenerateRegexInputSchema = z.object({
   prompt: z.string().describe('The plain English description of the desired regular expression.'),
@@ -39,6 +43,20 @@ const GenerateRegexFlowInputSchema = GenerateRegexInputSchema.extend({
     model: z.string().describe('The AI model to use for the generation.'),
 });
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
 
 const generateRegexFlow = ai.defineFlow(
   {
@@ -47,15 +65,14 @@ const generateRegexFlow = ai.defineFlow(
     outputSchema: GenerateRegexOutputSchema,
   },
   async (input) => {
+    const promptTemplate = await getCompiledPrompt('generate-regex');
+    const finalPrompt = promptTemplate({ 
+        prompt: input.prompt
+    });
+    
     const { output } = await ai.generate({
         model: input.model as any,
-        prompt: `You are a Regex Wizard, an expert in creating regular expressions. A user has provided a description of what they want to match.
-Your task is to:
-1.  Generate a robust, and efficient regular expression (regex) that accurately captures the user's request. DO NOT wrap the regex in slashes (/).
-2.  Provide a clear, step-by-step explanation of how the generated regex works.
-
-User's request: "${input.prompt}"
-`,
+        prompt: finalPrompt,
         output: { schema: GenerateRegexOutputSchema },
     });
     return output!;
