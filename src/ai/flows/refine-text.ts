@@ -12,6 +12,10 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getDefaultModel } from '@/actions/models';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
+
 
 const RefineTextInputSchema = z.object({
   text: z.string().describe('The original text to be processed.'),
@@ -40,6 +44,21 @@ const RefineTextFlowInputSchema = RefineTextInputSchema.extend({
     model: z.string().describe('The AI model to use for the refinement.'),
 });
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const refineTextFlow = ai.defineFlow(
   {
     name: 'refineTextFlow',
@@ -47,39 +66,18 @@ const refineTextFlow = ai.defineFlow(
     outputSchema: RefineTextOutputSchema,
   },
   async (input) => {
-    let prompt;
-    if (input.action.startsWith('summarize') || input.action.startsWith('translate') || input.action.startsWith('insight')) {
-        // Handle Analyze mode
-        prompt = `You are an expert analyst. A user wants you to perform an action on a piece of text. The input may be in English, Korean, or Chinese.
-Your task is to perform the action and return only the result.
-
-Action: ${input.action}
-
-Original Text:
----
-${input.text}
----
-
-Result:
-`;
-    } else {
-        // Handle Draft mode
-        prompt = `You are an expert editor and writer. A user wants you to refine a piece of text for a specific purpose.
-Your task is to revise the provided text to match the tone, style, and structure of the specified content type. Focus on improving clarity, grammar, conciseness, and overall quality.
-
-Content Type: ${input.action}
-
-Original Text:
----
-${input.text}
----
-`;
-    }
-
-
+    const isAnalyzeMode = input.action.startsWith('summarize') || input.action.startsWith('translate') || input.action.startsWith('insight');
+    
+    const promptTemplate = await getCompiledPrompt('refine-text');
+    const finalPrompt = promptTemplate({
+        isAnalyzeMode,
+        action: input.action,
+        text: input.text,
+    });
+    
     const { output } = await ai.generate({
         model: input.model as any,
-        prompt: prompt,
+        prompt: finalPrompt,
         output: { schema: RefineTextOutputSchema },
     });
     return output!;
