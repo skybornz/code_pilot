@@ -191,21 +191,21 @@ export default function DiagramForgePage() {
                                     <h5 className="font-semibold mt-2">Class Diagram</h5>
                                     <pre className="p-2 rounded-md bg-muted"><code>{`classDiagram
 class Animal {
-    +String name
-    +int age
-    +void makeSound()
+  +String name
+  +int age
+  +void makeSound()
 }
 class Dog {
-    +String breed
-    +void wagTail()
+  +String breed
+  +void wagTail()
 }
 Animal <|-- Dog`}</code></pre>
                                     <h5 className="font-semibold mt-2">Pie Chart</h5>
                                     <pre className="p-2 rounded-md bg-muted"><code>{`pie
     title Page Views
-    "Home" : 45
-    "Docs" : 25
-    "Admin" : 10`}</code></pre>
+    "Home": 45
+    "Docs": 25
+    "Admin": 10`}</code></pre>
                                   </div>
                                 </div>
                             </PopoverContent>
