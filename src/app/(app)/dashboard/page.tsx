@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { FileTerminal, FolderGit, GitCompare, LifeBuoy, Wand2, Workflow, TerminalSquare, FlaskConical, FilePenLine } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
+import { cn } from '@/lib/utils';
 
 const features = [
   {
@@ -13,6 +14,7 @@ const features = [
     icon: FolderGit,
     href: '/repo-insight',
     color: 'text-blue-400',
+    borderColor: 'hover:border-blue-400',
   },
   {
     title: 'Code Pilot',
@@ -20,6 +22,7 @@ const features = [
     icon: FileTerminal,
     href: '/codepilot',
     color: 'text-purple-400',
+    borderColor: 'hover:border-purple-400',
   },
   {
     title: 'Code GPT',
@@ -27,6 +30,7 @@ const features = [
     icon: TerminalSquare,
     href: '/code-gpt',
     color: 'text-pink-400',
+    borderColor: 'hover:border-pink-400',
   },
   {
     title: 'Diagram Forge',
@@ -34,6 +38,7 @@ const features = [
     icon: Workflow,
     href: '/diagram-forge',
     color: 'text-cyan-400',
+    borderColor: 'hover:border-cyan-400',
   },
   {
     title: 'Code Fiddle',
@@ -41,6 +46,7 @@ const features = [
     icon: FlaskConical,
     href: '/code-fiddle',
     color: 'text-yellow-400',
+    borderColor: 'hover:border-yellow-400',
   },
   {
     title: 'Debug Assist',
@@ -48,6 +54,7 @@ const features = [
     icon: LifeBuoy,
     href: '/waiki',
     color: 'text-red-400',
+    borderColor: 'hover:border-red-400',
   },
   {
     title: 'Smart Match',
@@ -55,6 +62,7 @@ const features = [
     icon: GitCompare,
     href: '/code-compare',
     color: 'text-orange-400',
+    borderColor: 'hover:border-orange-400',
   },
   {
     title: 'Regex Wizard',
@@ -62,6 +70,7 @@ const features = [
     icon: Wand2,
     href: '/regex-wizard',
     color: 'text-green-400',
+    borderColor: 'hover:border-green-400',
   },
   {
     title: 'Word Craft',
@@ -69,6 +78,7 @@ const features = [
     icon: FilePenLine,
     href: '/word-craft',
     color: 'text-indigo-400',
+    borderColor: 'hover:border-indigo-400',
   },
 ];
 
@@ -86,7 +96,10 @@ export default function DashboardPage() {
             const Icon = feature.icon;
             return (
               <Link href={feature.href} key={feature.title} className="group">
-                <Card className="h-full hover:border-primary transition-colors duration-300 hover:shadow-lg hover:-translate-y-1">
+                <Card className={cn(
+                  "h-full transition-colors duration-300 hover:shadow-lg hover:-translate-y-1",
+                  feature.borderColor
+                  )}>
                   <CardHeader>
                     <div className="flex items-center gap-4">
                       <Icon className={`w-8 h-8 ${feature.color}`} />
