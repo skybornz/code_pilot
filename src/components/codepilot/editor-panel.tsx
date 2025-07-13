@@ -18,8 +18,8 @@ import { diffLines, type Change } from 'diff';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { showMinimap } from "@replit/codemirror-minimap"
 import { TimeAgo } from '@/components/ui/time-ago';
+import { placeholder as codeMirrorPlaceholder } from '@codemirror/view';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -83,11 +83,6 @@ function lineHighlighter(lineClasses: { line: number; class: string }[]) {
   );
 }
 
-let createMinimap = (v: EditorView) => {
-    const dom = document.createElement('div');
-    return { dom };
-};
-
 export function EditorPanel({
   file,
   onCodeChange,
@@ -102,6 +97,10 @@ export function EditorPanel({
   const [scrollToLine, setScrollToLine] = useState<number | null>(null);
   const [currentChangeIndex, setCurrentChangeIndex] = useState(-1);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
+  
+  const editorPlaceholder = useMemo(() => {
+    return codeMirrorPlaceholder('Paste your code here or upload a file to start analyzing.');
+  }, []);
 
   useEffect(() => {
     setCode(file.content || '');
@@ -201,16 +200,10 @@ export function EditorPanel({
     };
 
   const extensions = useMemo(() => {
-    const minimapExtension = showMinimap.compute(['doc'], () => ({
-        create: createMinimap,
-        showOverlay: 'always',
-        displayText: 'blocks',
-    }));
-
     const baseExtensions = [
         ...getLanguageExtension(file.language),
-        minimapExtension,
         EditorView.lineWrapping,
+        editorPlaceholder,
     ];
 
     if (viewMode === 'diff' && file.previousContent) {
@@ -218,7 +211,7 @@ export function EditorPanel({
     }
     
     return baseExtensions;
-  }, [file.language, viewMode, file.previousContent, lineClasses]);
+  }, [file.language, viewMode, file.previousContent, lineClasses, editorPlaceholder]);
   
   const analyzeDisabled = isLoading || !file.previousContent;
 

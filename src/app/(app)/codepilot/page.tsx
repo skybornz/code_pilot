@@ -21,7 +21,7 @@ const initialFile: CodeFile = {
   name: 'untitled.txt',
   language: 'plaintext',
   type: 'file',
-  content: '// Paste your code here or upload a file to start analyzing.',
+  content: '',
 };
 
 const supportedLanguages = [
