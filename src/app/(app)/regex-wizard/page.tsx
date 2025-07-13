@@ -20,37 +20,46 @@ function RegexTestResult({ testString, regex }: { testString: string; regex: str
     if (!testString || !regex) {
       return <span className="text-muted-foreground">Your highlighted matches will appear here.</span>;
     }
+    
+    let re: RegExp;
     try {
-      // The AI might return a regex with single backslashes which need to be escaped for the JS RegExp constructor.
-      const escapedRegex = regex.replace(/\\/g, '\\\\');
-      const re = new RegExp(escapedRegex, 'g');
-      const parts = [];
-      let lastIndex = 0;
-      let match;
-
-      while ((match = re.exec(testString)) !== null) {
-        if (match.index > lastIndex) {
-          parts.push(testString.substring(lastIndex, match.index));
-        }
-        parts.push(
-          <mark key={match.index} className="bg-green-500/30 text-foreground rounded px-1 py-0.5">
-            {match[0]}
-          </mark>
-        );
-        lastIndex = re.lastIndex;
-        // Handle zero-length matches to avoid infinite loops
-        if (match[0].length === 0) {
-            re.lastIndex++;
-        }
-      }
-
-      if (lastIndex < testString.length) {
-        parts.push(testString.substring(lastIndex));
-      }
-      return parts.length > 0 ? <>{parts}</> : <span className="text-muted-foreground">No matches found.</span>;
+        // This is a more robust way to create the RegExp object.
+        // It will throw an error if the AI-generated pattern is invalid.
+        re = new RegExp(regex, 'g');
     } catch (e) {
+      console.error("Invalid Regex:", e);
       return <span className="text-red-400">Invalid Regex Pattern</span>;
     }
+
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = re.exec(testString)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(testString.substring(lastIndex, match.index));
+      }
+      parts.push(
+        <mark key={match.index} className="bg-green-500/30 text-foreground rounded px-1 py-0.5">
+          {match[0]}
+        </mark>
+      );
+      lastIndex = re.lastIndex;
+      // Handle zero-length matches to avoid infinite loops
+      if (match[0].length === 0) {
+          re.lastIndex++;
+      }
+    }
+
+    if (lastIndex < testString.length) {
+      parts.push(testString.substring(lastIndex));
+    }
+    
+    if (parts.length === 0) {
+        return <span className="text-muted-foreground">No matches found.</span>;
+    }
+
+    return <>{parts}</>;
   }, [testString, regex]);
 
   return <pre className="p-4 rounded-md bg-muted/80 overflow-x-auto text-sm whitespace-pre-wrap break-words">{highlighted}</pre>;
