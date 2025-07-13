@@ -1,9 +1,10 @@
+
 'use server';
 
 /**
- * @fileOverview An AI agent that refines text based on a specified content type.
+ * @fileOverview An AI agent that refines or analyzes text based on a specified action.
  *
- * - refineText - A function that handles the text refinement process.
+ * - refineText - A function that handles the text processing.
  * - RefineTextInput - The input type for the refineText function.
  * - RefineTextOutput - The return type for the refineText function.
  */
@@ -13,13 +14,13 @@ import {z} from 'genkit';
 import { getDefaultModel } from '@/actions/models';
 
 const RefineTextInputSchema = z.object({
-  text: z.string().describe('The original text to be refined.'),
-  contentType: z.string().describe('The target content type for the refinement (e.g., "Business Email", "Technical Report").'),
+  text: z.string().describe('The original text to be processed.'),
+  action: z.string().describe('The desired action, e.g., "Business Email", "Summarize Document", "Translate Content to Korean".'),
 });
 export type RefineTextInput = z.infer<typeof RefineTextInputSchema>;
 
 const RefineTextOutputSchema = z.object({
-  refinedText: z.string().describe("The refined, improved version of the text."),
+  refinedText: z.string().describe("The processed, improved, or analyzed version of the text."),
 });
 export type RefineTextOutput = z.infer<typeof RefineTextOutputSchema>;
 
@@ -46,18 +47,39 @@ const refineTextFlow = ai.defineFlow(
     outputSchema: RefineTextOutputSchema,
   },
   async (input) => {
-    const { output } = await ai.generate({
-        model: input.model as any,
-        prompt: `You are an expert editor and writer. A user wants you to refine a piece of text for a specific purpose.
-Your task is to revise the provided text to match the tone, style, and structure of the specified content type. Focus on improving clarity, grammar, conciseness, and overall quality.
+    let prompt;
+    if (input.action.startsWith('summarize') || input.action.startsWith('translate') || input.action.startsWith('insight')) {
+        // Handle Analyze mode
+        prompt = `You are an expert analyst. A user wants you to perform an action on a piece of text. The input may be in English, Korean, or Chinese.
+Your task is to perform the action and return only the result.
 
-Content Type: ${input.contentType}
+Action: ${input.action}
 
 Original Text:
 ---
 ${input.text}
 ---
-`,
+
+Result:
+`;
+    } else {
+        // Handle Draft mode
+        prompt = `You are an expert editor and writer. A user wants you to refine a piece of text for a specific purpose.
+Your task is to revise the provided text to match the tone, style, and structure of the specified content type. Focus on improving clarity, grammar, conciseness, and overall quality.
+
+Content Type: ${input.action}
+
+Original Text:
+---
+${input.text}
+---
+`;
+    }
+
+
+    const { output } = await ai.generate({
+        model: input.model as any,
+        prompt: prompt,
         output: { schema: RefineTextOutputSchema },
     });
     return output!;

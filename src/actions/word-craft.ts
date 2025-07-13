@@ -1,3 +1,4 @@
+
 'use server';
 
 import { configureAi } from '@/ai/genkit';
@@ -9,15 +10,15 @@ import { updateUserLastActive } from './users';
 export async function refineTextAction(
     userId: string,
     text: string,
-    contentType: string
+    action: string
 ): Promise<RefineTextOutput | { error: string }> {
     await configureAi();
 
     try {
         const { refineText } = await import('@/ai/flows/refine-text');
-        const result = await withRetry(() => refineText({ text, contentType }));
+        const result = await withRetry(() => refineText({ text, action }));
 
-        await logUserActivity(userId, 'Word Craft', `User refined text for type: "${contentType}"`);
+        await logUserActivity(userId, 'Word Craft', `User performed action: "${action}"`);
         await updateUserLastActive(userId);
 
         return result;
