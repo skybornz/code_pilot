@@ -27,7 +27,6 @@ const diagramTypes = [
   { value: 'classDiagram', label: 'Class Diagram' },
   { value: 'erDiagram', label: 'ER Diagram (Database)' },
   { value: 'stateDiagram-v2', label: 'State Diagram' },
-  { value: 'pie', label: 'Pie Chart' },
 ];
 
 export default function DiagramForgePage() {
