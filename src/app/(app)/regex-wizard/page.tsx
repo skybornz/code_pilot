@@ -21,7 +21,9 @@ function RegexTestResult({ testString, regex }: { testString: string; regex: str
       return <span className="text-muted-foreground">Your highlighted matches will appear here.</span>;
     }
     try {
-      const re = new RegExp(regex, 'g');
+      // The AI might return a regex with single backslashes which need to be escaped for the JS RegExp constructor.
+      const escapedRegex = regex.replace(/\\/g, '\\\\');
+      const re = new RegExp(escapedRegex, 'g');
       const parts = [];
       let lastIndex = 0;
       let match;
@@ -36,7 +38,7 @@ function RegexTestResult({ testString, regex }: { testString: string; regex: str
           </mark>
         );
         lastIndex = re.lastIndex;
-        // Handle zero-length matches
+        // Handle zero-length matches to avoid infinite loops
         if (match[0].length === 0) {
             re.lastIndex++;
         }
@@ -45,7 +47,7 @@ function RegexTestResult({ testString, regex }: { testString: string; regex: str
       if (lastIndex < testString.length) {
         parts.push(testString.substring(lastIndex));
       }
-      return <>{parts}</>;
+      return parts.length > 0 ? <>{parts}</> : <span className="text-muted-foreground">No matches found.</span>;
     } catch (e) {
       return <span className="text-red-400">Invalid Regex Pattern</span>;
     }
