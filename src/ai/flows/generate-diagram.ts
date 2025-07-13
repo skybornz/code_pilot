@@ -12,6 +12,9 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getDefaultModel } from '@/actions/models';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const GenerateDiagramInputSchema = z.object({
   prompt: z.string().describe('The plain English description of the desired diagram.'),
@@ -40,6 +43,20 @@ const GenerateDiagramFlowInputSchema = GenerateDiagramInputSchema.extend({
     model: z.string().describe('The AI model to use for the generation.'),
 });
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
 const generateDiagramFlow = ai.defineFlow(
   {
     name: 'generateDiagramFlow',
@@ -47,16 +64,15 @@ const generateDiagramFlow = ai.defineFlow(
     outputSchema: GenerateDiagramOutputSchema,
   },
   async (input) => {
+    const promptTemplate = await getCompiledPrompt('generate-diagram');
+    const finalPrompt = promptTemplate({ 
+        diagramType: input.diagramType,
+        prompt: input.prompt
+    });
+      
     const { output } = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert in creating diagrams using Mermaid.js syntax. A user has provided a description of a diagram and specified the type.
-Your task is to generate the corresponding Mermaid.js code and return it in the 'diagramCode' field of the JSON output.
-The generated code should NOT include the markdown triple quotes (e.g. \`\`\`mermaid). It must start directly with the diagram type (e.g., 'flowchart TD').
-Make the diagram visually appealing and well-structured.
-
-Diagram Type: ${input.diagramType}
-User's Description: "${input.prompt}"
-`,
+        prompt: finalPrompt,
         output: { schema: GenerateDiagramOutputSchema },
     });
     return output!;
