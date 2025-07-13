@@ -41,6 +41,50 @@ const supportedLanguages = [
     { value: 'html', label: 'HTML' },
 ];
 
+const languageKeywords: { [key: string]: { patterns: RegExp[], score: number } } = {
+  tsx: { patterns: [/\b(import|export)\s+.*\s+from\s+['"]react['"]/, /<[A-Z][a-zA-Z0-9]*\s*.*>/, /:\s*\w+Props/, /const\s+\w+\s*:\s*React.FC/], score: 5 },
+  jsx: { patterns: [/\b(import|export)\s+.*\s+from\s+['"]react['"]/, /<[A-Z][a-zA-Z0-9]*\s*.*>/, /React.createElement/], score: 4 },
+  typescript: { patterns: [/: \w+;/, /interface\s+\w+/, /type\s+\w+\s*=/, /<[A-Z][a-zA-Z0-9]*>/, /public\s+(class|interface|enum)/, /private\s+/, /protected\s+/], score: 3 },
+  javascript: { patterns: [/const\s+\w+\s*=\s*require\(/, /module\.exports/, /console\.log\(/, /function\*/, /=>/], score: 1 },
+  python: { patterns: [/def\s+\w+\(/, /import\s+\w+/, /print\(/, /__name__\s*==\s*['"]__main__['"]/, /@\w+/], score: 3 },
+  java: { patterns: [/public\s+static\s+void\s+main/, /System\.out\.println/, /import\s+java\./], score: 3 },
+  csharp: { patterns: [/using\s+System;/, /namespace\s+\w+/, /Console\.WriteLine/], score: 3 },
+  cpp: { patterns: [/#include\s*<iostream>/, /std::cout/], score: 2 },
+  c: { patterns: [/#include\s*<stdio\.h>/, /printf\(/, /scanf\(/, /int\s+main\(/], score: 1 },
+  css: { patterns: [/body\s*{/, /#\w+\s*{/, /\.\w+\s*{/, /@media/], score: 3 },
+  html: { patterns: [/<!DOCTYPE\s+html>/i, /<html\s*>/i, /<head\s*>/i, /<body\s*>/i], score: 3 },
+};
+
+function detectLanguage(code: string): string {
+    if (!code || code.trim().length === 0) {
+        return 'plaintext';
+    }
+
+    let maxScore = 0;
+    let detectedLang = 'plaintext';
+
+    for (const lang in languageKeywords) {
+        let currentScore = 0;
+        const { patterns, score } = languageKeywords[lang];
+        for (const pattern of patterns) {
+            if (pattern.test(code)) {
+                currentScore += score;
+            }
+        }
+        if (currentScore > maxScore) {
+            maxScore = currentScore;
+            detectedLang = lang;
+        }
+    }
+    
+    // Add a threshold to avoid incorrect detection for very short snippets
+    if (maxScore < 2 && code.length < 50) {
+        return 'plaintext';
+    }
+
+    return detectedLang;
+}
+
 export default function CodePilotPage() {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -55,9 +99,22 @@ export default function CodePilotPage() {
     ]);
     const [analysisChatMessages, setAnalysisChatMessages] = useState<Message[]>([]);
     const [isChatLoading, setIsChatLoading] = useState(false);
+    
+    const detectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleCodeChange = (fileId: string, newContent: string) => {
         setActiveFile(prev => ({ ...prev, content: newContent }));
+
+        if (detectionTimeoutRef.current) {
+            clearTimeout(detectionTimeoutRef.current);
+        }
+
+        detectionTimeoutRef.current = setTimeout(() => {
+            const detectedLang = detectLanguage(newContent);
+            if (detectedLang !== activeFile.language && supportedLanguages.some(l => l.value === detectedLang)) {
+                handleLanguageChange(detectedLang);
+            }
+        }, 500); // Debounce detection to avoid rapid changes while typing
     };
 
     const handleLanguageChange = (language: string) => {
