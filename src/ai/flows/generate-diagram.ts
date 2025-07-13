@@ -57,6 +57,18 @@ async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDeleg
     return compiledTemplate;
 }
 
+// Helper to clean up model output that might be wrapped in markdown
+function cleanJsonOutput(text: string): string {
+    const trimmed = text.trim();
+    // Regex to find content between ```json and ```
+    const match = trimmed.match(/```json\s*([\s\S]*?)\s*```/);
+    if (match && match[1]) {
+        return match[1].trim();
+    }
+    // Fallback for cases where it might just be ``` at the start and end
+    return trimmed.replace(/^```|```$/g, '').trim();
+}
+
 const generateDiagramFlow = ai.defineFlow(
   {
     name: 'generateDiagramFlow',
@@ -70,11 +82,27 @@ const generateDiagramFlow = ai.defineFlow(
         prompt: input.prompt
     });
       
-    const { output } = await ai.generate({
+    // Ask for a text response instead of direct JSON to handle model inconsistencies
+    const { text } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
-        output: { schema: GenerateDiagramOutputSchema },
     });
-    return output!;
+
+    if (!text) {
+        throw new Error("Received an empty response from the AI model.");
+    }
+
+    try {
+        // Clean and parse the response manually
+        const cleanedText = cleanJsonOutput(text);
+        const parsedOutput = JSON.parse(cleanedText);
+        // Validate the parsed object against our schema
+        return GenerateDiagramOutputSchema.parse(parsedOutput);
+    } catch (error) {
+        console.error("Failed to parse AI model's JSON output for diagram:", error);
+        console.error("Original model output:", text);
+        // Re-throw a more user-friendly error
+        throw new Error("The AI model returned a response that was not valid JSON. Please try again.");
+    }
   }
 );
