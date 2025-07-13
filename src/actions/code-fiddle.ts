@@ -3,7 +3,7 @@
 
 import { configureAi } from '@/ai/genkit';
 import { withRetry } from '@/lib/utils';
-import type { ExecuteCodeOutput } from '@/ai/flows/execute-python-code';
+import type { ExecuteCodeOutput } from '@/ai/flows/execute-code';
 import { logUserActivity } from './activity';
 import { updateUserLastActive } from './users';
 
@@ -15,7 +15,7 @@ export async function simulateCodeExecution(
     await configureAi();
 
     try {
-        const { executeCode } = await import('@/ai/flows/execute-python-code');
+        const { executeCode } = await import('@/ai/flows/execute-code');
         const result = await withRetry(() => executeCode({ code, language }));
 
         await logUserActivity(userId, 'Code Fiddle', `User executed a ${language} snippet.`);

@@ -18,8 +18,9 @@ import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
 const supportedLanguages = [
-    { value: 'javascript', label: 'JavaScript' },
     { value: 'python', label: 'Python' },
+    { value: 'javascript', label: 'JavaScript' },
+    { value: 'typescript', label: 'TypeScript' },
     { value: 'c', label: 'C' },
     { value: 'cpp', label: 'C++' },
     { value: 'csharp', label: 'C#' },
@@ -31,6 +32,7 @@ const getLanguageExtension = (language: string) => {
         case 'python':
             return [python()];
         case 'javascript':
+        case 'typescript':
         case 'c':
         case 'cpp':
         case 'csharp':
@@ -60,6 +62,9 @@ export default function CodeFiddlePage() {
                 break;
             case 'javascript':
                 setCode('console.log("Hello from JavaScript!");');
+                break;
+            case 'typescript':
+                setCode('function greet(name: string): string {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet("TypeScript"));');
                 break;
             case 'c':
                 setCode('#include <stdio.h>\\n\\nint main() {\\n   printf("Hello from C!\\\\n");\\n   return 0;\\n}');

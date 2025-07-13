@@ -22,7 +22,7 @@ async function initialize() {
     await import('@/ai/flows/generate-regex');
     await import('@/ai/flows/generate-diagram');
     await import('@/ai/flows/generate-code-snippet');
-    await import('@/ai/flows/execute-python-code');
+    await import('@/ai/flows/execute-code');
     await import('@/ai/flows/refine-text');
     await import('@/ai/flows/code-completion');
 }

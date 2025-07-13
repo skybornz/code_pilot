@@ -12,10 +12,14 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getDefaultModel } from '@/actions/models';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
+
 
 const ExecuteCodeInputSchema = z.object({
   code: z.string().describe('The code to execute.'),
-  language: z.string().describe('The programming language of the code (e.g., "python", "csharp", "java").'),
+  language: z.string().describe('The programming language of the code (e.g., "python", "typescript", "csharp").'),
 });
 export type ExecuteCodeInput = z.infer<typeof ExecuteCodeInputSchema>;
 
@@ -41,6 +45,20 @@ const ExecuteCodeFlowInputSchema = ExecuteCodeInputSchema.extend({
     model: z.string().describe('The AI model to use for the simulation.'),
 });
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
 const executeCodeFlow = ai.defineFlow(
   {
     name: 'executeCodeFlow',
@@ -48,21 +66,15 @@ const executeCodeFlow = ai.defineFlow(
     outputSchema: ExecuteCodeOutputSchema,
   },
   async (input) => {
+    const promptTemplate = await getCompiledPrompt('execute-code');
+    const finalPrompt = promptTemplate({
+        language: input.language,
+        code: input.code,
+    });
+      
     const { output } = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert programmer acting as a code interpreter and compiler. You will be given a snippet of code in a specific language.
-Execute the code and provide the standard output (stdout).
-If the code runs successfully, return the output in the 'output' field and set the 'error' field to null.
-If the code produces a compilation or runtime error, return the full error message and traceback in the 'output' field and a short summary of the error in the 'error' field.
-Do not provide any explanation, comments, or anything other than the raw output of the script.
-
-Language: ${input.language}
-
-Code:
-\`\`\`${input.language}
-${input.code}
-\`\`\`
-`,
+        prompt: finalPrompt,
         output: { schema: ExecuteCodeOutputSchema },
     });
     return output!;
