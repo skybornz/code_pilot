@@ -12,6 +12,9 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getDefaultModel } from '@/actions/models';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const GenerateCodeSnippetInputSchema = z.object({
   prompt: z.string().describe('The plain English description of the desired code snippet.'),
@@ -41,6 +44,21 @@ const GenerateCodeSnippetFlowInputSchema = GenerateCodeSnippetInputSchema.extend
     model: z.string().describe('The AI model to use for the generation.'),
 });
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const generateCodeSnippetFlow = ai.defineFlow(
   {
     name: 'generateCodeSnippetFlow',
@@ -48,17 +66,15 @@ const generateCodeSnippetFlow = ai.defineFlow(
     outputSchema: GenerateCodeSnippetOutputSchema,
   },
   async (input) => {
+    const promptTemplate = await getCompiledPrompt('generate-code-snippet');
+    const finalPrompt = promptTemplate({ 
+        language: input.language,
+        prompt: input.prompt
+    });
+      
     const { output } = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert programmer specializing in writing clear, efficient, and correct code snippets.
-A user wants to generate a code snippet in the following language: ${input.language}.
-Their request is: "${input.prompt}"
-
-Your tasks are:
-1.  Generate the code snippet that best fulfills the user's request.
-2.  Provide a concise explanation of what the code does and how it works.
-ONLY output the raw code for the snippet, do not wrap it in markdown triple quotes.
-`,
+        prompt: finalPrompt,
         output: { schema: GenerateCodeSnippetOutputSchema },
     });
     return output!;
