@@ -23,9 +23,8 @@ function RegexTestResult({ testString, regex }: { testString: string; regex: str
     
     let re: RegExp;
     try {
-        // This is a more robust way to create the RegExp object.
-        // It will throw an error if the AI-generated pattern is invalid.
-        re = new RegExp(regex, 'g');
+      // Add the global 'g' flag to find all matches in the string.
+      re = new RegExp(regex, 'g');
     } catch (e) {
       console.error("Invalid Regex:", e);
       return <span className="text-red-400">Invalid Regex Pattern</span>;
@@ -45,7 +44,8 @@ function RegexTestResult({ testString, regex }: { testString: string; regex: str
         </mark>
       );
       lastIndex = re.lastIndex;
-      // Handle zero-length matches to avoid infinite loops
+      // Handle zero-length matches to prevent infinite loops, which can occur
+      // with patterns like `\b` (word boundary).
       if (match[0].length === 0) {
           re.lastIndex++;
       }
@@ -55,7 +55,8 @@ function RegexTestResult({ testString, regex }: { testString: string; regex: str
       parts.push(testString.substring(lastIndex));
     }
     
-    if (parts.length === 0) {
+    // If no matches were found after all that, show the message.
+    if (parts.length === 0 || (parts.length === 1 && typeof parts[0] === 'string')) {
         return <span className="text-muted-foreground">No matches found.</span>;
     }
 
