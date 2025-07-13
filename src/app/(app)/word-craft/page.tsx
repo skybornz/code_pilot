@@ -145,7 +145,7 @@ export default function WordCraftPage() {
                         </Select>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="analyze-type-select">Analysis Type</Label>
                             <Select value={analyzeType} onValueChange={setAnalyzeType} disabled={isLoading}>
@@ -163,7 +163,7 @@ export default function WordCraftPage() {
                              <div className="space-y-2">
                                 <Label htmlFor="target-language-select">Target Language</Label>
                                 <Select value={targetLanguage} onValueChange={setTargetLanguage} disabled={isLoading}>
-                                    <SelectTrigger id="target-language-select">
+                                    <SelectTrigger id="target-language-select" className="w-full">
                                         <SelectValue placeholder="Select language" />
                                     </SelectTrigger>
                                     <SelectContent>
