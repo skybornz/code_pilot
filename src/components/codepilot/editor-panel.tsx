@@ -44,6 +44,11 @@ const getLanguageExtension = (language: string) => {
       return [css()];
     case 'python':
       return [python()];
+    case 'c':
+    case 'cpp':
+    case 'csharp':
+    case 'java':
+      return [javascript({ typescript: true })]; // Good enough for syntax highlighting
     default:
       // Fallback for languages like html, plaintext, etc.
       return [javascript({ jsx: true, typescript: true })];
