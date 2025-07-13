@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { LifeBuoy, Wand2, Loader2, Lightbulb } from 'lucide-react';
+import { LifeBuoy, Wand2, Loader2, Lightbulb, Info } from 'lucide-react';
 import { MessageContent } from '@/components/codepilot/message-content';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
@@ -16,10 +16,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CodeBlock } from '@/components/codepilot/code-block';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Label } from '@/components/ui/label';
 
 
 export default function DebugAssistPage() {
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorContext, setErrorContext] = useState('');
   const [analysis, setAnalysis] = useState<DebugErrorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
@@ -37,7 +39,7 @@ export default function DebugAssistPage() {
     setIsLoading(true);
     setAnalysis(null);
     
-    const result = await analyzeError(user.id, errorMessage);
+    const result = await analyzeError(user.id, errorMessage, errorContext);
 
     if ('error' in result) {
         toast({
@@ -66,18 +68,33 @@ export default function DebugAssistPage() {
                 </div>
                 <div>
                   <CardTitle className="text-2xl font-semibold text-red-400">Debug Assist</CardTitle>
-                  <CardDescription>Paste an error message or stack trace to get AI-powered analysis and solutions.</CardDescription>
+                  <CardDescription>Paste an error message and provide context to get AI-powered analysis and solutions.</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Paste your error message here..."
-                className="min-h-[200px] font-mono text-xs"
-                value={errorMessage}
-                onChange={(e) => setErrorMessage(e.target.value)}
-                disabled={isLoading}
-              />
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="error-message" className="mb-2 block">Error Message / Stack Trace</Label>
+                <Textarea
+                  id="error-message"
+                  placeholder="Paste your full error message here..."
+                  className="min-h-[150px] font-mono text-xs"
+                  value={errorMessage}
+                  onChange={(e) => setErrorMessage(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <Label htmlFor="error-context" className="mb-2 block">Context (Optional)</Label>
+                 <Textarea
+                  id="error-context"
+                  placeholder="Describe when and how you encountered this error. e.g., 'I get this error when I click the submit button on the user profile page.'"
+                  className="min-h-[100px]"
+                  value={errorContext}
+                  onChange={(e) => setErrorContext(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
             </CardContent>
             <CardFooter>
               <Button onClick={handleAnalyze} disabled={!errorMessage || isLoading} className="bg-red-600 hover:bg-red-700 text-white">

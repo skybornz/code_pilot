@@ -9,13 +9,14 @@ import { updateUserLastActive } from './users';
 
 export async function analyzeError(
     userId: string,
-    errorMessage: string
+    errorMessage: string,
+    context?: string
 ): Promise<DebugErrorOutput | { error: string }> {
     await configureAi();
 
     try {
         const { debugError } = await import('@/ai/flows/debug-error');
-        const analysis = await withRetry(() => debugError({ errorMessage }));
+        const analysis = await withRetry(() => debugError({ errorMessage, context }));
 
         await logUserActivity(userId, 'Debug Assist', `User requested analysis for an error.`);
         await updateUserLastActive(userId);

@@ -18,6 +18,7 @@ import handlebars from 'handlebars';
 
 const DebugErrorInputSchema = z.object({
   errorMessage: z.string().describe('The full error message or stack trace to be analyzed.'),
+  context: z.string().optional().describe('Optional user-provided context about when and how the error occurred.'),
 });
 export type DebugErrorInput = z.infer<typeof DebugErrorInputSchema>;
 
@@ -74,7 +75,10 @@ const debugErrorFlow = ai.defineFlow(
   },
   async (input) => {
     const promptTemplate = await getCompiledPrompt('debug-error');
-    const finalPrompt = promptTemplate({ errorMessage: input.errorMessage });
+    const finalPrompt = promptTemplate({ 
+        errorMessage: input.errorMessage,
+        context: input.context 
+    });
 
     const { output } = await ai.generate({
         model: input.model as any,
