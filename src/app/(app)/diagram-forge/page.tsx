@@ -188,13 +188,12 @@ export default function DiagramForgePage() {
     API->>DB: Query;
     DB-->>API: Results;
     API-->>User: Response;`}</code></pre>
-                                    <h5 className="font-semibold mt-2">Gantt Chart</h5>
-                                    <pre className="p-2 rounded-md bg-muted"><code>{`gantt
-    title A Gantt Diagram
-    dateFormat  YYYY-MM-DD
-    section Section
-    A task: a1, 2024-01-01, 30d
-    Another task: after a1, 20d;`}</code></pre>
+                                    <h5 className="font-semibold mt-2">Pie Chart</h5>
+                                    <pre className="p-2 rounded-md bg-muted"><code>{`pie
+    title Page Views
+    "Home": 45,
+    "Docs": 25,
+    "Admin": 10;`}</code></pre>
                                   </div>
                                 </div>
                             </PopoverContent>
