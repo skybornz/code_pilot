@@ -97,7 +97,7 @@ export default function DashboardPage() {
             return (
               <Link href={feature.href} key={feature.title} className="group">
                 <Card className={cn(
-                  "transition-colors duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col",
+                  "transition-colors duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col h-full",
                   feature.borderColor
                   )}>
                   <CardHeader>
