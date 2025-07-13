@@ -12,16 +12,23 @@ export const MessageContent = ({ content }: { content: string }) => {
         <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-                code: ({ node, inline, className, children, ...props }) => {
+                code({ node, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');
-                    if (!inline) {
+                    const codeText = String(children).trimEnd();
+                    
+                    // A more robust check: if it's multi-line or has a language tag, treat as a block.
+                    const isBlock = codeText.includes('\n') || !!match;
+
+                    if (isBlock) {
                         return (
                             <CodeBlock
                                 language={match ? match[1] : 'text'}
-                                code={String(children).trimEnd()}
+                                code={codeText}
                             />
                         );
                     }
+                    
+                    // Otherwise, treat it as inline code.
                     return (
                         <code className="bg-muted px-1.5 py-1 rounded-md font-mono text-sm" {...props}>
                             {children}
