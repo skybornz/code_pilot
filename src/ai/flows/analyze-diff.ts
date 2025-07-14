@@ -23,11 +23,9 @@ const AnalyzeDiffFlowInputSchema = z.object({
 });
 export type AnalyzeDiffInput = z.infer<typeof AnalyzeDiffFlowInputSchema>;
 
+// The output is now a single string containing the full analysis in Markdown.
 const AnalyzeDiffOutputSchema = z.object({
-  summary: z.string().describe('A high-level summary of the changes.'),
-  detailedAnalysis: z
-    .array(z.string())
-    .describe('A list of specific points, suggestions, or potential issues found in the changes.'),
+  analysis: z.string().describe('A full analysis of the code changes in Markdown format.'),
 });
 export type AnalyzeDiffOutput = z.infer<typeof AnalyzeDiffOutputSchema>;
 

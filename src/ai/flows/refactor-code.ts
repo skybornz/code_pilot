@@ -22,9 +22,9 @@ const RefactorCodeFlowInputSchema = z.object({
 });
 export type RefactorCodeInput = z.infer<typeof RefactorCodeFlowInputSchema>;
 
+// The output is now a single string containing the full refactor suggestion in Markdown.
 const RefactorCodeOutputSchema = z.object({
-  refactoredCode: z.string().describe('The refactored code with improvements.'),
-  explanation: z.string().describe('An explanation of the refactoring changes.'),
+  refactor: z.string().describe('The refactored code and explanation in Markdown format.'),
 });
 export type RefactorCodeOutput = z.infer<typeof RefactorCodeOutputSchema>;
 

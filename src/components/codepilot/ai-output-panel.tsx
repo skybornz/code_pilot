@@ -3,15 +3,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Wand2, Send, User, Loader2, CheckCircle, Circle } from 'lucide-react';
 import type { AIOutput } from './types';
-import type { FindBugsOutput } from '@/ai/flows/find-bugs';
-import type { RefactorCodeOutput } from '@/ai/flows/refactor-code';
-import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
-import type { GenerateSddOutput } from '@/ai/flows/generate-sdd';
-import { CodeBlock } from './code-block';
-import type { AnalyzeDiffOutput, ExplainCodeOutput } from './types';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import type { Message } from '@/ai/flows/copilot-chat';
@@ -35,123 +28,11 @@ interface AIOutputPanelProps {
 }
 
 const formatAiOutputForChat = (output: AIOutput): string => {
-  const { data, type, language } = output;
-  let content = `Regarding your previous analysis on "${output.title}":\n\n`;
-
-  if (type === 'explain') {
-    const explanation = data as ExplainCodeOutput;
-    content += `**Summary**\n${explanation.summary}\n\n**Breakdown**\n${explanation.breakdown.map((b) => `- ${b}`).join('\n')}`;
-  } else if (type === 'analyze-diff') {
-    const analysis = data as AnalyzeDiffOutput;
-    content += `**Summary of Changes:**\n${analysis.summary}\n\n**Detailed Analysis:**\n${analysis.detailedAnalysis.map((p) => `- ${p}`).join('\n')}`;
-  } else if (type === 'bugs') {
-    const bugReport = data as FindBugsOutput;
-    content += `**Bugs Found:**\n${bugReport.bugs.map((b) => `- ${b}`).join('\n')}\n\n**Explanation & Fixes:**\n${bugReport.explanation}`;
-  } else if (type === 'refactor') {
-    const refactorData = data as RefactorCodeOutput;
-    content += `**Refactored Code:**\n\`\`\`${language}\n${refactorData.refactoredCode}\n\`\`\`\n\n**Explanation:**\n${refactorData.explanation}`;
-  } else if (type === 'test') {
-    const testData = data as GenerateUnitTestOutput;
-    content += `**Generated Unit Test:**\n\`\`\`${language}\n${testData.unitTest}\n\`\`\``;
-  } else if (type === 'sdd') {
-    const sddData = data as GenerateSddOutput;
-    content += `**Software Design Document:**\n${sddData.sdd}`;
-  }
-  return content;
+  return `Regarding your previous analysis on "${output.title}":\n\n${output.data}`;
 };
 
 const renderOutput = (output: AIOutput) => {
-  const { data, type, language } = output;
-
-  if (type === 'explain') {
-    const explanation = data as ExplainCodeOutput;
-    return (
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold mb-2">Summary</h4>
-          <div className="text-muted-foreground"><MessageContent content={explanation.summary} /></div>
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Breakdown</h4>
-          {explanation.breakdown.length > 0 ? (
-            <ul className="list-disc list-inside space-y-2 bg-muted/50 p-4 rounded-md">
-              {explanation.breakdown.map((point, index) => <li key={index}>{point}</li>)}
-            </ul>
-          ) : (
-            <p className="text-muted-foreground">No breakdown available.</p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (type === 'analyze-diff') {
-    const analysis = data as AnalyzeDiffOutput;
-    return (
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold mb-2">Summary of Changes:</h4>
-          <div className="text-muted-foreground"><MessageContent content={analysis.summary} /></div>
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Detailed Analysis:</h4>
-          {analysis.detailedAnalysis.length > 0 ? (
-              <ul className="list-disc list-inside space-y-2 bg-muted/50 p-4 rounded-md">
-                  {analysis.detailedAnalysis.map((point, index) => <li key={index}>{point}</li>)}
-              </ul>
-          ) : <p className="text-muted-foreground">No specific issues found.</p>}
-        </div>
-      </div>
-    );
-  }
-
-  if (type === 'bugs') {
-    const bugReport = data as FindBugsOutput;
-    return (
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold mb-2">Bugs Found:</h4>
-          {bugReport.bugs.length > 0 ? (
-              <ul className="list-disc list-inside space-y-1 bg-muted/50 p-3 rounded-md">
-                  {bugReport.bugs.map((bug, index) => <li key={index}>{bug}</li>)}
-              </ul>
-          ) : <p className="text-muted-foreground">No bugs found.</p>}
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Explanation & Fixes:</h4>
-          <div className="text-muted-foreground"><MessageContent content={bugReport.explanation} /></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (type === 'refactor') {
-    const refactorData = data as RefactorCodeOutput;
-    return (
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold mb-2">Refactored Code:</h4>
-          <CodeBlock code={refactorData.refactoredCode} language={language} />
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Explanation:</h4>
-          <div className="text-muted-foreground"><MessageContent content={refactorData.explanation} /></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (type === 'test') {
-    const testData = data as GenerateUnitTestOutput;
-    return <CodeBlock code={testData.unitTest} language={language} />;
-  }
-  
-  if (type === 'sdd') {
-    const sddData = data as GenerateSddOutput;
-    return <MessageContent content={sddData.sdd} />;
-  }
-
-  return <p className="whitespace-pre-wrap">{String(data)}</p>;
+  return <MessageContent content={output.data} />;
 };
 
 const AIActionLoader = () => {

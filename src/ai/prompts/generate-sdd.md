@@ -7,6 +7,8 @@ The SDD should include the following sections:
 4.  **Dependencies**: A list of any external libraries or modules the code depends on.
 5.  **Potential Improvements**: Suggestions for refactoring, performance optimization, or enhancing functionality.
 
+Your entire response should be a single Markdown text block.
+
 Code:
 ```
 {{{code}}}

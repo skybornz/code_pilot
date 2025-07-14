@@ -6,7 +6,8 @@ You are a top-tier security and code quality analyst from the Qwen coder team. Y
 ```
 
 **Your Task:**
-1.  **Identify Issues**: Meticulously scan the code for any potential bugs, security vulnerabilities, or logical errors. List your findings.
-2.  **Provide Explanations**: Provide a clear and detailed explanation for each identified issue. For each bug, explain why it is a problem and suggest a concrete way to fix it.
+Provide a detailed report in Markdown format. Do NOT use JSON.
 
-Your output MUST be a valid JSON object. Do NOT include any commentary, explanations, or markdown formatting. Your response must be ONLY the raw JSON object.
+The report must include:
+1.  **Identified Issues**: A list of any potential bugs, security vulnerabilities, or logical errors.
+2.  **Explanations and Fixes**: For each identified issue, provide a clear and detailed explanation of why it is a problem and suggest a concrete way to fix it.

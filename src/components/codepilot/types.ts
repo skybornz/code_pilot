@@ -1,15 +1,14 @@
 
 'use client';
 
-import type { FindBugsOutput } from "@/ai/flows/find-bugs";
-import type { RefactorCodeOutput } from "@/ai/flows/refactor-code";
-import type { GenerateUnitTestOutput } from "@/ai/flows/generate-unit-test";
-import type { GenerateSddOutput } from "@/ai/flows/generate-sdd";
-import type { AnalyzeDiffOutput as AnalyzeDiffFlowOutput } from "@/ai/flows/analyze-diff";
-import type { ExplainCodeOutput as ExplainCodeFlowOutput } from "@/ai/flows/explain-code";
-
-export type AnalyzeDiffOutput = AnalyzeDiffFlowOutput;
-export type ExplainCodeOutput = ExplainCodeFlowOutput;
+// All flow outputs are now just strings, so we don't need to import their specific types.
+// We'll define the output types here directly for simplicity.
+export type AnalyzeDiffOutput = string;
+export type ExplainCodeOutput = string;
+export type FindBugsOutput = string;
+export type RefactorCodeOutput = string;
+export type GenerateUnitTestOutput = string;
+export type GenerateSddOutput = string;
 
 export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'sdd' | 'analyze-diff' | 'copilot';
 
@@ -22,6 +21,7 @@ type AIOutputBase = {
   };
 };
 
+// The `data` property for all types is now a simple string.
 export type AIOutput = AIOutputBase & (
   | { type: 'explain'; data: ExplainCodeOutput }
   | { type: 'bugs'; data: FindBugsOutput }

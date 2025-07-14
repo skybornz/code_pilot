@@ -20,9 +20,9 @@ const ExplainCodeFlowInputSchema = z.object({
 });
 export type ExplainCodeInput = z.infer<typeof ExplainCodeFlowInputSchema>;
 
+// The output is now a single string containing the full explanation in Markdown.
 const ExplainCodeOutputSchema = z.object({
-  summary: z.string().describe('A high-level summary of what the code does.'),
-  breakdown: z.array(z.string()).describe('A bullet-point breakdown of key parts of the code.'),
+  explanation: z.string().describe('A full explanation of the code in Markdown format, including a summary and breakdown.'),
 });
 export type ExplainCodeOutput = z.infer<typeof ExplainCodeOutputSchema>;
 

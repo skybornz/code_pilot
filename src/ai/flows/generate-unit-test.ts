@@ -22,9 +22,9 @@ const GenerateUnitTestFlowInputSchema = z.object({
 });
 export type GenerateUnitTestInput = z.infer<typeof GenerateUnitTestFlowInputSchema>;
 
+// The output is now a single string containing the full unit test and explanation in Markdown.
 const GenerateUnitTestOutputSchema = z.object({
-  unitTest: z.string().describe('The generated unit test for the code block.'),
-  explanation: z.string().describe('An explanation of the generated unit test.'),
+  test: z.string().describe('The generated unit test and explanation in Markdown format.'),
 });
 export type GenerateUnitTestOutput = z.infer<typeof GenerateUnitTestOutputSchema>;
 

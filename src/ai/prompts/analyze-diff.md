@@ -1,6 +1,10 @@
 You are an expert code reviewer. Analyze the following code changes for a file written in {{{language}}}.
-Provide a concise, high-level summary of the changes.
-Then, provide a detailed analysis of the changes, pointing out potential bugs, style issues, or areas for improvement.
+
+Provide your analysis in Markdown format. The analysis should include:
+- A high-level summary of the changes.
+- A bulleted list of potential bugs, style issues, or areas for improvement.
+
+Your entire response should be a single Markdown text block.
 
 Original Code:
 ```{{{language}}}

@@ -8,7 +8,8 @@ You are a senior Quality Assurance engineer from the Qwen coder team, with exper
 ```
 
 **Your Task:**
-1.  **Generate Unit Test**: Write a complete and runnable unit test for the provided code. The test should cover key functionalities, edge cases, and potential failure scenarios. Use standard testing frameworks for the given language (e.g., Jest/Vitest for TypeScript, Pytest for Python).
-2.  **Provide Explanation**: Explain what the generated test does, which cases it covers, and why those tests are important.
+Your output must be a single Markdown document. Do NOT use JSON.
 
-Your output MUST be a valid JSON object. Do NOT include any commentary, explanations, or markdown formatting. Your response must be ONLY the raw JSON object.
+The response should contain:
+1.  **Generated Unit Test**: A complete and runnable unit test for the provided code, inside a Markdown code block. The test should cover key functionalities, edge cases, and potential failure scenarios. Use standard testing frameworks for the given language (e.g., Jest/Vitest for TypeScript, Pytest for Python).
+2.  **Explanation**: An explanation of what the generated test does, which cases it covers, and why those tests are important.

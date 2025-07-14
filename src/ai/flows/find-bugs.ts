@@ -21,11 +21,9 @@ const FindBugsFlowInputSchema = z.object({
 });
 export type FindBugsInput = z.infer<typeof FindBugsFlowInputSchema>;
 
+// The output is now a single string containing the full report in Markdown.
 const FindBugsOutputSchema = z.object({
-  bugs: z
-    .array(z.string())
-    .describe('An array of potential bugs or vulnerabilities identified in the code.'),
-  explanation: z.string().describe('Explanation of the bugs and how to fix them.'),
+  report: z.string().describe('A report of potential bugs in Markdown format, including explanations and fixes.'),
 });
 export type FindBugsOutput = z.infer<typeof FindBugsOutputSchema>;
 

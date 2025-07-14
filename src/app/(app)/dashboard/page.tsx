@@ -32,14 +32,14 @@ const features = [
     color: 'text-pink-400',
     borderColor: 'hover:border-pink-400',
   },
-  {
-    title: 'Diagram Forge',
-    description: 'Convert text descriptions into professional diagrams with real-time preview and editing.',
-    icon: Workflow,
-    href: '/diagram-forge',
-    color: 'text-cyan-400',
-    borderColor: 'hover:border-cyan-400',
-  },
+  // {
+  //   title: 'Diagram Forge',
+  //   description: 'Convert text descriptions into professional diagrams with real-time preview and editing.',
+  //   icon: Workflow,
+  //   href: '/diagram-forge',
+  //   color: 'text-cyan-400',
+  //   borderColor: 'hover:border-cyan-400',
+  // },
   {
     title: 'Code Fiddle',
     description: 'A code playground to quickly test snippets for various languages with real-time feedback.',
