@@ -99,6 +99,12 @@ const generateDiagramFlow = ai.defineFlow(
         // Clean and parse the response manually
         const cleanedText = cleanJsonOutput(text);
         const parsedOutput = JSON.parse(cleanedText);
+
+        // Un-escape newline characters that some models might output as "\\n"
+        if (parsedOutput.diagramCode) {
+            parsedOutput.diagramCode = parsedOutput.diagramCode.replace(/\\n/g, '\n');
+        }
+
         // Validate the parsed object against our schema
         return GenerateDiagramOutputSchema.parse(parsedOutput);
     } catch (error) {
