@@ -10,6 +10,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const RefactorCodeFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for refactoring.'),
@@ -28,6 +31,21 @@ export async function refactorCode(input: RefactorCodeInput): Promise<RefactorCo
   return refactorCodeFlow(input);
 }
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const refactorCodeFlow = ai.defineFlow(
   {
     name: 'refactorCodeFlow',
@@ -35,15 +53,15 @@ const refactorCodeFlow = ai.defineFlow(
     outputSchema: RefactorCodeOutputSchema,
   },
   async (input: RefactorCodeInput) => {
+    const promptTemplate = await getCompiledPrompt('refactor-code');
+    const finalPrompt = promptTemplate({
+        language: input.language,
+        code: input.code,
+    });
+
     const {output} = await ai.generate({
         model: input.model as any,
-        prompt: `You are an AI code assistant that refactors code.
-Given the following code block and its programming language, suggest refactoring improvements. Return the refactored code and an explanation of the changes.
-
-Language: ${input.language}
-Code:
-${input.code}
-`,
+        prompt: finalPrompt,
         output: { schema: RefactorCodeOutputSchema },
     });
     return output!;

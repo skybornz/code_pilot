@@ -10,6 +10,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const GenerateCodeDocsFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for generating docs.'),
@@ -26,6 +29,21 @@ export async function generateCodeDocs(input: GenerateCodeDocsInput): Promise<Ge
   return generateCodeDocsFlow(input);
 }
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const generateCodeDocsFlow = ai.defineFlow(
   {
     name: 'generateCodeDocsFlow',
@@ -33,13 +51,14 @@ const generateCodeDocsFlow = ai.defineFlow(
     outputSchema: GenerateCodeDocsOutputSchema,
   },
   async (input: GenerateCodeDocsInput) => {
+    const promptTemplate = await getCompiledPrompt('generate-code-docs');
+    const finalPrompt = promptTemplate({
+        code: input.code,
+    });
+      
     const {output} = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert software developer.
-Generate code comments for the following code block. The comments should explain the code's functionality, parameters, and return values, suitable for in-line documentation or docblocks.
-
-Code:
-${input.code}`,
+        prompt: finalPrompt,
         output: { schema: GenerateCodeDocsOutputSchema },
     });
     return output!;

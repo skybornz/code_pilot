@@ -10,6 +10,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const GenerateUnitTestFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for generating the test.'),
@@ -28,6 +31,21 @@ export async function generateUnitTest(input: GenerateUnitTestInput): Promise<Ge
   return generateUnitTestFlow(input);
 }
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const generateUnitTestFlow = ai.defineFlow(
   {
     name: 'generateUnitTestFlow',
@@ -35,13 +53,15 @@ const generateUnitTestFlow = ai.defineFlow(
     outputSchema: GenerateUnitTestOutputSchema,
   },
   async (input: GenerateUnitTestInput) => {
+    const promptTemplate = await getCompiledPrompt('generate-unit-test');
+    const finalPrompt = promptTemplate({
+        language: input.language,
+        code: input.code,
+    });
+      
     const {output} = await ai.generate({
         model: input.model as any,
-        prompt: `You are a software quality assurance expert. Generate a unit test for the following code block. Also provide an explanation of what the test covers.
-
-Language: ${input.language}
-Code:
-${input.code}`,
+        prompt: finalPrompt,
         output: { schema: GenerateUnitTestOutputSchema },
     });
     return output!;

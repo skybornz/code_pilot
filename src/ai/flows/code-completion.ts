@@ -10,6 +10,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const CodeCompletionFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for completion.'),
@@ -33,6 +36,21 @@ export async function codeCompletion(input: CodeCompletionInput): Promise<CodeCo
   return codeCompletionFlow(input);
 }
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const codeCompletionFlow = ai.defineFlow(
   {
     name: 'codeCompletionFlow',
@@ -40,19 +58,16 @@ const codeCompletionFlow = ai.defineFlow(
     outputSchema: CodeCompletionOutputSchema,
   },
   async (input: CodeCompletionInput) => {
+    const promptTemplate = await getCompiledPrompt('code-completion');
+    const finalPrompt = promptTemplate({
+        language: input.language,
+        codeSnippet: input.codeSnippet,
+        projectContext: input.projectContext
+    });
+
     const { output } = await ai.generate({
         model: input.model as any,
-        prompt: `You are an AI code completion assistant. You will receive a code snippet and you will generate a code completion suggestion based on the code, language, and project context.
-
-Language: ${input.language}
-Code Snippet:
-\`\`\`${input.language}
-${input.codeSnippet}
-\`\`\`
-
-Project Context: ${input.projectContext}
-
-Completion:`,
+        prompt: finalPrompt,
         output: { schema: CodeCompletionOutputSchema },
     });
     return output!;

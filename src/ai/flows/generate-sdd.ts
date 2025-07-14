@@ -10,6 +10,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const GenerateSddFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for generating the SDD.'),
@@ -26,6 +29,21 @@ export async function generateSdd(input: GenerateSddInput): Promise<GenerateSddO
   return generateSddFlow(input);
 }
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const generateSddFlow = ai.defineFlow(
   {
     name: 'generateSddFlow',
@@ -33,22 +51,14 @@ const generateSddFlow = ai.defineFlow(
     outputSchema: GenerateSddOutputSchema,
   },
   async (input: GenerateSddInput) => {
+    const promptTemplate = await getCompiledPrompt('generate-sdd');
+    const finalPrompt = promptTemplate({
+        code: input.code,
+    });
+
     const {output} = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert software architect. Generate a comprehensive Software Design Document (SDD) in Markdown format for the following code block.
-
-The SDD should include the following sections:
-1.  **Overview**: A high-level summary of the code's purpose and functionality.
-2.  **Component Breakdown**: A description of the main functions, classes, or components, including their responsibilities and inputs/outputs.
-3.  **Data Flow**: An explanation of how data moves through the code.
-4.  **Dependencies**: A list of any external libraries or modules the code depends on.
-5.  **Potential Improvements**: Suggestions for refactoring, performance optimization, or enhancing functionality.
-
-Code:
-\`\`\`
-${input.code}
-\`\`\`
-`,
+        prompt: finalPrompt,
         output: { schema: GenerateSddOutputSchema },
     });
     return output!;

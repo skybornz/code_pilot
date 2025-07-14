@@ -9,6 +9,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import fs from 'fs/promises';
+import path from 'path';
+import handlebars from 'handlebars';
 
 const ExplainCodeFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for the explanation.'),
@@ -26,6 +29,21 @@ export async function explainCode(input: ExplainCodeInput): Promise<ExplainCodeO
   return explainCodeFlow(input);
 }
 
+// Define a template cache
+const promptTemplateCache = new Map<string, handlebars.TemplateDelegate>();
+
+async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDelegate> {
+    if (promptTemplateCache.has(name)) {
+        return promptTemplateCache.get(name)!;
+    }
+    const promptPath = path.join(process.cwd(), 'src', 'ai', 'prompts', `${name}.md`);
+    const promptText = await fs.readFile(promptPath, 'utf-8');
+    const compiledTemplate = handlebars.compile(promptText);
+    promptTemplateCache.set(name, compiledTemplate);
+    return compiledTemplate;
+}
+
+
 const explainCodeFlow = ai.defineFlow(
   {
     name: 'explainCodeFlow',
@@ -33,17 +51,14 @@ const explainCodeFlow = ai.defineFlow(
     outputSchema: ExplainCodeOutputSchema,
   },
   async (input: ExplainCodeInput) => {
+    const promptTemplate = await getCompiledPrompt('explain-code');
+    const finalPrompt = promptTemplate({
+        code: input.code,
+    });
+      
     const {output} = await ai.generate({
         model: input.model as any,
-        prompt: `You are an expert software developer.
-Analyze the following code.
-Provide a high-level summary of what the code does, and then a bullet-point breakdown of key parts of the code.
-
-Code:
-\`\`\`
-${input.code}
-\`\`\`
-`,
+        prompt: finalPrompt,
         output: { schema: ExplainCodeOutputSchema },
     });
     return output!;
