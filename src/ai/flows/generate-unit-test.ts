@@ -63,18 +63,24 @@ const generateUnitTestFlow = ai.defineFlow(
         code: input.code,
     });
       
-    const { output } = await ai.generate({
-        model: input.model as any,
-        prompt: finalPrompt,
-        output: {
-          schema: GenerateUnitTestOutputSchema
+    if (isQwenModel) {
+        const result = await ai.generate({
+            model: input.model as any,
+            prompt: finalPrompt,
+        });
+        return { test: result.text };
+    } else {
+        const { output } = await ai.generate({
+            model: input.model as any,
+            prompt: finalPrompt,
+            output: {
+              schema: GenerateUnitTestOutputSchema
+            }
+        });
+        if (!output) {
+            throw new Error("Received an empty response from the AI model.");
         }
-    });
-
-    if (!output) {
-        throw new Error("Received an empty response from the AI model.");
+        return output;
     }
-    
-    return output;
   }
 );

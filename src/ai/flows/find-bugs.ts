@@ -61,18 +61,24 @@ const findBugsFlow = ai.defineFlow(
         code: input.code,
     });
       
-    const { output } = await ai.generate({
-      model: input.model as any,
-      prompt: finalPrompt,
-      output: {
-        schema: FindBugsOutputSchema
-      }
-    });
-
-    if (!output) {
-        throw new Error("Received an empty response from the AI model.");
+    if (isQwenModel) {
+        const result = await ai.generate({
+            model: input.model as any,
+            prompt: finalPrompt,
+        });
+        return { report: result.text };
+    } else {
+        const { output } = await ai.generate({
+          model: input.model as any,
+          prompt: finalPrompt,
+          output: {
+            schema: FindBugsOutputSchema
+          }
+        });
+        if (!output) {
+            throw new Error("Received an empty response from the AI model.");
+        }
+        return output;
     }
-    
-    return output;
   }
 );

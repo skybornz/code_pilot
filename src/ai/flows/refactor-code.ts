@@ -63,18 +63,24 @@ const refactorCodeFlow = ai.defineFlow(
         code: input.code,
     });
 
-    const { output } = await ai.generate({
-        model: input.model as any,
-        prompt: finalPrompt,
-        output: {
-          schema: RefactorCodeOutputSchema
+    if (isQwenModel) {
+        const result = await ai.generate({
+            model: input.model as any,
+            prompt: finalPrompt,
+        });
+        return { refactor: result.text };
+    } else {
+        const { output } = await ai.generate({
+            model: input.model as any,
+            prompt: finalPrompt,
+            output: {
+              schema: RefactorCodeOutputSchema
+            }
+        });
+        if (!output) {
+            throw new Error("Received an empty response from the AI model.");
         }
-    });
-    
-    if (!output) {
-        throw new Error("Received an empty response from the AI model.");
+        return output;
     }
-    
-    return output;
   }
 );
