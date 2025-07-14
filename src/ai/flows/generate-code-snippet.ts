@@ -66,7 +66,11 @@ const generateCodeSnippetFlow = ai.defineFlow(
     outputSchema: GenerateCodeSnippetOutputSchema,
   },
   async (input) => {
-    const promptTemplate = await getCompiledPrompt('generate-code-snippet');
+    // Check if the model is the specialized qwen coder
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'generate-code-snippet-qwen' : 'generate-code-snippet';
+    
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
         language: input.language,
         prompt: input.prompt
