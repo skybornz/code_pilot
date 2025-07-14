@@ -65,7 +65,10 @@ const generateRegexFlow = ai.defineFlow(
     outputSchema: GenerateRegexOutputSchema,
   },
   async (input) => {
-    const promptTemplate = await getCompiledPrompt('generate-regex');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'generate-regex-qwen' : 'generate-regex';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
         prompt: input.prompt
     });

@@ -76,7 +76,10 @@ const generateDiagramFlow = ai.defineFlow(
     outputSchema: GenerateDiagramOutputSchema,
   },
   async (input) => {
-    const promptTemplate = await getCompiledPrompt('generate-diagram');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'generate-diagram-qwen' : 'generate-diagram';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
         diagramType: input.diagramType,
         prompt: input.prompt
