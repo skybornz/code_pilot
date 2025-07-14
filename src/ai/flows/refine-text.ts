@@ -58,6 +58,15 @@ async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDeleg
     return compiledTemplate;
 }
 
+// Helper to clean up model output that might be wrapped in markdown
+function cleanJsonOutput(text: string): string {
+    const trimmed = text.trim();
+    const match = trimmed.match(/```json\s*([\s\S]*?)\s*```/);
+    if (match && match[1]) {
+        return match[1].trim();
+    }
+    return trimmed.replace(/^```|```$/g, '').trim();
+}
 
 const refineTextFlow = ai.defineFlow(
   {
@@ -75,11 +84,23 @@ const refineTextFlow = ai.defineFlow(
         text: input.text,
     });
     
-    const { output } = await ai.generate({
+    const { text } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
-        output: { schema: RefineTextOutputSchema },
     });
-    return output!;
+
+    if (!text) {
+        throw new Error("Received an empty response from the AI model.");
+    }
+    
+    try {
+        const cleanedText = cleanJsonOutput(text);
+        const parsedOutput = JSON.parse(cleanedText);
+        return RefineTextOutputSchema.parse(parsedOutput);
+    } catch (error) {
+        console.error("Failed to parse AI model's JSON output for text refinement:", error);
+        console.error("Original model output:", text);
+        throw new Error("The AI model returned a response that was not valid JSON. Please try again.");
+    }
   }
 );
