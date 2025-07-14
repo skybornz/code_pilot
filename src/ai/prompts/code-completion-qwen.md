@@ -16,4 +16,5 @@ You will receive a snippet of code, the language it's written in, and optional c
 *   Analyze the provided code and context.
 *   Generate ONLY the code that should come next.
 *   Do not repeat the provided code snippet.
-*   Your output should be a clear, human-readable text. Do NOT format it as JSON.
+
+Your output MUST be a valid JSON object. Do NOT include any commentary, explanations, or markdown formatting. Your response must be ONLY the raw JSON object.

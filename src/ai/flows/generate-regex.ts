@@ -15,7 +15,6 @@ import { getDefaultModel } from '@/actions/models';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
-import { textToJsonFlow } from './text-to-json';
 
 const GenerateRegexInputSchema = z.object({
   prompt: z.string().describe('The plain English description of the desired regular expression.'),
@@ -74,15 +73,18 @@ const generateRegexFlow = ai.defineFlow(
         prompt: input.prompt
     });
     
-    const { text } = await ai.generate({
+    const { output } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
+        output: {
+          schema: GenerateRegexOutputSchema
+        }
     });
     
-    if (!text) {
+    if (!output) {
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow({ text, model: input.model }, GenerateRegexOutputSchema);
+    return output;
   }
 );

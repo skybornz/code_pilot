@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -13,7 +14,6 @@ import {z} from 'genkit';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
-import { textToJsonFlow } from './text-to-json';
 
 const AnalyzeDiffFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for the analysis.'),
@@ -67,15 +67,18 @@ const analyzeDiffFlow = ai.defineFlow(
         newCode: input.newCode,
     });
       
-    const { text } = await ai.generate({
+    const { output } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
+        output: {
+          schema: AnalyzeDiffOutputSchema
+        }
     });
 
-    if (!text) {
+    if (!output) {
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow({ text, model: input.model }, AnalyzeDiffOutputSchema);
+    return output;
   }
 );

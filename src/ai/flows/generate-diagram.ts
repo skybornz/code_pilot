@@ -15,7 +15,6 @@ import { getDefaultModel } from '@/actions/models';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
-import { textToJsonFlow } from './text-to-json';
 
 const GenerateDiagramInputSchema = z.object({
   prompt: z.string().describe('The plain English description of the desired diagram.'),
@@ -75,22 +74,23 @@ const generateDiagramFlow = ai.defineFlow(
         prompt: input.prompt
     });
       
-    const { text } = await ai.generate({
+    const { output } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
+        output: {
+          schema: GenerateDiagramOutputSchema
+        }
     });
 
-    if (!text) {
+    if (!output) {
         throw new Error("Received an empty response from the AI model.");
     }
-
-    const jsonResult = await textToJsonFlow({ text, model: input.model }, GenerateDiagramOutputSchema, { task: 'Extract the Mermaid diagram code from the text.'});
-
+    
     // Un-escape newlines that models like Qwen might return as \\n
-    if (jsonResult.diagramCode) {
-        jsonResult.diagramCode = jsonResult.diagramCode.replace(/\\n/g, '\n');
+    if (output.diagramCode) {
+        output.diagramCode = output.diagramCode.replace(/\\n/g, '\n');
     }
     
-    return jsonResult;
+    return output;
   }
 );

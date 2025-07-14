@@ -20,4 +20,4 @@ The file is written in **{{{language}}}**.
     *   **Performance**: Are there any obvious performance bottlenecks or inefficient operations?
     *   **Readability & Maintainability**: Is the code clean, well-structured, and easy to understand?
 
-Your output should be a clear, human-readable text. Do NOT format it as JSON.
+Your output MUST be a valid JSON object. Do NOT include any commentary, explanations, or markdown formatting. Your response must be ONLY the raw JSON object.

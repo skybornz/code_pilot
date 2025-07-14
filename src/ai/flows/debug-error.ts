@@ -15,7 +15,6 @@ import { getDefaultModel } from '@/actions/models';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
-import { textToJsonFlow } from './text-to-json';
 
 const DebugErrorInputSchema = z.object({
   errorMessage: z.string().describe('The full error message or stack trace to be analyzed.'),
@@ -84,15 +83,18 @@ const debugErrorFlow = ai.defineFlow(
         context: input.context 
     });
 
-    const { text } = await ai.generate({
+    const { output } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
+        output: {
+          schema: DebugErrorOutputSchema
+        }
     });
     
-    if (!text) {
+    if (!output) {
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow({ text, model: input.model }, DebugErrorOutputSchema);
+    return output;
   }
 );

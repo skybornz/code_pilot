@@ -10,7 +10,7 @@ Original Text:
 {{{text}}}
 ---
 
-Your output should be a clear, human-readable text. Do NOT format it as JSON.
+Your output MUST be a valid JSON object. Do NOT include any commentary, explanations, or markdown formatting. Your response must be ONLY the raw JSON object.
 {{else}}
 You are an expert editor and writer. A user wants you to refine a piece of text for a specific purpose.
 Your task is to revise the provided text to match the tone, style, and structure of the specified content type. Focus on improving clarity, grammar, conciseness, and overall quality.
@@ -22,5 +22,5 @@ Original Text:
 {{{text}}}
 ---
 
-Your output should be a clear, human-readable text. Do NOT format it as JSON.
+Your output MUST be a valid JSON object. Do NOT include any commentary, explanations, or markdown formatting. Your response must be ONLY the raw JSON object.
 {{/if}}

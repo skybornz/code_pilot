@@ -15,7 +15,6 @@ import { getDefaultModel } from '@/actions/models';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
-import { textToJsonFlow } from './text-to-json';
 
 
 const ExecuteCodeInputSchema = z.object({
@@ -77,15 +76,18 @@ const executeCodeFlow = ai.defineFlow(
         code: input.code,
     });
       
-    const { text } = await ai.generate({
+    const { output } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
+        output: {
+          schema: ExecuteCodeOutputSchema
+        }
     });
 
-    if (!text) {
+    if (!output) {
         throw new Error("Received an empty response from the AI model.");
     }
 
-    return textToJsonFlow({ text, model: input.model }, ExecuteCodeOutputSchema);
+    return output;
   }
 );

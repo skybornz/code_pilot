@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -13,7 +14,6 @@ import {z} from 'genkit';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
-import { textToJsonFlow } from './text-to-json';
 
 const FindBugsFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for bug detection.'),
@@ -63,15 +63,18 @@ const findBugsFlow = ai.defineFlow(
         code: input.code,
     });
       
-    const {text} = await ai.generate({
+    const { output } = await ai.generate({
       model: input.model as any,
       prompt: finalPrompt,
+      output: {
+        schema: FindBugsOutputSchema
+      }
     });
 
-    if (!text) {
+    if (!output) {
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow({ text, model: input.model }, FindBugsOutputSchema);
+    return output;
   }
 );

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Explains a block of code in plain language.
@@ -12,7 +13,6 @@ import {z} from 'genkit';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
-import { textToJsonFlow } from './text-to-json';
 
 const ExplainCodeFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for the explanation.'),
@@ -60,15 +60,18 @@ const explainCodeFlow = ai.defineFlow(
         code: input.code,
     });
       
-    const {text} = await ai.generate({
+    const { output } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
+        output: {
+          schema: ExplainCodeOutputSchema
+        }
     });
     
-    if (!text) {
+    if (!output) {
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow({ text, model: input.model }, ExplainCodeOutputSchema);
+    return output;
   }
 );

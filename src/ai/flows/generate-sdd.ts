@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -13,7 +14,6 @@ import {z} from 'genkit';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
-import { textToJsonFlow } from './text-to-json';
 
 const GenerateSddFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for generating the SDD.'),
@@ -60,15 +60,18 @@ const generateSddFlow = ai.defineFlow(
         code: input.code,
     });
 
-    const {text} = await ai.generate({
+    const { output } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
+        output: {
+          schema: GenerateSddOutputSchema
+        }
     });
     
-    if (!text) {
+    if (!output) {
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow({ text, model: input.model }, GenerateSddOutputSchema, { task: 'Extract the Software Design Document from the text.'});
+    return output;
   }
 );

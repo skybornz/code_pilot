@@ -14,4 +14,4 @@ Generate an SDD in Markdown format. The document must be well-structured and inc
 4.  **Dependencies**: A list of any external libraries, modules, or services that the code depends on.
 5.  **Potential Improvements**: Actionable suggestions for refactoring, performance optimization, or enhancing functionality.
 
-Your output should be a clear, human-readable text. Do NOT format it as JSON.
+Your output MUST be a valid JSON object. Do NOT include any commentary, explanations, or markdown formatting. Your response must be ONLY the raw JSON object.
