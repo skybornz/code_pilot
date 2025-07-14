@@ -13,6 +13,7 @@ import {z} from 'genkit';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
+import { textToJsonFlow } from './text-to-json';
 
 const CodeCompletionFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for completion.'),
@@ -50,15 +51,6 @@ async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDeleg
     return compiledTemplate;
 }
 
-// Helper to clean up model output that might be wrapped in markdown
-function cleanJsonOutput(text: string): string {
-    const trimmed = text.trim();
-    const match = trimmed.match(/```json\s*([\s\S]*?)\s*```/);
-    if (match && match[1]) {
-        return match[1].trim();
-    }
-    return trimmed.replace(/^```|```$/g, '').trim();
-}
 
 const codeCompletionFlow = ai.defineFlow(
   {
@@ -67,8 +59,7 @@ const codeCompletionFlow = ai.defineFlow(
     outputSchema: CodeCompletionOutputSchema,
   },
   async (input: CodeCompletionInput) => {
-    const isQwenCoder = input.model.includes('qwen2.5-coder');
-    const promptName = isQwenCoder ? 'code-completion-qwen' : 'code-completion';
+    const promptName = 'code-completion';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -86,14 +77,6 @@ const codeCompletionFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    try {
-        const cleanedText = cleanJsonOutput(text);
-        const parsedOutput = JSON.parse(cleanedText);
-        return CodeCompletionOutputSchema.parse(parsedOutput);
-    } catch (error) {
-        console.error("Failed to parse AI model's JSON output for code completion:", error);
-        console.error("Original model output:", text);
-        throw new Error("The AI model returned a response that was not valid JSON. Please try again.");
-    }
+    return textToJsonFlow(text, CodeCompletionOutputSchema, { task: 'Extract the suggested code completion from the text.' });
   }
 );

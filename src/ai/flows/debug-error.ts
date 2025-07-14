@@ -15,6 +15,7 @@ import { getDefaultModel } from '@/actions/models';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
+import { textToJsonFlow } from './text-to-json';
 
 const DebugErrorInputSchema = z.object({
   errorMessage: z.string().describe('The full error message or stack trace to be analyzed.'),
@@ -66,15 +67,6 @@ async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDeleg
     return compiledTemplate;
 }
 
-// Helper to clean up model output that might be wrapped in markdown
-function cleanJsonOutput(text: string): string {
-    const trimmed = text.trim();
-    const match = trimmed.match(/```json\s*([\s\S]*?)\s*```/);
-    if (match && match[1]) {
-        return match[1].trim();
-    }
-    return trimmed.replace(/^```|```$/g, '').trim();
-}
 
 const debugErrorFlow = ai.defineFlow(
   {
@@ -83,8 +75,7 @@ const debugErrorFlow = ai.defineFlow(
     outputSchema: DebugErrorOutputSchema,
   },
   async (input) => {
-    const isQwenCoder = input.model.includes('qwen2.5-coder');
-    const promptName = isQwenCoder ? 'debug-error-qwen' : 'debug-error';
+    const promptName = 'debug-error';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
@@ -101,14 +92,6 @@ const debugErrorFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    try {
-        const cleanedText = cleanJsonOutput(text);
-        const parsedOutput = JSON.parse(cleanedText);
-        return DebugErrorOutputSchema.parse(parsedOutput);
-    } catch (error) {
-        console.error("Failed to parse AI model's JSON output for debug error:", error);
-        console.error("Original model output:", text);
-        throw new Error("The AI model returned a response that was not valid JSON. Please try again.");
-    }
+    return textToJsonFlow(text, DebugErrorOutputSchema);
   }
 );

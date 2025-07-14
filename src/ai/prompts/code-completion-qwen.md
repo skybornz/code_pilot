@@ -14,6 +14,6 @@ You will receive a snippet of code, the language it's written in, and optional c
 
 **Instructions:**
 *   Analyze the provided code and context.
-*   Generate the code that should come next.
+*   Generate ONLY the code that should come next.
 *   Do not repeat the provided code snippet.
-*   Your output must be a valid JSON object only, without any markdown formatting or other text. The JSON object should contain a single key "completion" with the generated code as its value.
+*   Your output should be a clear, human-readable text. Do NOT format it as JSON.

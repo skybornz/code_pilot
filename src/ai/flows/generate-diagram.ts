@@ -15,6 +15,7 @@ import { getDefaultModel } from '@/actions/models';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
+import { textToJsonFlow } from './text-to-json';
 
 const GenerateDiagramInputSchema = z.object({
   prompt: z.string().describe('The plain English description of the desired diagram.'),
@@ -57,17 +58,6 @@ async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDeleg
     return compiledTemplate;
 }
 
-// Helper to clean up model output that might be wrapped in markdown
-function cleanJsonOutput(text: string): string {
-    const trimmed = text.trim();
-    // Regex to find content between ```json and ```
-    const match = trimmed.match(/```json\s*([\s\S]*?)\s*```/);
-    if (match && match[1]) {
-        return match[1].trim();
-    }
-    // Fallback for cases where it might just be ``` at the start and end
-    return trimmed.replace(/^```|```$/g, '').trim();
-}
 
 const generateDiagramFlow = ai.defineFlow(
   {
@@ -76,8 +66,7 @@ const generateDiagramFlow = ai.defineFlow(
     outputSchema: GenerateDiagramOutputSchema,
   },
   async (input) => {
-    const isQwenCoder = input.model.includes('qwen2.5-coder');
-    const promptName = isQwenCoder ? 'generate-diagram-qwen' : 'generate-diagram';
+    const promptName = 'generate-diagram';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
@@ -85,7 +74,6 @@ const generateDiagramFlow = ai.defineFlow(
         prompt: input.prompt
     });
       
-    // Ask for a text response instead of direct JSON to handle model inconsistencies
     const { text } = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
@@ -95,23 +83,12 @@ const generateDiagramFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
 
-    try {
-        // Clean and parse the response manually
-        const cleanedText = cleanJsonOutput(text);
-        const parsedOutput = JSON.parse(cleanedText);
+    const jsonResult = await textToJsonFlow(text, GenerateDiagramOutputSchema, { task: 'Extract the Mermaid diagram code from the text.'});
 
-        // Un-escape newline characters that some models might output as "\\n"
-        if (parsedOutput.diagramCode) {
-            parsedOutput.diagramCode = parsedOutput.diagramCode.replace(/\\n/g, '\n');
-        }
-
-        // Validate the parsed object against our schema
-        return GenerateDiagramOutputSchema.parse(parsedOutput);
-    } catch (error) {
-        console.error("Failed to parse AI model's JSON output for diagram:", error);
-        console.error("Original model output:", text);
-        // Re-throw a more user-friendly error
-        throw new Error("The AI model returned a response that was not valid JSON. Please try again.");
+    if (jsonResult.diagramCode) {
+        jsonResult.diagramCode = jsonResult.diagramCode.replace(/\\n/g, '\n');
     }
+    
+    return jsonResult;
   }
 );

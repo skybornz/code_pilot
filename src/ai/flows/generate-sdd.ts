@@ -13,6 +13,7 @@ import {z} from 'genkit';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
+import { textToJsonFlow } from './text-to-json';
 
 const GenerateSddFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for generating the SDD.'),
@@ -43,15 +44,6 @@ async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDeleg
     return compiledTemplate;
 }
 
-// Helper to clean up model output that might be wrapped in markdown
-function cleanJsonOutput(text: string): string {
-    const trimmed = text.trim();
-    const match = trimmed.match(/```json\s*([\s\S]*?)\s*```/);
-    if (match && match[1]) {
-        return match[1].trim();
-    }
-    return trimmed.replace(/^```|```$/g, '').trim();
-}
 
 const generateSddFlow = ai.defineFlow(
   {
@@ -60,8 +52,7 @@ const generateSddFlow = ai.defineFlow(
     outputSchema: GenerateSddOutputSchema,
   },
   async (input: GenerateSddInput) => {
-    const isQwenCoder = input.model.includes('qwen2.5-coder');
-    const promptName = isQwenCoder ? 'generate-sdd-qwen' : 'generate-sdd';
+    const promptName = 'generate-sdd';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -77,14 +68,6 @@ const generateSddFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    try {
-        const cleanedText = cleanJsonOutput(text);
-        const parsedOutput = JSON.parse(cleanedText);
-        return GenerateSddOutputSchema.parse(parsedOutput);
-    } catch (error) {
-        console.error("Failed to parse AI model's JSON output for SDD generation:", error);
-        console.error("Original model output:", text);
-        throw new Error("The AI model returned a response that was not valid JSON. Please try again.");
-    }
+    return textToJsonFlow(text, GenerateSddOutputSchema, { task: 'Extract the Software Design Document from the text.'});
   }
 );

@@ -13,6 +13,7 @@ import {z} from 'genkit';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
+import { textToJsonFlow } from './text-to-json';
 
 const AnalyzeDiffFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for the analysis.'),
@@ -48,15 +49,6 @@ async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDeleg
     return compiledTemplate;
 }
 
-// Helper to clean up model output that might be wrapped in markdown
-function cleanJsonOutput(text: string): string {
-    const trimmed = text.trim();
-    const match = trimmed.match(/```json\s*([\s\S]*?)\s*```/);
-    if (match && match[1]) {
-        return match[1].trim();
-    }
-    return trimmed.replace(/^```|```$/g, '').trim();
-}
 
 const analyzeDiffFlow = ai.defineFlow(
   {
@@ -65,8 +57,7 @@ const analyzeDiffFlow = ai.defineFlow(
     outputSchema: AnalyzeDiffOutputSchema,
   },
   async (input: AnalyzeDiffInput) => {
-    const isQwenCoder = input.model.includes('qwen2.5-coder');
-    const promptName = isQwenCoder ? 'analyze-diff-qwen' : 'analyze-diff';
+    const promptName = 'analyze-diff';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -84,14 +75,6 @@ const analyzeDiffFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    try {
-        const cleanedText = cleanJsonOutput(text);
-        const parsedOutput = JSON.parse(cleanedText);
-        return AnalyzeDiffOutputSchema.parse(parsedOutput);
-    } catch (error) {
-        console.error("Failed to parse AI model's JSON output for diff analysis:", error);
-        console.error("Original model output:", text);
-        throw new Error("The AI model returned a response that was not valid JSON. Please try again.");
-    }
+    return textToJsonFlow(text, AnalyzeDiffOutputSchema);
   }
 );

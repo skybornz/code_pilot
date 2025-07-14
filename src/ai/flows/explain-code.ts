@@ -12,6 +12,7 @@ import {z} from 'genkit';
 import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
+import { textToJsonFlow } from './text-to-json';
 
 const ExplainCodeFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for the explanation.'),
@@ -43,15 +44,6 @@ async function getCompiledPrompt(name: string): Promise<handlebars.TemplateDeleg
     return compiledTemplate;
 }
 
-// Helper to clean up model output that might be wrapped in markdown
-function cleanJsonOutput(text: string): string {
-    const trimmed = text.trim();
-    const match = trimmed.match(/```json\s*([\s\S]*?)\s*```/);
-    if (match && match[1]) {
-        return match[1].trim();
-    }
-    return trimmed.replace(/^```|```$/g, '').trim();
-}
 
 const explainCodeFlow = ai.defineFlow(
   {
@@ -60,8 +52,7 @@ const explainCodeFlow = ai.defineFlow(
     outputSchema: ExplainCodeOutputSchema,
   },
   async (input: ExplainCodeInput) => {
-    const isQwenCoder = input.model.includes('qwen2.5-coder');
-    const promptName = isQwenCoder ? 'explain-code-qwen' : 'explain-code';
+    const promptName = 'explain-code';
     
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -77,14 +68,6 @@ const explainCodeFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    try {
-        const cleanedText = cleanJsonOutput(text);
-        const parsedOutput = JSON.parse(cleanedText);
-        return ExplainCodeOutputSchema.parse(parsedOutput);
-    } catch (error) {
-        console.error("Failed to parse AI model's JSON output for code explanation:", error);
-        console.error("Original model output:", text);
-        throw new Error("The AI model returned a response that was not valid JSON. Please try again.");
-    }
+    return textToJsonFlow(text, ExplainCodeOutputSchema);
   }
 );
