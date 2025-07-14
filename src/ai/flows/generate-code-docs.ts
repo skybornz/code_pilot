@@ -51,7 +51,10 @@ const generateCodeDocsFlow = ai.defineFlow(
     outputSchema: GenerateCodeDocsOutputSchema,
   },
   async (input: GenerateCodeDocsInput) => {
-    const promptTemplate = await getCompiledPrompt('generate-code-docs');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'generate-code-docs-qwen' : 'generate-code-docs';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         code: input.code,
     });

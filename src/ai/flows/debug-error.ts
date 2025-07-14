@@ -74,7 +74,10 @@ const debugErrorFlow = ai.defineFlow(
     outputSchema: DebugErrorOutputSchema,
   },
   async (input) => {
-    const promptTemplate = await getCompiledPrompt('debug-error');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'debug-error-qwen' : 'debug-error';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
         errorMessage: input.errorMessage,
         context: input.context 

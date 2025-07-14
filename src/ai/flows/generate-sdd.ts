@@ -51,7 +51,10 @@ const generateSddFlow = ai.defineFlow(
     outputSchema: GenerateSddOutputSchema,
   },
   async (input: GenerateSddInput) => {
-    const promptTemplate = await getCompiledPrompt('generate-sdd');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'generate-sdd-qwen' : 'generate-sdd';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         code: input.code,
     });

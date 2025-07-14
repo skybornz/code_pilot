@@ -53,7 +53,10 @@ const refactorCodeFlow = ai.defineFlow(
     outputSchema: RefactorCodeOutputSchema,
   },
   async (input: RefactorCodeInput) => {
-    const promptTemplate = await getCompiledPrompt('refactor-code');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'refactor-code-qwen' : 'refactor-code';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         language: input.language,
         code: input.code,

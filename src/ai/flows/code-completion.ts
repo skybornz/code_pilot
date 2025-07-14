@@ -58,7 +58,10 @@ const codeCompletionFlow = ai.defineFlow(
     outputSchema: CodeCompletionOutputSchema,
   },
   async (input: CodeCompletionInput) => {
-    const promptTemplate = await getCompiledPrompt('code-completion');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'code-completion-qwen' : 'code-completion';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         language: input.language,
         codeSnippet: input.codeSnippet,

@@ -66,7 +66,10 @@ const executeCodeFlow = ai.defineFlow(
     outputSchema: ExecuteCodeOutputSchema,
   },
   async (input) => {
-    const promptTemplate = await getCompiledPrompt('execute-code');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'execute-code-qwen' : 'execute-code';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         language: input.language,
         code: input.code,

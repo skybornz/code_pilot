@@ -53,7 +53,10 @@ const generateUnitTestFlow = ai.defineFlow(
     outputSchema: GenerateUnitTestOutputSchema,
   },
   async (input: GenerateUnitTestInput) => {
-    const promptTemplate = await getCompiledPrompt('generate-unit-test');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'generate-unit-test-qwen' : 'generate-unit-test';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         language: input.language,
         code: input.code,

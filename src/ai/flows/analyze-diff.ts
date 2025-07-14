@@ -56,7 +56,10 @@ const analyzeDiffFlow = ai.defineFlow(
     outputSchema: AnalyzeDiffOutputSchema,
   },
   async (input: AnalyzeDiffInput) => {
-    const promptTemplate = await getCompiledPrompt('analyze-diff');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'analyze-diff-qwen' : 'analyze-diff';
+
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         language: input.language,
         oldCode: input.oldCode,

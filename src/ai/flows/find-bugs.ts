@@ -54,7 +54,10 @@ const findBugsFlow = ai.defineFlow(
     outputSchema: FindBugsOutputSchema,
   },
   async (input: FindBugsInput) => {
-    const promptTemplate = await getCompiledPrompt('find-bugs');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'find-bugs-qwen' : 'find-bugs';
+    
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         code: input.code,
     });

@@ -51,7 +51,10 @@ const explainCodeFlow = ai.defineFlow(
     outputSchema: ExplainCodeOutputSchema,
   },
   async (input: ExplainCodeInput) => {
-    const promptTemplate = await getCompiledPrompt('explain-code');
+    const isQwenCoder = input.model.includes('qwen2.5-coder');
+    const promptName = isQwenCoder ? 'explain-code-qwen' : 'explain-code';
+    
+    const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
         code: input.code,
     });
