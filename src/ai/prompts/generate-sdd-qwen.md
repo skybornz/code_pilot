@@ -14,4 +14,4 @@ Generate an SDD in Markdown format. The document must be well-structured and inc
 4.  **Dependencies**: A list of any external libraries, modules, or services that the code depends on.
 5.  **Potential Improvements**: Actionable suggestions for refactoring, performance optimization, or enhancing functionality.
 
-Your output must be a single Markdown string in the `sdd` field of the JSON response.
+Your output must be a valid JSON object with a single key "sdd" containing a single Markdown string, without any other markdown formatting or text.

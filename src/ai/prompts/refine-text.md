@@ -9,7 +9,7 @@ Original Text:
 {{{text}}}
 ---
 
-Result:
+Your output must be a valid JSON object only, with a single key "refinedText", without any markdown formatting or other text.
 {{else}}
 You are an expert editor and writer. A user wants you to refine a piece of text for a specific purpose.
 Your task is to revise the provided text to match the tone, style, and structure of the specified content type. Focus on improving clarity, grammar, conciseness, and overall quality.
@@ -21,5 +21,5 @@ Original Text:
 {{{text}}}
 ---
 
-Refined Text:
+Your output must be a valid JSON object only, with a single key "refinedText", without any markdown formatting or other text.
 {{/if}}

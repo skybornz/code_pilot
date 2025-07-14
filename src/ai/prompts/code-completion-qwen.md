@@ -12,10 +12,8 @@ You will receive a snippet of code, the language it's written in, and optional c
 **Project Context (if available):**
 {{{projectContext}}}
 
-**Completion Task:**
+**Instructions:**
 *   Analyze the provided code and context.
-*   Generate only the code that should come next.
+*   Generate the code that should come next.
 *   Do not repeat the provided code snippet.
-*   Do not add any explanations, comments, or markdown formatting. Your output should be raw code only.
-
-**Completion:**
+*   Your output must be a valid JSON object only, without any markdown formatting or other text. The JSON object should contain a single key "completion" with the generated code as its value.
