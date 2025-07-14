@@ -68,7 +68,8 @@ const executeCodeFlow = ai.defineFlow(
     outputSchema: ExecuteCodeOutputSchema,
   },
   async (input) => {
-    const promptName = 'execute-code';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'execute-code-qwen' : 'execute-code';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -85,6 +86,6 @@ const executeCodeFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
 
-    return textToJsonFlow(text, ExecuteCodeOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, ExecuteCodeOutputSchema);
   }
 );

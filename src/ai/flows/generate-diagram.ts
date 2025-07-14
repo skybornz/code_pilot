@@ -66,7 +66,8 @@ const generateDiagramFlow = ai.defineFlow(
     outputSchema: GenerateDiagramOutputSchema,
   },
   async (input) => {
-    const promptName = 'generate-diagram';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'generate-diagram-qwen' : 'generate-diagram';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
@@ -83,8 +84,9 @@ const generateDiagramFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
 
-    const jsonResult = await textToJsonFlow(text, GenerateDiagramOutputSchema, { task: 'Extract the Mermaid diagram code from the text.'});
+    const jsonResult = await textToJsonFlow({ text, model: input.model }, GenerateDiagramOutputSchema, { task: 'Extract the Mermaid diagram code from the text.'});
 
+    // Un-escape newlines that models like Qwen might return as \\n
     if (jsonResult.diagramCode) {
         jsonResult.diagramCode = jsonResult.diagramCode.replace(/\\n/g, '\n');
     }

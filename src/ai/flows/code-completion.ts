@@ -59,7 +59,8 @@ const codeCompletionFlow = ai.defineFlow(
     outputSchema: CodeCompletionOutputSchema,
   },
   async (input: CodeCompletionInput) => {
-    const promptName = 'code-completion';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'code-completion-qwen' : 'code-completion';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -77,6 +78,6 @@ const codeCompletionFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, CodeCompletionOutputSchema, { task: 'Extract the suggested code completion from the text.' });
+    return textToJsonFlow({ text, model: input.model }, CodeCompletionOutputSchema, { task: 'Extract the suggested code completion from the text.' });
   }
 );

@@ -75,7 +75,8 @@ const debugErrorFlow = ai.defineFlow(
     outputSchema: DebugErrorOutputSchema,
   },
   async (input) => {
-    const promptName = 'debug-error';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'debug-error-qwen' : 'debug-error';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
@@ -92,6 +93,6 @@ const debugErrorFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, DebugErrorOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, DebugErrorOutputSchema);
   }
 );

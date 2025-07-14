@@ -52,7 +52,8 @@ const generateSddFlow = ai.defineFlow(
     outputSchema: GenerateSddOutputSchema,
   },
   async (input: GenerateSddInput) => {
-    const promptName = 'generate-sdd';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'generate-sdd-qwen' : 'generate-sdd';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -68,6 +69,6 @@ const generateSddFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, GenerateSddOutputSchema, { task: 'Extract the Software Design Document from the text.'});
+    return textToJsonFlow({ text, model: input.model }, GenerateSddOutputSchema, { task: 'Extract the Software Design Document from the text.'});
   }
 );

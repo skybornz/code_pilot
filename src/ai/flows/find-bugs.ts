@@ -55,7 +55,8 @@ const findBugsFlow = ai.defineFlow(
     outputSchema: FindBugsOutputSchema,
   },
   async (input: FindBugsInput) => {
-    const promptName = 'find-bugs';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'find-bugs-qwen' : 'find-bugs';
     
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -71,6 +72,6 @@ const findBugsFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, FindBugsOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, FindBugsOutputSchema);
   }
 );

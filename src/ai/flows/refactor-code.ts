@@ -54,7 +54,8 @@ const refactorCodeFlow = ai.defineFlow(
     outputSchema: RefactorCodeOutputSchema,
   },
   async (input: RefactorCodeInput) => {
-    const promptName = 'refactor-code';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'refactor-code-qwen' : 'refactor-code';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -71,6 +72,6 @@ const refactorCodeFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, RefactorCodeOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, RefactorCodeOutputSchema);
   }
 );

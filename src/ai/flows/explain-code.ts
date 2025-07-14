@@ -52,7 +52,8 @@ const explainCodeFlow = ai.defineFlow(
     outputSchema: ExplainCodeOutputSchema,
   },
   async (input: ExplainCodeInput) => {
-    const promptName = 'explain-code';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'explain-code-qwen' : 'explain-code';
     
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -68,6 +69,6 @@ const explainCodeFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, ExplainCodeOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, ExplainCodeOutputSchema);
   }
 );

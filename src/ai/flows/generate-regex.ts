@@ -66,7 +66,8 @@ const generateRegexFlow = ai.defineFlow(
     outputSchema: GenerateRegexOutputSchema,
   },
   async (input) => {
-    const promptName = 'generate-regex';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'generate-regex-qwen' : 'generate-regex';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
@@ -82,6 +83,6 @@ const generateRegexFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, GenerateRegexOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, GenerateRegexOutputSchema);
   }
 );

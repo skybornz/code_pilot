@@ -85,6 +85,6 @@ const refineTextFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, RefineTextOutputSchema, { task: 'Extract the refined text.'});
+    return textToJsonFlow({ text, model: input.model }, RefineTextOutputSchema, { task: 'Extract the refined text.'});
   }
 );

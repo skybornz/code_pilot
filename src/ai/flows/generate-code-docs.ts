@@ -52,7 +52,8 @@ const generateCodeDocsFlow = ai.defineFlow(
     outputSchema: GenerateCodeDocsOutputSchema,
   },
   async (input: GenerateCodeDocsInput) => {
-    const promptName = 'generate-code-docs';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'generate-code-docs-qwen' : 'generate-code-docs';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -68,6 +69,6 @@ const generateCodeDocsFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, GenerateCodeDocsOutputSchema, { task: 'Extract the documentation from the text.' });
+    return textToJsonFlow({ text, model: input.model }, GenerateCodeDocsOutputSchema, { task: 'Extract the documentation from the text.' });
   }
 );

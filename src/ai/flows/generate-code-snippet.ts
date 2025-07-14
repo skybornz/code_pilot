@@ -67,7 +67,8 @@ const generateCodeSnippetFlow = ai.defineFlow(
     outputSchema: GenerateCodeSnippetOutputSchema,
   },
   async (input) => {
-    const promptName = 'generate-code-snippet';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'generate-code-snippet-qwen' : 'generate-code-snippet';
     
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({ 
@@ -84,6 +85,6 @@ const generateCodeSnippetFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, GenerateCodeSnippetOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, GenerateCodeSnippetOutputSchema);
   }
 );

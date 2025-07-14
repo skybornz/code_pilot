@@ -54,7 +54,8 @@ const generateUnitTestFlow = ai.defineFlow(
     outputSchema: GenerateUnitTestOutputSchema,
   },
   async (input: GenerateUnitTestInput) => {
-    const promptName = 'generate-unit-test';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'generate-unit-test-qwen' : 'generate-unit-test';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -71,6 +72,6 @@ const generateUnitTestFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, GenerateUnitTestOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, GenerateUnitTestOutputSchema);
   }
 );

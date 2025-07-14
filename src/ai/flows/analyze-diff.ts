@@ -57,7 +57,8 @@ const analyzeDiffFlow = ai.defineFlow(
     outputSchema: AnalyzeDiffOutputSchema,
   },
   async (input: AnalyzeDiffInput) => {
-    const promptName = 'analyze-diff';
+    const isQwenModel = input.model.includes('qwen');
+    const promptName = isQwenModel ? 'analyze-diff-qwen' : 'analyze-diff';
 
     const promptTemplate = await getCompiledPrompt(promptName);
     const finalPrompt = promptTemplate({
@@ -75,6 +76,6 @@ const analyzeDiffFlow = ai.defineFlow(
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return textToJsonFlow(text, AnalyzeDiffOutputSchema);
+    return textToJsonFlow({ text, model: input.model }, AnalyzeDiffOutputSchema);
   }
 );
