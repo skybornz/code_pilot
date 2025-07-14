@@ -65,24 +65,11 @@ const analyzeDiffFlow = ai.defineFlow(
         newCode: input.newCode,
     });
     
-    if (isQwenModel) {
-        const result = await ai.generate({
-            model: input.model as any,
-            prompt: finalPrompt,
-        });
-        return { analysis: result.text };
-    } else {
-        const { output } = await ai.generate({
-            model: input.model as any,
-            prompt: finalPrompt,
-            output: {
-              schema: AnalyzeDiffOutputSchema
-            }
-        });
-        if (!output) {
-            throw new Error("Received an empty response from the AI model.");
-        }
-        return output;
-    }
+    const result = await ai.generate({
+        model: input.model as any,
+        prompt: finalPrompt,
+    });
+    
+    return { analysis: result.text };
   }
 );

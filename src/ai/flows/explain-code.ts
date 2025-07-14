@@ -60,24 +60,11 @@ const explainCodeFlow = ai.defineFlow(
         code: input.code,
     });
       
-    if (isQwenModel) {
-        const result = await ai.generate({
-            model: input.model as any,
-            prompt: finalPrompt,
-        });
-        return { explanation: result.text };
-    } else {
-        const { output } = await ai.generate({
-            model: input.model as any,
-            prompt: finalPrompt,
-            output: {
-              schema: ExplainCodeOutputSchema
-            }
-        });
-        if (!output) {
-            throw new Error("Received an empty response from the AI model.");
-        }
-        return output;
-    }
+    const result = await ai.generate({
+        model: input.model as any,
+        prompt: finalPrompt,
+    });
+    
+    return { explanation: result.text };
   }
 );
