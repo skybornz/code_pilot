@@ -36,6 +36,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
 
   const themeColorClass = pathname.startsWith('/codepilot') ? 'text-blue-400' : 'text-purple-400';
   const accentColorClass = pathname.startsWith('/codepilot') ? 'text-blue-400' : 'text-accent';
+  const buttonClass = pathname.startsWith('/codepilot') ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700';
 
   // Auto-scroll to the bottom when new messages are added.
   useEffect(() => {
@@ -132,12 +133,12 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
               <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
                 {message.role === 'model' && (
                   <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
-                    <AvatarFallback className="bg-transparent"><LogoMark /></AvatarFallback>
+                    <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
                   </Avatar>
                 )}
                 <div className={cn(
                     'p-3 rounded-lg max-w-[85%] text-sm break-words', 
-                    message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    message.role === 'user' ? `${buttonClass} text-primary-foreground` : 'bg-muted'
                 )}>
                   {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
                 </div>
@@ -152,7 +153,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
             {isChatLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
               <div className="flex items-start gap-3">
                  <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
-                    <AvatarFallback className="bg-transparent"><LogoMark /></AvatarFallback>
+                    <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
                   </Avatar>
                 <div className="p-3 rounded-lg bg-muted flex items-center">
                     <Loader2 className="h-5 w-5 animate-spin"/>
@@ -169,7 +170,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
               placeholder="Ask me anything about your code..."
               disabled={isChatLoading}
             />
-            <Button type="submit" disabled={isChatLoading || !input.trim()} size="icon">
+            <Button type="submit" disabled={isChatLoading || !input.trim()} size="icon" className={buttonClass}>
               <Send className="h-4 w-4" />
               <span className="sr-only">Send</span>
             </Button>
