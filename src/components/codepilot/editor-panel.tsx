@@ -21,6 +21,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { TimeAgo } from '@/components/ui/time-ago';
 import { placeholder as codeMirrorPlaceholder } from '@codemirror/view';
 import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -113,7 +114,10 @@ export function EditorPanel({
     return codeMirrorPlaceholder(text);
   }, [pathname]);
 
-  const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-purple-400' : 'text-blue-400';
+  const isRepoInsight = pathname.startsWith('/repo-insight');
+  const themeColorClass = isRepoInsight ? 'text-purple-400' : 'text-blue-400';
+  const buttonThemeClass = isRepoInsight ? 'hover:bg-purple-400/10 focus:bg-purple-400/20' : 'hover:bg-blue-400/10 focus:bg-blue-400/20';
+  const dropdownItemThemeClass = isRepoInsight ? 'focus:bg-purple-400/10 focus:text-purple-400' : 'focus:bg-blue-400/10 focus:text-blue-400';
 
   useEffect(() => {
     setCode(file.content || '');
@@ -286,7 +290,7 @@ export function EditorPanel({
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleNavigateChange('prev')} disabled={changeLines.length < 2}>
+                            <Button variant="ghost" size="icon" className={cn("h-8 w-8", buttonThemeClass)} onClick={() => handleNavigateChange('prev')} disabled={changeLines.length < 2}>
                                 <ChevronUp className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -294,7 +298,7 @@ export function EditorPanel({
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleNavigateChange('next')} disabled={changeLines.length < 2}>
+                            <Button variant="ghost" size="icon" className={cn("h-8 w-8", buttonThemeClass)} onClick={() => handleNavigateChange('next')} disabled={changeLines.length < 2}>
                                 <ChevronDown className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -317,7 +321,7 @@ export function EditorPanel({
                     onClick={handleViewChangesClick}
                     disabled={!file.previousContent}
                     data-active={viewMode === 'diff'}
-                    className="data-[active=true]:bg-accent"
+                    className={cn("data-[active=true]:bg-accent", buttonThemeClass)}
                     aria-label={viewMode === 'edit' ? 'View Changes' : 'Hide Changes'}
                     >
                     <GitCompare className="h-5 w-5" />
@@ -338,6 +342,7 @@ export function EditorPanel({
                             onClick={() => onAiAction('analyze-diff', code, file.language, file.previousContent)}
                             disabled={analyzeDisabled}
                             aria-label="Analyze Changes"
+                            className={buttonThemeClass}
                         >
                             <Sparkles className="h-5 w-5" />
                         </Button>
@@ -359,6 +364,7 @@ export function EditorPanel({
                     onClick={() => onAiAction(action.id, code, file.language)}
                     disabled={isLoading}
                     aria-label={action.label}
+                    className={buttonThemeClass}
                   >
                     <action.icon className="h-5 w-5" />
                   </Button>
@@ -378,6 +384,7 @@ export function EditorPanel({
                       size="icon"
                       disabled={isLoading}
                       aria-label="More actions"
+                      className={buttonThemeClass}
                     >
                       <MoreVertical className="h-5 w-5" />
                     </Button>
@@ -388,13 +395,13 @@ export function EditorPanel({
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem key={copilotAction.id} onClick={handleShowCopilotChat} disabled={isLoading}>
+                <DropdownMenuItem key={copilotAction.id} onClick={handleShowCopilotChat} disabled={isLoading} className={dropdownItemThemeClass}>
                     <copilotAction.icon className="mr-2 h-4 w-4" />
                     <span>{copilotAction.label}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {secondaryActions.map((action) => (
-                    <DropdownMenuItem key={action.id} onClick={() => onAiAction(action.id, code, file.language)} disabled={isLoading}>
+                    <DropdownMenuItem key={action.id} onClick={() => onAiAction(action.id, code, file.language)} disabled={isLoading} className={dropdownItemThemeClass}>
                         <action.icon className="mr-2 h-4 w-4" />
                         <span>{action.label}</span>
                     </DropdownMenuItem>
