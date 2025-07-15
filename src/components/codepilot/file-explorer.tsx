@@ -253,28 +253,28 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                           <DropdownMenuContent align="end">
                               {isAdmin && (
                                   <>
-                                      <DropdownMenuItem asChild className="focus:bg-purple-400/90 focus:text-white">
+                                      <DropdownMenuItem asChild className="focus:bg-purple-400/10 focus:text-purple-400">
                                           <Link href="/admin">
-                                              <Settings className="mr-2 h-4 w-4 text-purple-400" />
+                                              <Settings className="mr-2 h-4 w-4" />
                                               <span>Admin Dashboard</span>
                                           </Link>
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
                                   </>
                               )}
-                              <DropdownMenuItem asChild className="focus:bg-purple-400/90 focus:text-white">
+                              <DropdownMenuItem asChild className="focus:bg-purple-400/10 focus:text-purple-400">
                                 <Link href="/dashboard">
-                                    <LayoutDashboard className="mr-2 h-4 w-4 text-purple-400" />
+                                    <LayoutDashboard className="mr-2 h-4 w-4" />
                                     <span>Dashboard</span>
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)} className="focus:bg-purple-400/90 focus:text-white">
-                                  <KeyRound className="mr-2 h-4 w-4 text-purple-400" />
+                              <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)} className="focus:bg-purple-400/10 focus:text-purple-400">
+                                  <KeyRound className="mr-2 h-4 w-4" />
                                   <span>Change Password</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={logout} className="focus:bg-purple-400/90 focus:text-white">
-                                  <LogOut className="mr-2 h-4 w-4 text-purple-400" />
+                              <DropdownMenuItem onClick={logout} className="focus:bg-purple-400/10 focus:text-purple-400">
+                                  <LogOut className="mr-2 h-4 w-4" />
                                   <span>Logout</span>
                               </DropdownMenuItem>
                           </DropdownMenuContent>
