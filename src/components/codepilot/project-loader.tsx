@@ -121,11 +121,11 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
                 ))}
                 </div>
             ) : (
-                <div className="flex h-full items-center justify-center -mt-24">
+                <div className="h-full flex items-center justify-center">
                     <div className="text-center text-muted-foreground">
-                    <FolderGit2 className="mx-auto h-12 w-12 mb-4" />
-                    <p>No projects yet.</p>
-                    <p>Click "Add Project" to get started.</p>
+                        <FolderGit2 className="mx-auto h-12 w-12 mb-4" />
+                        <p>No projects yet.</p>
+                        <p>Click "Add Project" to get started.</p>
                     </div>
                 </div>
             )}
