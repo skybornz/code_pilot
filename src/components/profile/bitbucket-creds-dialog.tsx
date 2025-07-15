@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -121,7 +122,7 @@ export function BitbucketCredsDialog({ open, onOpenChange }: BitbucketCredsDialo
               )}
             />
             <DialogFooter>
-                <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700 text-white">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Credentials
                 </Button>

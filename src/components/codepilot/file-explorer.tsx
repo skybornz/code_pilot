@@ -189,7 +189,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
       <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           <Link href="/dashboard" aria-label="Back to Dashboard">
-            <Logo className="text-blue-400" />
+            <Logo className="text-purple-400" />
           </Link>
             {project && (
                 <TooltipProvider>
@@ -210,7 +210,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
           <div className="flex justify-between items-center mb-2 px-2">
               {project && branch && (
                 <div className="overflow-hidden mr-2 flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold truncate text-blue-400" title={project.name}>{project.name}</h2>
+                  <h2 className="text-lg font-semibold truncate text-purple-400" title={project.name}>{project.name}</h2>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -253,28 +253,28 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
                           <DropdownMenuContent align="end">
                               {isAdmin && (
                                   <>
-                                      <DropdownMenuItem asChild className="focus:bg-blue-400/90 focus:text-white">
+                                      <DropdownMenuItem asChild className="focus:bg-purple-400/90 focus:text-white">
                                           <Link href="/admin">
-                                              <Settings className="mr-2 h-4 w-4 text-blue-400" />
+                                              <Settings className="mr-2 h-4 w-4 text-purple-400" />
                                               <span>Admin Dashboard</span>
                                           </Link>
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
                                   </>
                               )}
-                              <DropdownMenuItem asChild className="focus:bg-blue-400/90 focus:text-white">
+                              <DropdownMenuItem asChild className="focus:bg-purple-400/90 focus:text-white">
                                 <Link href="/dashboard">
-                                    <LayoutDashboard className="mr-2 h-4 w-4 text-blue-400" />
+                                    <LayoutDashboard className="mr-2 h-4 w-4 text-purple-400" />
                                     <span>Dashboard</span>
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)} className="focus:bg-blue-400/90 focus:text-white">
-                                  <KeyRound className="mr-2 h-4 w-4 text-blue-400" />
+                              <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)} className="focus:bg-purple-400/90 focus:text-white">
+                                  <KeyRound className="mr-2 h-4 w-4 text-purple-400" />
                                   <span>Change Password</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={logout} className="focus:bg-blue-400/90 focus:text-white">
-                                  <LogOut className="mr-2 h-4 w-4 text-blue-400" />
+                              <DropdownMenuItem onClick={logout} className="focus:bg-purple-400/90 focus:text-white">
+                                  <LogOut className="mr-2 h-4 w-4 text-purple-400" />
                                   <span>Logout</span>
                               </DropdownMenuItem>
                           </DropdownMenuContent>

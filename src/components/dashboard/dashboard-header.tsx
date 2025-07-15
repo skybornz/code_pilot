@@ -26,8 +26,8 @@ export function DashboardHeader() {
     }, [user?.email]);
 
     const getThemeColorClass = () => {
-        if (pathname.startsWith('/repo-insight')) return 'text-blue-400';
-        if (pathname.startsWith('/codepilot')) return 'text-purple-400';
+        if (pathname.startsWith('/repo-insight')) return 'text-purple-400';
+        if (pathname.startsWith('/codepilot')) return 'text-blue-400';
         if (pathname.startsWith('/waiki')) return 'text-red-400';
         if (pathname.startsWith('/code-compare')) return 'text-orange-400';
         if (pathname.startsWith('/regex-wizard')) return 'text-green-400';
@@ -39,8 +39,8 @@ export function DashboardHeader() {
     };
 
     const getThemeHoverClass = () => {
-        if (pathname.startsWith('/repo-insight')) return 'hover:bg-blue-400/10 hover:text-blue-400';
-        if (pathname.startsWith('/codepilot')) return 'hover:bg-purple-400/10 hover:text-purple-400';
+        if (pathname.startsWith('/repo-insight')) return 'hover:bg-purple-400/10 hover:text-purple-400';
+        if (pathname.startsWith('/codepilot')) return 'hover:bg-blue-400/10 hover:text-blue-400';
         if (pathname.startsWith('/waiki')) return 'hover:bg-red-400/10 hover:text-red-400';
         if (pathname.startsWith('/code-compare')) return 'hover:bg-orange-400/10 hover:text-orange-400';
         if (pathname.startsWith('/regex-wizard')) return 'hover:bg-green-400/10 hover:text-green-400';
@@ -52,8 +52,8 @@ export function DashboardHeader() {
     }
 
     const getThemeFocusClass = () => {
-        if (pathname.startsWith('/repo-insight')) return 'focus:bg-blue-400/90 focus:text-white';
-        if (pathname.startsWith('/codepilot')) return 'focus:bg-purple-400/90 focus:text-white';
+        if (pathname.startsWith('/repo-insight')) return 'focus:bg-purple-400/90 focus:text-white';
+        if (pathname.startsWith('/codepilot')) return 'focus:bg-blue-400/90 focus:text-white';
         if (pathname.startsWith('/waiki')) return 'focus:bg-red-400/90 focus:text-white';
         if (pathname.startsWith('/code-compare')) return 'focus:bg-orange-400/90 focus:text-white';
         if (pathname.startsWith('/regex-wizard')) return 'focus:bg-green-400/90 focus:text-white';

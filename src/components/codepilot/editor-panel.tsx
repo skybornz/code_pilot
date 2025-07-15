@@ -109,7 +109,7 @@ export function EditorPanel({
     return codeMirrorPlaceholder('Paste your code here or upload a file to start analyzing.');
   }, []);
 
-  const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-purple-400';
+  const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-purple-400' : 'text-blue-400';
 
   useEffect(() => {
     setCode(file.content || '');

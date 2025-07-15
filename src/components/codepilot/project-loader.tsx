@@ -71,11 +71,11 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
     <div className="h-full w-full container mx-auto p-8 flex flex-col">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-4">
             <div className="flex items-start gap-4">
-                <div className="p-2 bg-blue-500/10 rounded-full">
-                    <FolderGit className="h-8 w-8 text-blue-400" />
+                <div className="p-2 bg-purple-500/10 rounded-full">
+                    <FolderGit className="h-8 w-8 text-purple-400" />
                 </div>
                 <div>
-                    <h1 className="text-xl font-semibold text-blue-400">
+                    <h1 className="text-xl font-semibold text-purple-400">
                         Repo Analyzer
                     </h1>
                     <p className="mt-1 text-lg text-muted-foreground">
@@ -84,13 +84,13 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
                 </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-                <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)} className="text-blue-400 border-current hover:bg-blue-500/10 hover:text-blue-400">
+                <Button variant="outline" onClick={() => setIsBitbucketDialogOpen(true)} className="text-purple-400 border-current hover:bg-purple-500/10 hover:text-purple-400">
                     <GitBranch className="mr-2 h-4 w-4" />
                     Configuration
                 </Button>
                 <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Project
                         </Button>
@@ -212,7 +212,7 @@ function AddProjectForm({ onProjectAdded }: { onProjectAdded: (project: Project)
         <DialogClose asChild>
           <Button variant="ghost">Cancel</Button>
         </DialogClose>
-        <Button onClick={handleValidateAndAdd} disabled={isLoading || !repoName.trim() || !projectKey.trim()} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button onClick={handleValidateAndAdd} disabled={isLoading || !repoName.trim() || !projectKey.trim()} className="bg-purple-600 hover:bg-purple-700 text-white">
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Add Project
         </Button>
@@ -284,13 +284,13 @@ function ProjectCard({ project, onDelete, onFilesLoaded }: { project: Project, o
                 {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button onClick={handleLoadProject} disabled={isLoadingFiles || !selectedBranch} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={handleLoadProject} disabled={isLoadingFiles || !selectedBranch} className="bg-purple-600 hover:bg-purple-700 text-white">
               {isLoadingFiles && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Load Project
             </Button>
           </>
         ) : (
-          <Button onClick={handleFetchBranches} disabled={isLoadingBranches} className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button onClick={handleFetchBranches} disabled={isLoadingBranches} className="bg-purple-600 hover:bg-purple-700 text-white">
             {isLoadingBranches && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Select Branch to Load
           </Button>

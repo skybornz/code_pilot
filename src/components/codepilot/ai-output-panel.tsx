@@ -45,7 +45,7 @@ const AIActionLoader = () => {
   ];
   const [currentStep, setCurrentStep] = useState(0);
   const pathname = usePathname();
-  const accentColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-purple-400';
+  const accentColorClass = pathname.startsWith('/repo-insight') ? 'text-purple-400' : 'text-blue-400';
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -107,8 +107,8 @@ export function AIOutputPanel({
   const { user } = useAuth();
   const pathname = usePathname();
   
-  const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-purple-400';
-  const accentColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-accent';
+  const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-purple-400' : 'text-blue-400';
+  const accentColorClass = pathname.startsWith('/repo-insight') ? 'text-purple-400' : 'text-accent';
 
 
   useEffect(() => {
