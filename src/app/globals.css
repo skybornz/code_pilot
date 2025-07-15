@@ -111,16 +111,27 @@
     --radius: 0.5rem;
   }
 
-  .theme-dashboard { --ring: 274 100% 50%; }
-  .theme-repo-insight { --ring: 262.1 83.3% 57.8%; }
-  .theme-codepilot { --ring: 221.2 83.1% 53.4%; }
-  .theme-waiki { --ring: 0 84.2% 60.2%; }
-  .theme-code-compare { --ring: 24.6 95% 53.1%; }
-  .theme-regex-wizard { --ring: 142.1 76.2% 36.3%; }
-  .theme-diagram-forge { --ring: 180 88% 41%; }
-  .theme-code-gpt { --ring: 346.8 98.4% 61.2%; }
-  .theme-code-fiddle { --ring: 48 96% 50%; }
-  .theme-word-craft { --ring: 262.1 83.3% 57.8%;}
+  /* Page-specific theme variables */
+  .theme-dashboard { --ring: 274 100% 50%; --accent: 274 100% 50%; }
+  .theme-repo-insight { --ring: 262.1 83.3% 57.8%; --accent: 262.1 83.3% 57.8%; }
+  .theme-codepilot { --ring: 221.2 83.1% 53.4%; --accent: 221.2 83.1% 53.4%;}
+  .theme-waiki { --ring: 0 84.2% 60.2%; --accent: 0 84.2% 60.2%; }
+  .theme-code-compare { --ring: 24.6 95% 53.1%; --accent: 24.6 95% 53.1%;}
+  .theme-regex-wizard { --ring: 142.1 76.2% 36.3%; --accent: 142.1 76.2% 36.3%; }
+  .theme-diagram-forge { --ring: 180 88% 41%; --accent: 180 88% 41%; }
+  .theme-code-gpt { --ring: 346.8 98.4% 61.2%; --accent: 346.8 98.4% 61.2%; }
+  .theme-code-fiddle { --ring: 48 96% 50%; --accent: 48 96% 50%; }
+  .theme-word-craft { --ring: 262.1 83.3% 57.8%; --accent: 262.1 83.3% 57.8%; }
+
+  .light .theme-repo-insight { --accent: 262.1 80% 96%; }
+  .light .theme-codepilot { --accent: 221.2 80% 96%; }
+  .light .theme-waiki { --accent: 0 80% 96%; }
+  .light .theme-code-compare { --accent: 24.6 90% 96%; }
+  .light .theme-regex-wizard { --accent: 142.1 70% 96%; }
+  .light .theme-diagram-forge { --accent: 180 80% 96%; }
+  .light .theme-code-gpt { --accent: 346.8 90% 96%; }
+  .light .theme-code-fiddle { --accent: 48 90% 96%; }
+  .light .theme-word-craft { --accent: 262.1 80% 96%; }
 }
 
 @layer base {
