@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload } from 'lucide-react';
+import { Upload, FileTerminal } from 'lucide-react';
 
 const initialFile: CodeFile = {
   id: 'local-file',
@@ -202,7 +202,10 @@ export default function CodePilotPage() {
             <main className="flex-1 flex p-4 overflow-hidden">
                 <div className="container mx-auto flex flex-col flex-1 gap-4">
                     <div className="flex-shrink-0 flex items-center justify-between gap-4 border-b pb-4">
-                        <h1 className="text-xl font-semibold text-purple-400">Code Pilot</h1>
+                        <h1 className="text-xl font-semibold text-purple-400 flex items-center gap-2">
+                            <FileTerminal className="h-6 w-6" />
+                            <span>Code Pilot</span>
+                        </h1>
                         <div className="flex items-center gap-4">
                             <div className="w-48">
                                 <Select value={activeFile.language} onValueChange={handleLanguageChange}>
