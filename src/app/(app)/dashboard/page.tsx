@@ -32,14 +32,6 @@ const features = [
     color: 'text-pink-400',
     borderColor: 'hover:border-pink-400',
   },
-  // {
-  //   title: 'Diagram Forge',
-  //   description: 'Convert text descriptions into professional diagrams with real-time preview and editing.',
-  //   icon: Workflow,
-  //   href: '/diagram-forge',
-  //   color: 'text-cyan-400',
-  //   borderColor: 'hover:border-cyan-400',
-  // },
   {
     title: 'Code Fiddle',
     description: 'A code playground to quickly test snippets for various languages with real-time feedback.',
@@ -86,12 +78,12 @@ export default function DashboardPage() {
   return (
     <div className="theme-dashboard min-h-screen flex flex-col bg-background">
       <DashboardHeader />
-      <main className="flex-1 container mx-auto p-4 md:p-6 flex flex-col">
-        <div className="my-8 text-center">
+      <main className="flex-1 container mx-auto p-4 md:p-6 flex flex-col items-start">
+        <div className="my-8 text-center w-full">
             <h1 className="text-3xl font-normal tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Welcome to AD Labs</h1>
             <p className="mt-2 text-base md:text-lg text-muted-foreground">Your integrated suite for AI-powered development. Select a tool to begin.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 w-full">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
@@ -103,7 +95,7 @@ export default function DashboardPage() {
                   <CardHeader>
                     <div className="flex items-center gap-4">
                       <Icon className={`w-8 h-8 ${feature.color}`} />
-                      <CardTitle className={`font-normal ${feature.color}`}>{feature.title}</CardTitle>
+                      <CardTitle className={`text-xl font-normal ${feature.color}`}>{feature.title}</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="flex-grow">

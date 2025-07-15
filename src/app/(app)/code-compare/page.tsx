@@ -14,6 +14,7 @@ import { performAiAction } from '@/actions/ai';
 import type { AnalyzeDiffOutput } from '@/components/codepilot/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { MessageContent } from '@/components/codepilot/message-content';
 
 export default function SmartMatchPage() {
   const [textA, setTextA] = useState('');
@@ -70,7 +71,7 @@ export default function SmartMatchPage() {
                       <GitCompare className="h-8 w-8 text-orange-400" />
                   </div>
                   <div>
-                      <CardTitle className="text-2xl font-semibold text-orange-400">Smart Match</CardTitle>
+                      <CardTitle className="text-xl font-semibold text-orange-400">Smart Match</CardTitle>
                       <CardDescription>Paste content into the two panes below to see a line-by-line analysis and an AI-powered summary of the differences.</CardDescription>
                   </div>
               </div>
@@ -113,7 +114,7 @@ export default function SmartMatchPage() {
           {diffResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-orange-400"><GitCompare className="h-5 w-5" />Comparison Result</CardTitle>
+                <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><GitCompare className="h-5 w-5" />Comparison Result</CardTitle>
                 <CardDescription>Lines in red were removed, and lines in green were added. Unchanged lines are also shown for context.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -149,7 +150,7 @@ export default function SmartMatchPage() {
           {isAnalyzing && !analysisResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
+                <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center p-12">
                 <LoadingSpinner text="AI is analyzing the changes..." />
@@ -160,24 +161,11 @@ export default function SmartMatchPage() {
           {analysisResult && (
             <Card className="bg-card/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
+                <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
                 <CardDescription>An AI-powered summary and analysis of the changes.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Alert>
-                  <AlertTitle className="font-semibold">Summary of Changes</AlertTitle>
-                  <AlertDescription>{analysisResult.summary}</AlertDescription>
-                </Alert>
-                <div>
-                  <h4 className="font-semibold mb-2 text-lg">Detailed Analysis</h4>
-                  {analysisResult.detailedAnalysis.length > 0 ? (
-                    <ul className="list-disc list-inside space-y-2 bg-muted/50 p-4 rounded-md">
-                      {analysisResult.detailedAnalysis.map((point, index) => <li key={index}>{point}</li>)}
-                    </ul>
-                  ) : (
-                    <p className="text-muted-foreground">No specific issues found in the analysis.</p>
-                  )}
-                </div>
+                  <MessageContent content={analysisResult} />
               </CardContent>
             </Card>
           )}

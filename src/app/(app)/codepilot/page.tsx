@@ -202,7 +202,7 @@ export default function CodePilotPage() {
             <main className="flex-1 flex p-4 overflow-hidden">
                 <div className="container mx-auto flex flex-col flex-1 gap-4">
                     <div className="flex-shrink-0 flex items-center justify-between gap-4 border-b pb-4">
-                        <h1 className="text-lg font-semibold text-purple-400">Code Pilot</h1>
+                        <h1 className="text-xl font-semibold text-purple-400">Code Pilot</h1>
                         <div className="flex items-center gap-4">
                             <div className="w-48">
                                 <Select value={activeFile.language} onValueChange={handleLanguageChange}>

@@ -237,7 +237,7 @@ export function EditorPanel({
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-4 space-y-2 md:space-y-0 md:space-x-4">
         <div className="flex-1 min-w-0 w-full">
-          <CardTitle className="text-base font-semibold truncate" title={file.name}>{file.name}</CardTitle>
+          <CardTitle className="text-xl font-semibold truncate" title={file.name}>{file.name}</CardTitle>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 w-full md:w-auto justify-end">
           {file.commits && file.commits.length > 0 && (

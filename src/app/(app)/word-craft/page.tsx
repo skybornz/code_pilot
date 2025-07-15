@@ -110,7 +110,7 @@ export default function WordCraftPage() {
                   <PenLine className="h-8 w-8 text-indigo-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-semibold text-indigo-400">Word Craft</CardTitle>
+                  <CardTitle className="text-xl font-semibold text-indigo-400">Word Craft</CardTitle>
                   <CardDescription>
                     An AI-powered text refinement tool that adapts to different content types.
                   </CardDescription>
@@ -194,7 +194,7 @@ export default function WordCraftPage() {
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="bg-card/50">
                     <CardHeader>
-                        <CardTitle>Original Text</CardTitle>
+                        <CardTitle className="text-lg">Original Text</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <Textarea
@@ -208,7 +208,7 @@ export default function WordCraftPage() {
                 </Card>
                 <Card className="bg-card/50">
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>AI Output</CardTitle>
+                        <CardTitle className="text-lg">AI Output</CardTitle>
                           {refinedText && !isLoading && (
                             <Button variant="ghost" size="icon" onClick={handleCopy} className="h-7 w-7">
                                 {isCopied ? <ClipboardCheck className="h-4 w-4 text-green-400" /> : <Clipboard className="h-4 w-4" />}

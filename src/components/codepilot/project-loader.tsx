@@ -75,7 +75,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
                     <FolderGit className="h-8 w-8 text-blue-400" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-semibold text-blue-400">
+                    <h1 className="text-xl font-semibold text-blue-400">
                         Repo Analyzer
                     </h1>
                     <p className="mt-1 text-lg text-muted-foreground">

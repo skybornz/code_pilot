@@ -161,7 +161,7 @@ export default function CodeFiddlePage() {
                                     <FlaskConical className="h-8 w-8 text-yellow-400" />
                                 </div>
                                 <div>
-                                    <CardTitle className="text-2xl font-semibold text-yellow-400">Code Fiddle</CardTitle>
+                                    <CardTitle className="text-xl font-semibold text-yellow-400">Code Fiddle</CardTitle>
                                     <CardDescription>
                                         A lightweight playground to write, run, and test code snippets. For many languages, AI simulates the output.
                                     </CardDescription>

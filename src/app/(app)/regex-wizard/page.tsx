@@ -113,7 +113,7 @@ export default function RegexWizardPage() {
                   <Wand2 className="h-8 w-8 text-green-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-semibold text-green-400">Regex Wizard</CardTitle>
+                  <CardTitle className="text-xl font-semibold text-green-400">Regex Wizard</CardTitle>
                   <CardDescription>
                     Describe what you want to match in plain English, and the wizard will generate a battle-tested regular expression for you.
                   </CardDescription>

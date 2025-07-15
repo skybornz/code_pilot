@@ -67,7 +67,7 @@ export default function DebugAssistPage() {
                     <LifeBuoy className="h-8 w-8 text-red-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-semibold text-red-400">Debug Assist</CardTitle>
+                    <CardTitle className="text-xl font-semibold text-red-400">Debug Assist</CardTitle>
                     <CardDescription>Paste an error message and provide context to get AI-powered analysis and solutions.</CardDescription>
                   </div>
                 </div>
@@ -78,7 +78,7 @@ export default function DebugAssistPage() {
                 {/* Input Card */}
                 <Card className="bg-card/50">
                     <CardHeader>
-                        <CardTitle>Error Details</CardTitle>
+                        <CardTitle className="text-lg">Error Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>

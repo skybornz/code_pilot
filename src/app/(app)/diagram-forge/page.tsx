@@ -101,7 +101,7 @@ export default function DiagramForgePage() {
                   <Workflow className="h-8 w-8 text-cyan-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-semibold text-cyan-400">Diagram Forge</CardTitle>
+                  <CardTitle className="text-xl font-semibold text-cyan-400">Diagram Forge</CardTitle>
                   <CardDescription>
                     Describe a process, system, or structure in plain English, and the forge will craft a diagram for you.
                   </CardDescription>

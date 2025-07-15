@@ -67,7 +67,7 @@ export default function CodeGptPage() {
                   <TerminalSquare className="h-8 w-8 text-pink-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-semibold text-pink-400">Code GPT</CardTitle>
+                  <CardTitle className="text-xl font-semibold text-pink-400">Code GPT</CardTitle>
                   <CardDescription>
                     Describe what you want to build in plain English, select a language, and let the AI generate the code for you.
                   </CardDescription>
