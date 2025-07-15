@@ -106,8 +106,12 @@ export function EditorPanel({
   const pathname = usePathname();
   
   const editorPlaceholder = useMemo(() => {
-    return codeMirrorPlaceholder('Paste your code here or upload a file to start analyzing.');
-  }, []);
+    const isRepoInsight = pathname.startsWith('/repo-insight');
+    const text = isRepoInsight
+      ? 'Select a file from the explorer to view its content.'
+      : 'Paste your code here or upload a file to start analyzing.';
+    return codeMirrorPlaceholder(text);
+  }, [pathname]);
 
   const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-purple-400' : 'text-blue-400';
 

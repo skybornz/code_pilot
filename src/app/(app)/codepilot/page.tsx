@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, FileTerminal } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const initialFile: CodeFile = {
   id: 'local-file',
@@ -220,7 +221,7 @@ export default function CodePilotPage() {
                                 </Select>
                             </div>
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-                            <Button variant="outline" onClick={triggerFileLoad}>
+                            <Button variant="outline" onClick={triggerFileLoad} className="text-blue-400 border-current hover:bg-blue-400/10 hover:text-blue-400">
                                 <Upload className="mr-2 h-4 w-4" />
                                 Upload File
                             </Button>

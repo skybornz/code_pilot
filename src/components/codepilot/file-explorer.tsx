@@ -149,7 +149,7 @@ const FileTreeItem = ({
         <CollapsibleTrigger asChild>
             <div className={cn(commonClasses)} onClick={handleFolderClick}>
                 <ChevronRight className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-90')} />
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Folder className="w-4 h-4 text-accent" />}
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Folder className="w-4 h-4 text-purple-400" />}
                 <span className="truncate">{node.name}</span>
             </div>
         </CollapsibleTrigger>
