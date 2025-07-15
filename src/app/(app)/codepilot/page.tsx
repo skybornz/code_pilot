@@ -208,18 +208,6 @@ export default function CodePilotPage() {
                             <span>Code Pilot</span>
                         </h1>
                         <div className="flex items-center gap-4">
-                            <div className="w-48">
-                                <Select value={activeFile.language} onValueChange={handleLanguageChange}>
-                                <SelectTrigger>
-                                        <SelectValue placeholder="Select language..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                        {supportedLanguages.map(lang => (
-                                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
-                                        ))}
-                                </SelectContent>
-                                </Select>
-                            </div>
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                             <Button variant="outline" onClick={triggerFileLoad} className="text-blue-400 border-current hover:bg-blue-400/10 hover:text-blue-400">
                                 <Upload className="mr-2 h-4 w-4" />
