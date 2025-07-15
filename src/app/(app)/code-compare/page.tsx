@@ -53,6 +53,7 @@ export default function SmartMatchPage() {
             description: aiResult.error,
         });
     } else if (aiResult.type === 'analyze-diff') {
+        // The output is now a direct string, not a nested object.
         setAnalysisResult(aiResult.data);
     }
     
