@@ -17,6 +17,7 @@ import { MessageContent } from './message-content';
 import { Separator } from '../ui/separator';
 import { useAuth } from '@/context/auth-context';
 import { streamCopilotChat } from '@/actions/ai';
+import { usePathname } from 'next/navigation';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -43,6 +44,8 @@ const AIActionLoader = () => {
     'Finalizing response...',
   ];
   const [currentStep, setCurrentStep] = useState(0);
+  const pathname = usePathname();
+  const accentColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-purple-400';
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -60,7 +63,7 @@ const AIActionLoader = () => {
 
   return (
     <div className="space-y-4 p-4 rounded-lg bg-muted/50">
-      <h4 className="font-semibold text-center text-primary animate-pulse">AI is thinking...</h4>
+      <h4 className={`font-semibold text-center ${accentColorClass} animate-pulse`}>AI is thinking...</h4>
       <div className="space-y-3">
         {steps.map((step, index) => (
           <div key={index} className="flex items-center gap-3 text-sm">
@@ -68,7 +71,7 @@ const AIActionLoader = () => {
               {index < currentStep ? (
                 <CheckCircle className="h-5 w-5 text-green-500" />
               ) : index === currentStep ? (
-                <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                <Loader2 className={`h-5 w-5 animate-spin ${accentColorClass}`} />
               ) : (
                 <Circle className="h-5 w-5 text-muted-foreground/50" />
               )}
@@ -102,7 +105,12 @@ export function AIOutputPanel({
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const pathname = usePathname();
   
+  const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-purple-400';
+  const accentColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-accent';
+
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -185,8 +193,8 @@ export function AIOutputPanel({
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 border-b p-4">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Wand2 className="h-5 w-5 text-accent" />
+        <CardTitle className={`text-base font-semibold flex items-center gap-2 ${themeColorClass}`}>
+          <Wand2 className={`h-5 w-5 ${accentColorClass}`} />
           <span>{output ? output.title : 'AI Assistant'}</span>
         </CardTitle>
         {output && output.fileContext && (

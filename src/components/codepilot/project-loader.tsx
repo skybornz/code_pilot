@@ -266,7 +266,7 @@ function ProjectCard({ project, onDelete, onFilesLoaded }: { project: Project, o
     <Card className="flex flex-col">
       <CardHeader className="flex-row items-start justify-between pb-4">
         <div>
-          <CardTitle className="text-lg">{project.name}</CardTitle>
+          <CardTitle className="text-xl">{project.name}</CardTitle>
           <CardDescription className="text-xs break-all">{project.url}</CardDescription>
         </div>
         <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => onDelete(project.id)}>

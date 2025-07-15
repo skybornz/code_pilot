@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { MessageContent } from './message-content';
 import { useAuth } from '@/context/auth-context';
 import { streamCopilotChat } from '@/actions/ai';
+import { usePathname } from 'next/navigation';
 
 
 interface CopilotChatPanelProps {
@@ -31,6 +32,10 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const pathname = usePathname();
+
+  const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-purple-400';
+  const accentColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-accent';
 
   // Auto-scroll to the bottom when new messages are added.
   useEffect(() => {
@@ -115,8 +120,8 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 border-b p-4 flex flex-row items-center">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Wand2 className="h-5 w-5 text-accent" />
+        <CardTitle className={`text-base font-semibold flex items-center gap-2 ${themeColorClass}`}>
+          <Wand2 className={`h-5 w-5 ${accentColorClass}`} />
           <span>AD Labs Chat</span>
         </CardTitle>
       </CardHeader>

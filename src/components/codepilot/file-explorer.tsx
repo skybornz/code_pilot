@@ -189,7 +189,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
       <aside className="h-full w-full md:w-72 flex flex-col bg-sidebar-background border-r border-sidebar-border">
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           <Link href="/dashboard" aria-label="Back to Dashboard">
-            <Logo />
+            <Logo className="text-blue-400" />
           </Link>
             {project && (
                 <TooltipProvider>
@@ -210,7 +210,7 @@ export function FileExplorer({ files, activeFileId, onFileSelect, onSwitchProjec
           <div className="flex justify-between items-center mb-2 px-2">
               {project && branch && (
                 <div className="overflow-hidden mr-2 flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold truncate" title={project.name}>{project.name}</h2>
+                  <h2 className="text-lg font-semibold truncate text-blue-400" title={project.name}>{project.name}</h2>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>

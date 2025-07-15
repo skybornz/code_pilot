@@ -20,6 +20,7 @@ import { RangeSet, RangeSetBuilder } from '@codemirror/state';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TimeAgo } from '@/components/ui/time-ago';
 import { placeholder as codeMirrorPlaceholder } from '@codemirror/view';
+import { usePathname } from 'next/navigation';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -102,10 +103,13 @@ export function EditorPanel({
   const [scrollToLine, setScrollToLine] = useState<number | null>(null);
   const [currentChangeIndex, setCurrentChangeIndex] = useState(-1);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
+  const pathname = usePathname();
   
   const editorPlaceholder = useMemo(() => {
     return codeMirrorPlaceholder('Paste your code here or upload a file to start analyzing.');
   }, []);
+
+  const themeColorClass = pathname.startsWith('/repo-insight') ? 'text-blue-400' : 'text-purple-400';
 
   useEffect(() => {
     setCode(file.content || '');
@@ -237,7 +241,7 @@ export function EditorPanel({
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-4 space-y-2 md:space-y-0 md:space-x-4">
         <div className="flex-1 min-w-0 w-full">
-          <CardTitle className="text-xl font-semibold truncate" title={file.name}>{file.name}</CardTitle>
+          <CardTitle className={`text-xl font-semibold truncate ${themeColorClass}`} title={file.name}>{file.name}</CardTitle>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 w-full md:w-auto justify-end">
           {file.commits && file.commits.length > 0 && (
