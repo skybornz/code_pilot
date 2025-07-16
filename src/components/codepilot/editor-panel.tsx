@@ -245,6 +245,18 @@ export function EditorPanel({
       { id: 'sdd', label: 'Generate SDD', icon: FileText },
   ];
 
+  const handlePaste = () => {
+    // Use a timeout to ensure the paste operation has completed
+    // and the editor has updated before we try to scroll.
+    setTimeout(() => {
+        if (editorRef.current?.view) {
+            editorRef.current.view.dispatch({
+                effects: EditorView.scrollIntoView(0, { y: 'start' }),
+            });
+        }
+    }, 0);
+  };
+
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-4 space-y-2 md:space-y-0 md:space-x-4">
@@ -419,6 +431,7 @@ export function EditorPanel({
               theme={vscodeDark}
               extensions={extensions}
               onChange={viewMode === 'edit' ? handleCodeMirrorChange : () => {}}
+              onPaste={handlePaste}
               readOnly={viewMode === 'diff'}
               height="100%"
               basicSetup={{
