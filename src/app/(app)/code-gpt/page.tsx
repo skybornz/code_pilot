@@ -15,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CodeBlock } from '@/components/codepilot/code-block';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -268,3 +267,5 @@ export default function CodeGptPage() {
     </div>
   );
 }
+
+    
