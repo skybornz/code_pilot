@@ -21,6 +21,7 @@ const RefineTextInputSchema = z.object({
   text: z.string().describe('The original text to be processed.'),
   action: z.string().describe('The desired action, e.g., "Business Email", "Summarize Document", "Translate Content to Korean", "use-template".'),
   template: z.string().optional().describe('An optional template to structure the output.'),
+  enhance: z.boolean().optional().describe('Whether to generate detailed content before applying a template.'),
 });
 export type RefineTextInput = z.infer<typeof RefineTextInputSchema>;
 
@@ -78,6 +79,7 @@ const refineTextFlow = ai.defineFlow(
         action: input.action,
         text: input.text,
         template: input.template,
+        enhance: input.enhance,
     });
     
     const result = await ai.generate({

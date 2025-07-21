@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { MessageContent } from '@/components/codepilot/message-content';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 
 const draftContentTypes = [
   { value: 'Business Email', label: 'Business Email' },
@@ -51,6 +52,7 @@ export default function WordCraftPage() {
   const [contentType, setContentType] = useState('Business Email');
   const [analyzeType, setAnalyzeType] = useState('summarize');
   const [targetLanguage, setTargetLanguage] = useState('English');
+  const [enhance, setEnhance] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const { user } = useAuth();
@@ -80,7 +82,7 @@ export default function WordCraftPage() {
       ? `${analyzeType}${analyzeType === 'translate' ? ` to ${targetLanguage}` : ''}`
       : 'use-template'; // Special action for template mode
       
-    const result = await refineTextAction(user.id, originalText, action, mode === 'template' ? template : undefined);
+    const result = await refineTextAction(user.id, originalText, action, mode === 'template' ? template : undefined, mode === 'template' ? enhance : undefined);
 
     if ('error' in result) {
       toast({ variant: 'destructive', title: 'AI Action Failed', description: result.error });
@@ -109,7 +111,7 @@ export default function WordCraftPage() {
         }
     }
     if (mode === 'template') {
-        return 'Generate from Template';
+        return enhance ? 'Enhance & Generate' : 'Generate from Template';
     }
     return 'Refine Text';
   }
@@ -133,8 +135,12 @@ export default function WordCraftPage() {
                     </CardContent>
                 </Card>
                 <Card className="bg-card/50">
-                    <CardHeader>
+                    <CardHeader className="flex-row justify-between items-center">
                         <CardTitle className="text-lg text-indigo-400">Content</CardTitle>
+                        <div className="flex items-center space-x-2">
+                            <Switch id="enhance-mode" checked={enhance} onCheckedChange={setEnhance} disabled={isLoading} />
+                            <Label htmlFor="enhance-mode">Enhance Content</Label>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <Textarea

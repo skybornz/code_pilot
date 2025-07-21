@@ -11,14 +11,15 @@ export async function refineTextAction(
     userId: string,
     text: string,
     action: string,
-    template?: string
+    template?: string,
+    enhance?: boolean
 ): Promise<RefineTextOutput | { error: string }> {
     await configureAi();
 
     try {
         const { refineText } = await import('@/ai/flows/refine-text');
         // The result is now a direct string, not an object.
-        const resultText = await withRetry(() => refineText({ text, action, template }));
+        const resultText = await withRetry(() => refineText({ text, action, template, enhance }));
 
         await logUserActivity(userId, 'Word Craft', `User performed action: "${action}"`);
         await updateUserLastActive(userId);
