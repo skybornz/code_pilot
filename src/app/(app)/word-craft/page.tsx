@@ -14,6 +14,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { MessageContent } from '@/components/codepilot/message-content';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const draftContentTypes = [
   { value: 'Business Email', label: 'Business Email' },
@@ -176,20 +178,17 @@ export default function WordCraftPage() {
                 </Button>
             )}
         </CardHeader>
-        <CardContent className="flex-1">
+        <CardContent className="flex-1 min-h-0">
           {isLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <LoadingSpinner text="The AI is working its magic..." />
               </div>
           ) : refinedText ? (
-            <div className="relative h-full">
-                <Textarea
-                    placeholder="AI output will appear here..."
-                    className="h-full min-h-[300px] font-sans"
-                    value={refinedText}
-                    readOnly
-                />
-            </div>
+            <ScrollArea className="h-full">
+              <div className="p-4 pr-6">
+                <MessageContent content={refinedText} />
+              </div>
+            </ScrollArea>
           ) : (
             <div className="flex items-center justify-center h-full min-h-[300px]">
                 <p className="text-muted-foreground">AI output will appear here.</p>
