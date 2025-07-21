@@ -198,4 +198,34 @@
   .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--accent) / 0.8);
   }
+
+  /* CodeMirror Search Panel Theming */
+  .cm-panel.cm-search {
+    @apply bg-card border-t border-b border-border p-2 flex items-center gap-2;
+    color: hsl(var(--foreground));
+  }
+  .cm-panel.cm-search input {
+    @apply bg-input border border-border rounded-md px-2 py-1 text-sm text-foreground;
+  }
+  .cm-panel.cm-search input:focus {
+     @apply ring-2 ring-ring outline-none;
+  }
+  .cm-panel.cm-search button {
+    @apply bg-transparent border-none text-foreground p-1 rounded-md cursor-pointer;
+  }
+  .cm-panel.cm-search button:hover {
+     @apply bg-accent;
+  }
+  .cm-panel.cm-search .cm-button.cm-close {
+    @apply text-lg;
+  }
+  .cm-panel.cm-search label {
+     @apply text-xs text-muted-foreground;
+  }
+  .cm-panel.cm-search .cm-textfield {
+    @apply w-40;
+  }
+  .cm-panel.cm-search .cm-search-results {
+    @apply text-xs text-muted-foreground ml-auto;
+  }
 }
