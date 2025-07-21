@@ -4,7 +4,7 @@
 /**
  * @fileOverview An AI agent that refines an existing code snippet based on user instructions.
  *
- * - refineCodeSnippetFlow - A function that handles the code refinement process.
+ * - refineCodeSnippet - A function that handles the code refinement process.
  * - RefineCodeSnippetInput - The input type for the refineCodeSnippet function.
  * - RefineCodeSnippetOutput - The return type for the refineCodeSnippet function.
  */
@@ -31,7 +31,7 @@ const RefineCodeSnippetFlowInputSchema = RefineCodeSnippetInputSchema.extend({
     model: z.string().describe('The AI model to use for the refinement.'),
 });
 
-export async function refineCodeSnippetFlow(input: RefineCodeSnippetInput): Promise<RefineCodeSnippetOutput> {
+export async function refineCodeSnippet(input: RefineCodeSnippetInput): Promise<RefineCodeSnippetOutput> {
     const modelConfig = await getDefaultModel();
     if (!modelConfig) {
         throw new Error('No default model is configured.');
@@ -40,11 +40,11 @@ export async function refineCodeSnippetFlow(input: RefineCodeSnippetInput): Prom
         ? `ollama/${modelConfig.name}`
         : `googleai/${modelConfig.name}`;
     
-    return ai.run('refineCodeSnippetFlow', { model: modelName, ...input });
+    return refineCodeSnippetFlow({ model: modelName, ...input });
 }
 
 
-ai.defineFlow(
+const refineCodeSnippetFlow = ai.defineFlow(
   {
     name: 'refineCodeSnippetFlow',
     inputSchema: RefineCodeSnippetFlowInputSchema,

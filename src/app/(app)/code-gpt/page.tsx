@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TerminalSquare, Sparkles, Loader2, Lightbulb, Send, User, Bot } from 'lucide-react';
+import { TerminalSquare, Sparkles, Loader2, Lightbulb, Send, User, Bot, RefreshCcw } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { generateSnippetFromPrompt } from '@/actions/code-snippet';
@@ -19,7 +19,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogoMark } from '@/components/codepilot/logo-mark';
 import { Badge } from '@/components/ui/badge';
@@ -57,7 +56,14 @@ export default function CodeGptPage() {
             behavior: 'smooth',
         });
     }
-  }, [chatMessages]);
+  }, [chatMessages, isRefining]);
+  
+  const resetToInitial = () => {
+    setResult(null);
+    setChatMessages([]);
+    setPrompt('');
+    setChatInput('');
+  };
 
   const handleGenerate = async () => {
     if (!user) {
@@ -160,26 +166,30 @@ export default function CodeGptPage() {
   const renderWorkspaceView = () => (
      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Left Panel */}
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 min-h-0">
             <Card className="bg-card/50">
-                <CardHeader>
-                    <CardTitle className="text-lg">Original Request</CardTitle>
+                <CardHeader className="flex flex-row justify-between items-start">
+                    <div>
+                        <CardTitle className="text-lg text-pink-400">Original Request</CardTitle>
+                        <p className="text-sm text-muted-foreground italic mt-2">"{prompt}"</p>
+                    </div>
+                     <Button variant="outline" onClick={resetToInitial}>
+                        <RefreshCcw className="mr-2 h-4 w-4" />
+                        New Code
+                    </Button>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm text-muted-foreground italic">"{prompt}"</p>
-                    <div className="mt-2">
-                        <Badge>{language}</Badge>
-                    </div>
+                    <Badge>{language}</Badge>
                 </CardContent>
             </Card>
 
-            <Card className="bg-card/50 flex-1 flex flex-col">
+            <Card className="bg-card/50 flex-1 flex flex-col min-h-0">
                 <CardHeader>
-                    <CardTitle className="text-lg">Refine Code</CardTitle>
+                    <CardTitle className="text-lg text-pink-400">Refine Code</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1 min-h-0 flex flex-col">
+                <CardContent className="flex-1 min-h-0 flex flex-col p-0">
                     <ScrollArea className="flex-1 pr-4" ref={chatScrollAreaRef}>
-                        <div className="space-y-4">
+                        <div className="space-y-4 px-6">
                             {chatMessages.map((message, index) => (
                                 <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
                                     {message.role === 'model' && (
@@ -197,17 +207,17 @@ export default function CodeGptPage() {
                         </div>
                     </ScrollArea>
                 </CardContent>
-                <CardHeader className="pt-4">
-                    <form onSubmit={handleRefine} className="flex gap-2">
-                        <Input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="e.g., Add comments to the code" disabled={isRefining} />
-                        <Button type="submit" size="icon" className="bg-pink-600 hover:bg-pink-700 text-white" disabled={isRefining || !chatInput.trim()}><Send className="h-4 w-4" /></Button>
+                <div className="p-6 pt-4">
+                    <form onSubmit={handleRefine} className="flex items-start gap-2">
+                        <Textarea value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="e.g., Add comments to the code" disabled={isRefining} className="min-h-[40px] max-h-[120px]" />
+                        <Button type="submit" size="icon" className="bg-pink-600 hover:bg-pink-700 text-white flex-shrink-0" disabled={isRefining || !chatInput.trim()}><Send className="h-4 w-4" /></Button>
                     </form>
-                </CardHeader>
+                </div>
             </Card>
         </div>
 
         {/* Right Panel */}
-        <Card className="bg-card/50 flex-1 flex flex-col">
+        <Card className="bg-card/50 flex-1 flex flex-col min-h-0">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-pink-400 flex items-center gap-2">
               <Lightbulb />
@@ -246,7 +256,11 @@ export default function CodeGptPage() {
 
         {!isLoading && !result && renderInitialView()}
         
-        {!isLoading && result && renderWorkspaceView()}
+        {!isLoading && result && (
+            <div className="flex-1 flex flex-col min-h-0">
+                {renderWorkspaceView()}
+            </div>
+        )}
       </main>
     </div>
   );
