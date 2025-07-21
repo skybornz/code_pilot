@@ -10,7 +10,7 @@ The response should include:
 **Language:** {{{language}}}
 {{#if framework}}
 **Testing Framework:** {{{framework}}}
-Use the syntax and conventions of the `{{{framework}}}` framework.
+Use the syntax and conventions of the `{{{framework}}}` framework for the generated unit test.
 {{/if}}
 
 **Code to Test:**
