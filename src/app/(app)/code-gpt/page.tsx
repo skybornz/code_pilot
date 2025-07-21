@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,8 +89,8 @@ export default function CodeGptPage() {
       return;
     }
 
-    const newMessages: Message[] = [...chatMessages, { role: 'user', content: chatInput }];
-    setChatMessages(newMessages);
+    const userMessage: Message = { role: 'user', content: chatInput };
+    setChatMessages(prev => [...prev, userMessage]);
     const instruction = chatInput;
     setChatInput('');
     setIsRefining(true);
@@ -171,15 +171,15 @@ export default function CodeGptPage() {
                     <div>
                         <CardTitle className="text-lg text-pink-400">Original Request</CardTitle>
                         <p className="text-sm text-muted-foreground italic mt-2">"{prompt}"</p>
+                        <div className="mt-2">
+                            <Badge>{language}</Badge>
+                        </div>
                     </div>
-                     <Button variant="outline" onClick={resetToInitial}>
+                     <Button variant="outline" onClick={resetToInitial} className="text-pink-400 border-current hover:bg-pink-500/10 hover:text-pink-400">
                         <RefreshCcw className="mr-2 h-4 w-4" />
-                        New Code
+                        Reset
                     </Button>
                 </CardHeader>
-                <CardContent>
-                    <Badge>{language}</Badge>
-                </CardContent>
             </Card>
             
             {result && (
