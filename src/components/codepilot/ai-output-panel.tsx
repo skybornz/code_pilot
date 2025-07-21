@@ -29,8 +29,10 @@ interface AIOutputPanelProps {
 }
 
 const formatAiOutputForChat = (output: AIOutput): string => {
+  // For 'test' type, data is already a string. For others, it's also a string.
   return `Regarding your previous analysis on "${output.title}":\n\n${output.data}`;
 };
+
 
 const AIActionLoader = () => {
   const steps = [
