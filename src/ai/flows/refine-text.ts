@@ -6,7 +6,7 @@
  *
  * - refineText - A function that handles the text processing.
  * - RefineTextInput - The input type for the refineText function.
- * - RefineTextOutput - The return type for the refineText function.
+ * - RefineTextOutput - The return type for the refineText function (which is just a string).
  */
 
 import {ai} from '@/ai/genkit';
@@ -24,12 +24,13 @@ const RefineTextInputSchema = z.object({
 });
 export type RefineTextInput = z.infer<typeof RefineTextInputSchema>;
 
-const RefineTextOutputSchema = z.object({
-  refinedText: z.string().describe("The processed, improved, or analyzed version of the text."),
-});
-export type RefineTextOutput = z.infer<typeof RefineTextOutputSchema>;
+// The output is now a simple string.
+export type RefineTextOutput = {
+    refinedText: string;
+};
 
-export async function refineText(input: RefineTextInput): Promise<RefineTextOutput> {
+// The flow itself will return a string.
+export async function refineText(input: RefineTextInput): Promise<string> {
   const modelConfig = await getDefaultModel();
   if (!modelConfig) {
       throw new Error('No default model is configured.');
@@ -64,7 +65,7 @@ const refineTextFlow = ai.defineFlow(
   {
     name: 'refineTextFlow',
     inputSchema: RefineTextFlowInputSchema,
-    outputSchema: RefineTextOutputSchema,
+    outputSchema: z.string(), // The flow now outputs a raw string
   },
   async (input) => {
     const isAnalyzeMode = input.action.startsWith('summarize') || input.action.startsWith('translate') || input.action.startsWith('insight');
@@ -79,18 +80,15 @@ const refineTextFlow = ai.defineFlow(
         template: input.template,
     });
     
-    const { output } = await ai.generate({
+    const result = await ai.generate({
         model: input.model as any,
         prompt: finalPrompt,
-        output: {
-          schema: RefineTextOutputSchema,
-        },
     });
 
-    if (!output) {
+    if (!result.text) {
         throw new Error("Received an empty response from the AI model.");
     }
     
-    return output;
+    return result.text;
   }
 );

@@ -17,12 +17,14 @@ export async function refineTextAction(
 
     try {
         const { refineText } = await import('@/ai/flows/refine-text');
-        const result = await withRetry(() => refineText({ text, action, template }));
+        // The result is now a direct string, not an object.
+        const resultText = await withRetry(() => refineText({ text, action, template }));
 
         await logUserActivity(userId, 'Word Craft', `User performed action: "${action}"`);
         await updateUserLastActive(userId);
 
-        return result;
+        // Wrap the text in the expected output format for the component.
+        return { refinedText: resultText };
     } catch (error: any) {
         console.error('Word Craft action failed in server action:', error);
         return { error: error.message || 'An unexpected error occurred while processing the text refinement.' };
