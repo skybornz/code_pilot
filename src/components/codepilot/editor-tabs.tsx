@@ -6,7 +6,7 @@ import type { CodeFile } from './types';
 import { Button } from '../ui/button';
 import { X, FileCode } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
-import {useRef} from 'react';
+import React, { useRef } from 'react';
 
 interface EditorTabsProps {
   openFiles: CodeFile[];
@@ -37,7 +37,7 @@ export function EditorTabs({
   return (
     <div className="flex-shrink-0 border-b bg-muted/20">
       <ScrollArea orientation="horizontal" className="h-full">
-        <div className="flex items-center">
+        <div className="flex items-center" style={{ display: 'inline-flex', minWidth: '100%' }}>
           {openFiles.map(file => (
             <div
               key={file.id}
