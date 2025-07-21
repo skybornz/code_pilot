@@ -13,6 +13,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { css } from '@codemirror/lang-css';
 import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+import { search } from '@codemirror/search';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { diffLines, type Change } from 'diff';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
@@ -222,6 +223,7 @@ export function EditorPanel({
         ...getLanguageExtension(file.language),
         EditorView.lineWrapping,
         editorPlaceholder,
+        search({ top: true }), // Enable search panel
     ];
 
     if (viewMode === 'diff' && file.previousContent) {
@@ -261,8 +263,18 @@ export function EditorPanel({
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-4 space-y-2 md:space-y-0 md:space-x-4">
-        <div className="flex-1 min-w-0 w-full">
-          <CardTitle className={`text-xl font-semibold truncate ${themeColorClass}`} title={file.name}>{file.name}</CardTitle>
+        <div className="flex-1 min-w-0 w-full flex items-center gap-2">
+          <CardTitle className={cn("text-xl font-semibold truncate", themeColorClass)} title={file.name}>{file.name}</CardTitle>
+           <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                   <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Use Cmd+F or Ctrl+F to search</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 w-full md:w-auto justify-end">
           {file.commits && file.commits.length > 0 && (
