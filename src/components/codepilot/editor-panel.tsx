@@ -24,11 +24,12 @@ import { placeholder as codeMirrorPlaceholder } from '@codemirror/view';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { EditorTabs } from './editor-tabs';
+import { GenerateTestDialog } from './generate-test-dialog';
 
 interface EditorPanelProps {
   file: CodeFile;
   onCodeChange: (fileId: string, newContent: string) => void;
-  onAiAction: (action: ActionType, code: string, language: string, originalCode?: string) => void;
+  onAiAction: (action: ActionType, code: string, language: string, originalCode?: string, framework?: string, dependencies?: { name: string; content: string }[]) => void;
   isLoading: boolean;
   onCommitChange: (fileId: string, commitHash: string) => void;
   handleShowCopilotChat: () => void;
@@ -111,6 +112,7 @@ export function EditorPanel({
   const [code, setCode] = useState(file.content || '');
   const [scrollToLine, setScrollToLine] = useState<number | null>(null);
   const [currentChangeIndex, setCurrentChangeIndex] = useState(-1);
+  const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const pathname = usePathname();
   
@@ -241,9 +243,13 @@ export function EditorPanel({
   
   const analyzeDisabled = isLoading || !file.previousContent;
 
-  const primaryActions: { id: ActionType; label: string; icon: React.ElementType }[] = [
-    { id: 'explain', label: 'Explain Code', icon: BookText },
-    { id: 'test', label: 'Generate Unit Test', icon: TestTube2 },
+  const handleGenTestClick = () => {
+    setIsTestDialogOpen(true);
+  };
+
+  const primaryActions: { id: ActionType; label: string; icon: React.ElementType, onClick?: () => void }[] = [
+    { id: 'explain', label: 'Explain Code', icon: BookText, onClick: () => onAiAction('explain', code, file.language) },
+    { id: 'test', label: 'Generate Unit Test', icon: TestTube2, onClick: handleGenTestClick },
   ];
 
   const copilotAction = { id: 'copilot', label: 'AD Labs Chat', icon: Bot };
@@ -265,6 +271,8 @@ export function EditorPanel({
         }
     }, 0);
   };
+  
+  const otherOpenFiles = openFiles.filter(f => f.id !== file.id);
 
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
@@ -392,7 +400,7 @@ export function EditorPanel({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onAiAction(action.id, code, file.language)}
+                    onClick={action.onClick}
                     disabled={isLoading}
                     aria-label={action.label}
                     className={buttonThemeClass}
@@ -471,6 +479,13 @@ export function EditorPanel({
               }}
             />
       </CardContent>
+       <GenerateTestDialog
+          open={isTestDialogOpen}
+          onOpenChange={setIsTestDialogOpen}
+          activeFile={file}
+          otherOpenFiles={otherOpenFiles}
+          onGenerate={(framework, dependencies) => onAiAction('test', code, file.language, undefined, framework, dependencies)}
+        />
     </Card>
   );
 }

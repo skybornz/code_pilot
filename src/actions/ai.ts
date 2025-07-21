@@ -25,6 +25,8 @@ export async function performAiAction(
     code: string,
     language: string,
     originalCode?: string,
+    framework?: string,
+    dependencies?: { name: string; content: string }[],
     activeFileName?: string,
 ): Promise<AIOutput | { error: string }> {
     await configureAi();
@@ -52,7 +54,7 @@ export async function performAiAction(
         } else if (action === 'test') {
             actionName = 'Generate Test';
             const { generateUnitTest } = await import('@/ai/flows/generate-unit-test');
-            const unitTest = await withRetry(() => generateUnitTest({ model, code, language }));
+            const unitTest = await withRetry(() => generateUnitTest({ model, code, language, framework, dependencies }));
             result = { type: 'test', data: unitTest.test, title: 'Generated Unit Test', language };
         } else if (action === 'refactor') {
             actionName = 'Refactor Code';

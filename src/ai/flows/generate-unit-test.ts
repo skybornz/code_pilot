@@ -15,10 +15,17 @@ import fs from 'fs/promises';
 import path from 'path';
 import handlebars from 'handlebars';
 
+const DependencySchema = z.object({
+  name: z.string(),
+  content: z.string(),
+});
+
 const GenerateUnitTestFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for generating the test.'),
   code: z.string().describe('The code block to generate a unit test for.'),
   language: z.string().describe('The programming language of the code.'),
+  framework: z.string().optional().describe('The testing framework to use, e.g., "jest", "pytest".'),
+  dependencies: z.array(DependencySchema).optional().describe('An array of dependent files with their content.'),
 });
 export type GenerateUnitTestInput = z.infer<typeof GenerateUnitTestFlowInputSchema>;
 
@@ -61,6 +68,8 @@ const generateUnitTestFlow = ai.defineFlow(
     const finalPrompt = promptTemplate({
         language: input.language,
         code: input.code,
+        framework: input.framework,
+        dependencies: input.dependencies,
     });
       
     const result = await ai.generate({
