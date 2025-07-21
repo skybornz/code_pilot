@@ -112,10 +112,10 @@ export default function WordCraftPage() {
     return 'Refine Text';
   }
 
-  const renderInputs = () => {
+  const renderInputPanel = () => {
     if (mode === 'template') {
         return (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-8">
                 <Card className="bg-card/50">
                     <CardHeader>
                         <CardTitle className="text-lg text-indigo-400">Template</CardTitle>
@@ -123,7 +123,7 @@ export default function WordCraftPage() {
                     <CardContent>
                         <Textarea
                             placeholder="e.g., Meeting Title: [Title]&#10;Attendees: [List of names]&#10;Summary: [A brief summary]"
-                            className="min-h-[300px] font-sans"
+                            className="min-h-[150px] font-sans"
                             value={template}
                             onChange={(e) => setTemplate(e.target.value)}
                             disabled={isLoading}
@@ -137,7 +137,7 @@ export default function WordCraftPage() {
                     <CardContent>
                         <Textarea
                             placeholder="Provide the content or data points here..."
-                            className="min-h-[300px] font-sans"
+                            className="min-h-[150px] font-sans"
                             value={originalText}
                             onChange={(e) => setOriginalText(e.target.value)}
                             disabled={isLoading}
@@ -149,54 +149,55 @@ export default function WordCraftPage() {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="bg-card/50">
-                <CardHeader>
-                    <CardTitle className="text-lg text-indigo-400">Original Text</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Textarea
-                        placeholder="Paste your text here..."
-                        className="min-h-[300px] font-sans"
-                        value={originalText}
-                        onChange={(e) => setOriginalText(e.target.value)}
-                        disabled={isLoading}
-                    />
-                </CardContent>
-            </Card>
-            <Card className="bg-card/50">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg text-indigo-400">AI Output</CardTitle>
-                      {refinedText && !isLoading && (
-                        <Button variant="ghost" size="icon" onClick={handleCopy} className="h-7 w-7">
-                            {isCopied ? <ClipboardCheck className="h-4 w-4 text-green-400" /> : <Clipboard className="h-4 w-4" />}
-                        </Button>
-                    )}
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                        <div className="flex items-center justify-center h-full min-h-[300px]">
-                          <LoadingSpinner text="The AI is working its magic..." />
-                      </div>
-                  ) : refinedText ? (
-                    <div className="relative">
-                        <Textarea
-                            placeholder="AI output will appear here..."
-                            className="min-h-[300px] font-sans"
-                            value={refinedText}
-                            readOnly
-                        />
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full min-h-[300px]">
-                        <p className="text-muted-foreground">AI output will appear here.</p>
-                    </div>
-                  )}
-                </CardContent>
-            </Card>
-        </div>
+        <Card className="bg-card/50">
+            <CardHeader>
+                <CardTitle className="text-lg text-indigo-400">Original Text</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Textarea
+                    placeholder="Paste your text here..."
+                    className="min-h-[300px] font-sans"
+                    value={originalText}
+                    onChange={(e) => setOriginalText(e.target.value)}
+                    disabled={isLoading}
+                />
+            </CardContent>
+        </Card>
     )
   }
+
+  const renderOutputPanel = () => (
+    <Card className="bg-card/50 h-full flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg text-indigo-400">AI Output</CardTitle>
+              {refinedText && !isLoading && (
+                <Button variant="ghost" size="icon" onClick={handleCopy} className="h-7 w-7">
+                    {isCopied ? <ClipboardCheck className="h-4 w-4 text-green-400" /> : <Clipboard className="h-4 w-4" />}
+                </Button>
+            )}
+        </CardHeader>
+        <CardContent className="flex-1">
+          {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <LoadingSpinner text="The AI is working its magic..." />
+              </div>
+          ) : refinedText ? (
+            <div className="relative h-full">
+                <Textarea
+                    placeholder="AI output will appear here..."
+                    className="h-full min-h-[300px] font-sans"
+                    value={refinedText}
+                    readOnly
+                />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full min-h-[300px]">
+                <p className="text-muted-foreground">AI output will appear here.</p>
+            </div>
+          )}
+        </CardContent>
+    </Card>
+  )
 
   return (
     <div className="theme-word-craft min-h-screen flex flex-col bg-background">
@@ -295,7 +296,10 @@ export default function WordCraftPage() {
             </CardContent>
           </Card>
           
-           {renderInputs()}
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {renderInputPanel()}
+                {renderOutputPanel()}
+           </div>
         </div>
       </main>
     </div>
