@@ -431,14 +431,20 @@ export function ADLabsWorkspace() {
         </div>
       </main>
 
-      {/* This ensures the dialog is part of the main component tree and not re-rendered */}
       {activeFile && (
         <GenerateTestDialog
           open={isTestDialogOpen}
           onOpenChange={setIsTestDialogOpen}
           activeFile={activeFile}
           otherOpenFiles={otherOpenFiles}
-          onGenerate={(framework, dependencies) => handleAiAction('test', activeFile.content || '', activeFile.language, undefined, framework, dependencies)}
+          onGenerate={useCallback(
+            (framework: string, dependencies: { name: string; content: string }[]) => {
+              if (activeFile?.content) {
+                handleAiAction('test', activeFile.content, activeFile.language, undefined, framework, dependencies);
+              }
+            },
+            [activeFile, handleAiAction]
+          )}
         />
       )}
     </div>
