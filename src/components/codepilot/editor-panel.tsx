@@ -24,6 +24,7 @@ import { placeholder as codeMirrorPlaceholder } from '@codemirror/view';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { EditorTabs } from './editor-tabs';
+import { GenerateTestDialog } from './generate-test-dialog';
 
 interface EditorPanelProps {
   file: CodeFile;
