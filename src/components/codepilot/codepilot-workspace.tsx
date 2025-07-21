@@ -54,6 +54,44 @@ export function ADLabsWorkspace() {
       { role: 'model', content: "Hello! I'm the AD Labs assistant. How can I help you with your code today?" }
     ]);
   }, []);
+
+  const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string, framework?: string, dependencies?: { name: string; content: string }[]) => {
+    if (!user) return;
+    setIsLoading(true);
+    setAnalysisChatMessages([]);
+    setRightPanelView('ai-output');
+    
+    const result = await performAiAction(user.id, action, code, language, originalCode, activeFile?.name, framework, dependencies);
+
+    if ('error' in result) {
+      toast({
+        variant: 'destructive',
+        title: 'AI Action Failed',
+        description: result.error,
+      });
+    } else {
+      if (activeFile) {
+        const outputWithContext: AIOutput = {
+          ...result,
+          fileContext: { id: activeFile.id, name: activeFile.name },
+        };
+        setAiOutput(outputWithContext);
+      } else {
+        setAiOutput(result);
+      }
+    }
+    
+    setIsLoading(false);
+  }, [toast, activeFile, user]);
+  
+  const handleGenerateTest = useCallback(
+    (framework: string, dependencies: { name: string; content: string }[]) => {
+      if (activeFile?.content) {
+        handleAiAction('test', activeFile.content, activeFile.language, undefined, framework, dependencies);
+      }
+    },
+    [activeFile, handleAiAction]
+  );
   
   const handleFilesLoaded = useCallback(async (loadedFiles: Partial<CodeFile>[], project: Project, branch: string) => {
     if (!user) return;
@@ -224,35 +262,6 @@ export function ADLabsWorkspace() {
       )
     );
   };
-
-  const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string, framework?: string, dependencies?: { name: string; content: string }[]) => {
-    if (!user) return;
-    setIsLoading(true);
-    setAnalysisChatMessages([]);
-    setRightPanelView('ai-output');
-    
-    const result = await performAiAction(user.id, action, code, language, originalCode, activeFile?.name, framework, dependencies);
-
-    if ('error' in result) {
-      toast({
-        variant: 'destructive',
-        title: 'AI Action Failed',
-        description: result.error,
-      });
-    } else {
-      if (activeFile) {
-        const outputWithContext: AIOutput = {
-          ...result,
-          fileContext: { id: activeFile.id, name: activeFile.name },
-        };
-        setAiOutput(outputWithContext);
-      } else {
-        setAiOutput(result);
-      }
-    }
-    
-    setIsLoading(false);
-  }, [toast, activeFile, user]);
 
   const handleSwitchProject = () => {
     setAllFiles([]);
@@ -437,14 +446,7 @@ export function ADLabsWorkspace() {
           onOpenChange={setIsTestDialogOpen}
           activeFile={activeFile}
           otherOpenFiles={otherOpenFiles}
-          onGenerate={useCallback(
-            (framework: string, dependencies: { name: string; content: string }[]) => {
-              if (activeFile?.content) {
-                handleAiAction('test', activeFile.content, activeFile.language, undefined, framework, dependencies);
-              }
-            },
-            [activeFile, handleAiAction]
-          )}
+          onGenerate={handleGenerateTest}
         />
       )}
     </div>
