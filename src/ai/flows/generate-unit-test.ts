@@ -29,7 +29,7 @@ const GenerateUnitTestFlowInputSchema = z.object({
 });
 export type GenerateUnitTestInput = z.infer<typeof GenerateUnitTestFlowInputSchema>;
 
-// The output is now a single string containing the full unit test and explanation in Markdown.
+// The output is an object containing the full unit test and explanation in Markdown.
 const GenerateUnitTestOutputSchema = z.object({
   test: z.string().describe('The generated unit test and explanation in Markdown format.'),
 });
@@ -78,7 +78,7 @@ const generateUnitTestFlow = ai.defineFlow(
         prompt: finalPrompt,
     });
     
-    // The output is now the raw text from the AI, wrapped in the expected object format.
+    // The output is the raw text from the AI, wrapped in the expected object format.
     return { test: result.text };
   }
 );
