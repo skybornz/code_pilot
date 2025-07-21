@@ -187,8 +187,8 @@ export default function CodeGptPage() {
                 <CardHeader>
                     <CardTitle className="text-lg text-pink-400">Refine Code</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1 min-h-0 flex flex-col p-0">
-                    <ScrollArea className="flex-1 pr-4" ref={chatScrollAreaRef}>
+                <CardContent className="flex-1 min-h-0 p-0">
+                    <ScrollArea className="h-full pr-4" ref={chatScrollAreaRef}>
                         <div className="space-y-4 px-6">
                             {chatMessages.map((message, index) => (
                                 <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
@@ -207,7 +207,7 @@ export default function CodeGptPage() {
                         </div>
                     </ScrollArea>
                 </CardContent>
-                <div className="p-6 pt-4">
+                <div className="p-6 pt-4 border-t">
                     <form onSubmit={handleRefine} className="flex items-start gap-2">
                         <Textarea value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="e.g., Add comments to the code" disabled={isRefining} className="min-h-[40px] max-h-[120px]" />
                         <Button type="submit" size="icon" className="bg-pink-600 hover:bg-pink-700 text-white flex-shrink-0" disabled={isRefining || !chatInput.trim()}><Send className="h-4 w-4" /></Button>
@@ -217,7 +217,7 @@ export default function CodeGptPage() {
         </div>
 
         {/* Right Panel */}
-        <Card className="bg-card/50 flex-1 flex flex-col min-h-0">
+        <Card className="bg-card/50 flex flex-col min-h-0">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-pink-400 flex items-center gap-2">
               <Lightbulb />

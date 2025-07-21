@@ -16,8 +16,8 @@ export async function refineCodeSnippet(
     await configureAi();
 
     try {
-        const { refineCodeSnippetFlow } = await import('@/ai/flows/refine-code-snippet');
-        const result = await withRetry(() => refineCodeSnippetFlow({ code, instruction, language }));
+        const { refineCodeSnippet } = await import('@/ai/flows/refine-code-snippet');
+        const result = await withRetry(() => refineCodeSnippet({ code, instruction, language }));
 
         await logUserActivity(userId, 'Code GPT', `User refined a '${language}' snippet with instruction: "${instruction}"`);
         await updateUserLastActive(userId);
