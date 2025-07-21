@@ -24,7 +24,6 @@ import { placeholder as codeMirrorPlaceholder } from '@codemirror/view';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { EditorTabs } from './editor-tabs';
-import { GenerateTestDialog } from './generate-test-dialog';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -38,6 +37,7 @@ interface EditorPanelProps {
   openFiles: CodeFile[];
   onTabSelect: (fileId: string) => void;
   onTabClose: (fileId: string) => void;
+  onGenTestClick: () => void;
 }
 
 const getLanguageExtension = (language: string) => {
@@ -108,11 +108,11 @@ export function EditorPanel({
   openFiles,
   onTabSelect,
   onTabClose,
+  onGenTestClick,
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content || '');
   const [scrollToLine, setScrollToLine] = useState<number | null>(null);
   const [currentChangeIndex, setCurrentChangeIndex] = useState(-1);
-  const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const pathname = usePathname();
   
@@ -243,13 +243,9 @@ export function EditorPanel({
   
   const analyzeDisabled = isLoading || !file.previousContent;
 
-  const handleGenTestClick = () => {
-    setIsTestDialogOpen(true);
-  };
-
   const primaryActions: { id: ActionType; label: string; icon: React.ElementType, onClick?: () => void }[] = [
     { id: 'explain', label: 'Explain Code', icon: BookText, onClick: () => onAiAction('explain', code, file.language) },
-    { id: 'test', label: 'Generate Unit Test', icon: TestTube2, onClick: handleGenTestClick },
+    { id: 'test', label: 'Generate Unit Test', icon: TestTube2, onClick: onGenTestClick },
   ];
 
   const copilotAction = { id: 'copilot', label: 'AD Labs Chat', icon: Bot };
@@ -271,8 +267,6 @@ export function EditorPanel({
         }
     }, 0);
   };
-  
-  const otherOpenFiles = openFiles.filter(f => f.id !== file.id);
 
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
@@ -479,13 +473,6 @@ export function EditorPanel({
               }}
             />
       </CardContent>
-       <GenerateTestDialog
-          open={isTestDialogOpen}
-          onOpenChange={setIsTestDialogOpen}
-          activeFile={file}
-          otherOpenFiles={otherOpenFiles}
-          onGenerate={(framework, dependencies) => onAiAction('test', code, file.language, undefined, framework, dependencies)}
-        />
     </Card>
   );
 }

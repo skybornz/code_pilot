@@ -23,6 +23,7 @@ import { updateUserLastActive } from '@/actions/users';
 import { performAiAction } from '@/actions/ai';
 import { DashboardHeader } from '../dashboard/dashboard-header';
 import { LoadingSpinner } from '../ui/loading-spinner';
+import { GenerateTestDialog } from './generate-test-dialog';
 
 const ACTIVE_PROJECT_KEY_PREFIX = 'adlabs_active_project_';
 
@@ -43,6 +44,7 @@ export function ADLabsWorkspace() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [editorViewMode, setEditorViewMode] = useState<'edit' | 'diff'>('edit');
+  const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
   
   const activeFile = openFiles.find((f) => f.id === activeFileId);
   const activeProjectKey = user ? `${ACTIVE_PROJECT_KEY_PREFIX}${user.id}` : null;
@@ -223,13 +225,13 @@ export function ADLabsWorkspace() {
     );
   };
 
-  const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string) => {
+  const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string, framework?: string, dependencies?: { name: string; content: string }[]) => {
     if (!user) return;
     setIsLoading(true);
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
     
-    const result = await performAiAction(user.id, action, code, language, originalCode, activeFile?.name);
+    const result = await performAiAction(user.id, action, code, language, originalCode, activeFile?.name, framework, dependencies);
 
     if ('error' in result) {
       toast({
@@ -311,6 +313,8 @@ export function ADLabsWorkspace() {
       </div>
     );
   }
+  
+  const otherOpenFiles = openFiles.filter(f => f.id !== activeFileId);
 
   // If a project is loaded, render the full IDE experience.
   const editor = (isFileLoading && activeFile?.type === 'file') ? (
@@ -318,20 +322,30 @@ export function ADLabsWorkspace() {
         <LoadingSpinner text="Loading file content..." />
     </Card>
   ) : activeFile && activeFile.type === 'file' ? (
-    <EditorPanel
-      key={`${activeFile.id}-${activeFile.activeCommitHash || 'latest'}`}
-      file={activeFile}
-      onCodeChange={handleCodeChange}
-      onAiAction={handleAiAction}
-      isLoading={isLoading}
-      onCommitChange={handleCommitChange}
-      handleShowCopilotChat={handleShowCopilotChat}
-      viewMode={editorViewMode}
-      setViewMode={setEditorViewMode}
-      openFiles={openFiles}
-      onTabSelect={setActiveFileId}
-      onTabClose={handleTabClose}
-    />
+    <>
+      <EditorPanel
+        key={activeFile.id}
+        file={activeFile}
+        onCodeChange={handleCodeChange}
+        onAiAction={handleAiAction}
+        isLoading={isLoading}
+        onCommitChange={handleCommitChange}
+        handleShowCopilotChat={handleShowCopilotChat}
+        viewMode={editorViewMode}
+        setViewMode={setEditorViewMode}
+        openFiles={openFiles}
+        onTabSelect={setActiveFileId}
+        onTabClose={handleTabClose}
+        onGenTestClick={() => setIsTestDialogOpen(true)}
+      />
+      <GenerateTestDialog
+          open={isTestDialogOpen}
+          onOpenChange={setIsTestDialogOpen}
+          activeFile={activeFile}
+          otherOpenFiles={otherOpenFiles}
+          onGenerate={(framework, dependencies) => handleAiAction('test', activeFile.content || '', activeFile.language, undefined, framework, dependencies)}
+        />
+    </>
   ) : (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
         <p className="text-muted-foreground">Select a file from the explorer to view its content.</p>
