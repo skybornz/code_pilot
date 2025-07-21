@@ -9,6 +9,8 @@ import type { CodeFile } from './types';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '../ui/badge';
+import { Checkbox } from '../ui/checkbox';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface GenerateTestDialogProps {
   open: boolean;
@@ -49,6 +51,7 @@ const GenerateTestDialogMemo = ({
 }: GenerateTestDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [framework, setFramework] = useState('');
+  const [selectedDependencies, setSelectedDependencies] = useState<string[]>([]);
 
   const availableFrameworks = useMemo(() => {
     return frameworkOptions[activeFile.language] || [];
@@ -59,13 +62,25 @@ const GenerateTestDialogMemo = ({
       // Reset state when dialog opens and set default framework
       const currentFrameworks = frameworkOptions[activeFile.language] || [];
       setFramework(currentFrameworks.length > 0 ? currentFrameworks[0].value : '');
+      setSelectedDependencies([]);
     }
   }, [open, activeFile.language]);
 
+  const handleDependencyToggle = (fileId: string) => {
+    setSelectedDependencies(prev => 
+        prev.includes(fileId) 
+            ? prev.filter(id => id !== fileId) 
+            : [...prev, fileId]
+    );
+  };
+
   const handleGenerateClick = () => {
     setIsLoading(true);
-    // Pass empty values for dependencies for now
-    onGenerate(framework, []);
+    const dependenciesToSend = otherOpenFiles
+        .filter(file => selectedDependencies.includes(file.id))
+        .map(file => ({ name: file.name, content: file.content || '' }));
+
+    onGenerate(framework, dependenciesToSend);
 
     // Close dialog after a short delay to show loading state
     setTimeout(() => {
@@ -107,6 +122,32 @@ const GenerateTestDialogMemo = ({
                         </SelectContent>
                     </Select>
                  </div>
+            )}
+            
+            {otherOpenFiles.length > 0 && (
+              <div className="space-y-2">
+                <Label>Dependencies</Label>
+                <p className="text-xs text-muted-foreground">Select any open files that the file-to-test depends on to improve generation accuracy.</p>
+                <ScrollArea className="h-32 rounded-md border">
+                    <div className="p-4 space-y-2">
+                    {otherOpenFiles.map(file => (
+                        <div key={file.id} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`dep-${file.id}`}
+                                checked={selectedDependencies.includes(file.id)}
+                                onCheckedChange={() => handleDependencyToggle(file.id)}
+                            />
+                            <label
+                                htmlFor={`dep-${file.id}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                {file.name}
+                            </label>
+                        </div>
+                    ))}
+                    </div>
+                </ScrollArea>
+              </div>
             )}
         </div>
 
