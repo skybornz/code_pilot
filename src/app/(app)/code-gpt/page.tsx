@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogoMark } from '@/components/codepilot/logo-mark';
+import { Badge } from '@/components/ui/badge';
 
 const supportedLanguages = [
     { value: 'typescript', label: 'TypeScript' },
