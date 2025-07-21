@@ -10,13 +10,14 @@ import { updateUserLastActive } from './users';
 export async function refineTextAction(
     userId: string,
     text: string,
-    action: string
+    action: string,
+    template?: string
 ): Promise<RefineTextOutput | { error: string }> {
     await configureAi();
 
     try {
         const { refineText } = await import('@/ai/flows/refine-text');
-        const result = await withRetry(() => refineText({ text, action }));
+        const result = await withRetry(() => refineText({ text, action, template }));
 
         await logUserActivity(userId, 'Word Craft', `User performed action: "${action}"`);
         await updateUserLastActive(userId);

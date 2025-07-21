@@ -19,7 +19,8 @@ import handlebars from 'handlebars';
 
 const RefineTextInputSchema = z.object({
   text: z.string().describe('The original text to be processed.'),
-  action: z.string().describe('The desired action, e.g., "Business Email", "Summarize Document", "Translate Content to Korean".'),
+  action: z.string().describe('The desired action, e.g., "Business Email", "Summarize Document", "Translate Content to Korean", "use-template".'),
+  template: z.string().optional().describe('An optional template to structure the output.'),
 });
 export type RefineTextInput = z.infer<typeof RefineTextInputSchema>;
 
@@ -67,12 +68,15 @@ const refineTextFlow = ai.defineFlow(
   },
   async (input) => {
     const isAnalyzeMode = input.action.startsWith('summarize') || input.action.startsWith('translate') || input.action.startsWith('insight');
-    
+    const isTemplateMode = input.action === 'use-template';
+
     const promptTemplate = await getCompiledPrompt('refine-text');
     const finalPrompt = promptTemplate({
         isAnalyzeMode,
+        isTemplateMode,
         action: input.action,
         text: input.text,
+        template: input.template,
     });
     
     const { output } = await ai.generate({
