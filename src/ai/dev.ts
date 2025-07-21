@@ -25,6 +25,7 @@ async function initialize() {
     await import('@/ai/flows/execute-code');
     await import('@/ai/flows/refine-text');
     await import('@/ai/flows/code-completion');
+    await import('@/ai/flows/refine-code-snippet');
 }
 
 initialize().catch(err => {
