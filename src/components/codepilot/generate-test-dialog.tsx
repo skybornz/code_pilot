@@ -56,10 +56,11 @@ const GenerateTestDialogMemo = ({
 
   useEffect(() => {
     if (open) {
-      // Reset state when dialog opens
-      setFramework(availableFrameworks.length > 0 ? availableFrameworks[0].value : '');
+      // Reset state when dialog opens and set default framework
+      const currentFrameworks = frameworkOptions[activeFile.language] || [];
+      setFramework(currentFrameworks.length > 0 ? currentFrameworks[0].value : '');
     }
-  }, [open, availableFrameworks]);
+  }, [open, activeFile.language]);
 
   const handleGenerateClick = () => {
     setIsLoading(true);
