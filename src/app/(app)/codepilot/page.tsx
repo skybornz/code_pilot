@@ -45,15 +45,15 @@ const supportedLanguages = [
 const languageKeywords: { [key: string]: { patterns: RegExp[], score: number } } = {
   tsx: { patterns: [/\b(import|export)\s+.*\s+from\s+['"]react['"]/, /<[A-Z][a-zA-Z0-9]*\s*.*>/, /:\s*\w+Props/, /const\s+\w+\s*:\s*React.FC/], score: 5 },
   jsx: { patterns: [/\b(import|export)\s+.*\s+from\s+['"]react['"]/, /<[A-Z][a-zA-Z0-9]*\s*.*>/, /React.createElement/], score: 4 },
-  typescript: { patterns: [/: \w+;/, /interface\s+\w+/, /type\s+\w+\s*=/, /<[A-Z][a-zA-Z0-9]*>/, /public\s+(class|interface|enum)/, /private\s+/, /protected\s+/], score: 3 },
-  javascript: { patterns: [/const\s+\w+\s*=\s*require\(/, /module\.exports/, /console\.log\(/, /function\*/, /=>/], score: 1 },
-  python: { patterns: [/def\s+\w+\(/, /import\s+\w+/, /print\(/, /__name__\s*==\s*['"]__main__['"]/, /@\w+/], score: 3 },
-  java: { patterns: [/public\s+static\s+void\s+main/, /System\.out\.println/, /import\s+java\./], score: 3 },
-  csharp: { patterns: [/using\s+System;/, /namespace\s+\w+/, /Console\.WriteLine/], score: 3 },
-  cpp: { patterns: [/#include\s*<iostream>/, /std::cout/], score: 2 },
-  c: { patterns: [/#include\s*<stdio\.h>/, /printf\(/, /scanf\(/, /int\s+main\(/], score: 1 },
-  css: { patterns: [/body\s*{/, /#\w+\s*{/, /\.\w+\s*{/, /@media/], score: 3 },
-  html: { patterns: [/<!DOCTYPE\s+html>/i, /<html\s*>/i, /<head\s*>/i, /<body\s*>/i], score: 3 },
+  typescript: { patterns: [/\b(interface|type|enum|public|private|protected)\b/, /:\s*\w+[;\[\]]/, /<\w+>/], score: 3 },
+  cpp: { patterns: [/^#include\s*<iostream>/m, /\bstd::(cout|cin|endl)\b/, /\b(int|void)\s+main\s*\(/], score: 4 },
+  csharp: { patterns: [/\busing\s+System;/, /\b(namespace|class|public|static|void)\b/], score: 3 },
+  java: { patterns: [/\bimport\s+java\./, /\b(public|static|void)\s+main\s*\(/, /System\.out\.println/], score: 3 },
+  python: { patterns: [/^def\s+\w+\s*\(.*\):/m, /^import\s+/, /^from\s+.*import\s+/m, /__name__\s*==\s*['"]__main__['"]/], score: 3 },
+  c: { patterns: [/^#include\s*<stdio\.h>/m, /\b(printf|scanf|malloc|free)\s*\(/], score: 2 },
+  javascript: { patterns: [/const\s+\w+\s*=\s*require\(/, /module\.exports/, /console\.log\(/, /function\s*\*?/, /=>/], score: 1 },
+  html: { patterns: [/<!DOCTYPE\s+html>/i, /<html.*>/i, /<head.*>/i, /<body.*>/i], score: 3 },
+  css: { patterns: [/body\s*\{/, /#\w+\s*\{/, /\.\w+\s*\{/, /@media/], score: 3 },
 };
 
 function detectLanguage(code: string): string {
@@ -66,10 +66,10 @@ function detectLanguage(code: string): string {
 
     for (const lang in languageKeywords) {
         let currentScore = 0;
-        const { patterns, score } = languageKeywords[lang];
+        const { patterns, score: baseScore } = languageKeywords[lang];
         for (const pattern of patterns) {
             if (pattern.test(code)) {
-                currentScore += score;
+                currentScore += baseScore;
             }
         }
         if (currentScore > maxScore) {
