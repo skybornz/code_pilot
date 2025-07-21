@@ -35,6 +35,7 @@ const GenerateUnitTestOutputSchema = z.object({
 });
 export type GenerateUnitTestOutput = z.infer<typeof GenerateUnitTestOutputSchema>;
 
+
 export async function generateUnitTest(input: GenerateUnitTestInput): Promise<GenerateUnitTestOutput> {
   return generateUnitTestFlow(input);
 }
@@ -77,6 +78,7 @@ const generateUnitTestFlow = ai.defineFlow(
         prompt: finalPrompt,
     });
     
+    // The output is now the raw text from the AI, wrapped in the expected object format.
     return { test: result.text };
   }
 );
