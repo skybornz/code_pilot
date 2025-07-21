@@ -25,9 +25,9 @@ export async function performAiAction(
     code: string,
     language: string,
     originalCode?: string,
+    activeFileName?: string,
     framework?: string,
     dependencies?: { name: string; content: string }[],
-    activeFileName?: string,
 ): Promise<AIOutput | { error: string }> {
     await configureAi();
 
