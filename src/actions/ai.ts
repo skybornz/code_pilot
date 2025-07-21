@@ -4,7 +4,7 @@
 import { configureAi } from '@/ai/genkit';
 import { getDefaultModel } from './models';
 import { withRetry } from '@/lib/utils';
-import type { ActionType, AIOutput } from '@/components/codepilot/types';
+import type { ActionType, AIOutput, GenerateUnitTestOutput } from '@/components/codepilot/types';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { logUserActivity } from './activity';
 import { updateUserLastActive } from './users';
@@ -54,7 +54,7 @@ export async function performAiAction(
         } else if (action === 'test') {
             actionName = 'Generate Test';
             const { generateUnitTest } = await import('@/ai/flows/generate-unit-test');
-            const unitTest = await withRetry(() => generateUnitTest({ model, code, language, framework, dependencies }));
+            const unitTest: GenerateUnitTestOutput = await withRetry(() => generateUnitTest({ model, code, language, framework, dependencies }));
             result = { type: 'test', data: unitTest.test, title: 'Generated Unit Test', language };
         } else if (action === 'refactor') {
             actionName = 'Refactor Code';
