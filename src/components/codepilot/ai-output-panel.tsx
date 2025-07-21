@@ -210,9 +210,8 @@ export function AIOutputPanel({
           </p>
         )}
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col min-h-0 p-0">
-        <div className="flex-1 min-h-0">
-            <ScrollArea className="h-full" ref={scrollAreaRef}>
+      <CardContent className="flex-1 p-0 flex flex-col min-h-0">
+          <ScrollArea className="flex-1" ref={scrollAreaRef}>
             <div className="p-4">
                 {isLoading && <AIActionLoader />}
                 {!isLoading && !output && (
@@ -263,8 +262,7 @@ export function AIOutputPanel({
                 </div>
                 )}
             </div>
-            </ScrollArea>
-        </div>
+          </ScrollArea>
       </CardContent>
        {output && !isLoading && (
         <CardFooter className="p-4 border-t flex-shrink-0">
