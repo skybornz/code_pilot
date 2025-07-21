@@ -6,6 +6,7 @@ import type { CodeFile } from './types';
 import { Button } from '../ui/button';
 import { X, FileCode } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
+import {useRef} from 'react';
 
 interface EditorTabsProps {
   openFiles: CodeFile[];
@@ -20,17 +21,27 @@ export function EditorTabs({
   onTabSelect,
   onTabClose,
 }: EditorTabsProps) {
+  const activeTabRef = useRef<HTMLDivElement>(null);
+
   if (openFiles.length === 0) {
     return null;
   }
+  
+  // This is a side-effect to scroll the active tab into view
+  React.useEffect(() => {
+    if (activeTabRef.current) {
+        activeTabRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [activeFileId]);
 
   return (
     <div className="flex-shrink-0 border-b bg-muted/20">
       <ScrollArea orientation="horizontal" className="h-full">
-        <div className="flex items-stretch">
+        <div className="flex items-center">
           {openFiles.map(file => (
             <div
               key={file.id}
+              ref={activeFileId === file.id ? activeTabRef : null}
               onClick={() => onTabSelect(file.id)}
               className={cn(
                 'flex items-center gap-2 px-3 py-2 text-xs border-r cursor-pointer whitespace-nowrap',
