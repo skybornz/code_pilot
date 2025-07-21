@@ -209,56 +209,56 @@ export function AIOutputPanel({
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
           <ScrollArea className="flex-1" ref={scrollAreaRef}>
             <div className="p-4 space-y-4">
-                {isLoading && <AIActionLoader />}
+              {isLoading && <AIActionLoader />}
 
-                {!isLoading && !output && (
-                  <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-16">
-                      <p>Select an AI action to see the results here.</p>
-                      <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
-                  </div>
-                )}
-                
-                {/* Main AI output */}
-                {!isLoading && output && (
-                  <div>
-                      <MessageContent content={output.data} onCopy={handleCopyAndScroll} />
-                  </div>
-                )}
-            
-                {/* Follow-up chat messages */}
-                {messages.length > 0 && output && <Separator />}
+              {!isLoading && !output && (
+                <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-16">
+                    <p>Select an AI action to see the results here.</p>
+                    <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
+                </div>
+              )}
+              
+              {/* Main AI output */}
+              {!isLoading && output && (
+                <div>
+                    <MessageContent content={output.data} onCopy={handleCopyAndScroll} />
+                </div>
+              )}
+          
+              {/* Follow-up chat messages */}
+              {messages.length > 0 && output && <Separator />}
 
-                {messages.map((message, index) => (
-                <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
-                    {message.role === 'model' && (
-                    <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
-                        <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
-                    </Avatar>
-                    )}
-                    <div className={cn(
-                        'p-3 rounded-lg max-w-[85%]', 
-                        'text-sm break-words', 
-                        message.role === 'user' ? `${buttonClass} text-primary-foreground` : 'bg-muted'
-                    )}>
-                    {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
-                    </div>
-                    {message.role === 'user' && (
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
-                    </Avatar>
-                    )}
-                </div>
-                ))}
-                {isChatLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
-                <div className="flex items-start gap-3">
-                    <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
-                        <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
-                    </Avatar>
-                    <div className="p-3 rounded-lg bg-muted flex items-center">
-                        <Loader2 className="h-5 w-5 animate-spin"/>
-                    </div>
-                </div>
-                )}
+              {messages.map((message, index) => (
+              <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
+                  {message.role === 'model' && (
+                  <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
+                      <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
+                  </Avatar>
+                  )}
+                  <div className={cn(
+                      'p-3 rounded-lg max-w-[85%]', 
+                      'text-sm break-words', 
+                      message.role === 'user' ? `${buttonClass} text-primary-foreground` : 'bg-muted'
+                  )}>
+                  {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
+                  </div>
+                  {message.role === 'user' && (
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                  </Avatar>
+                  )}
+              </div>
+              ))}
+              {isChatLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
+              <div className="flex items-start gap-3">
+                  <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
+                      <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
+                  </Avatar>
+                  <div className="p-3 rounded-lg bg-muted flex items-center">
+                      <Loader2 className="h-5 w-5 animate-spin"/>
+                  </div>
+              </div>
+              )}
             </div>
           </ScrollArea>
       </CardContent>

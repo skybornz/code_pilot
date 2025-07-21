@@ -126,7 +126,7 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
           <span>AD Labs Chat</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 p-0 flex flex-col min-h-0">
+      <CardContent className="flex-1 flex flex-col min-h-0">
         <ScrollArea className="flex-1" ref={scrollAreaRef}>
           <div className="space-y-6 p-4">
             {messages.map((message, index) => (

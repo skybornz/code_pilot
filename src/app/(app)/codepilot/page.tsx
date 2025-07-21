@@ -200,37 +200,35 @@ export default function CodePilotPage() {
     return (
         <div className="theme-codepilot min-h-screen flex flex-col bg-background">
             <DashboardHeader />
-            <main className="flex-1 flex p-4 overflow-hidden">
-                <div className="container mx-auto flex flex-col flex-1 gap-4">
-                    <div className="flex-shrink-0 flex items-center justify-between gap-4 border-b pb-4">
-                        <h1 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
-                            <FileTerminal className="h-6 w-6" />
-                            <span>Code Pilot</span>
-                        </h1>
-                        <div className="flex items-center gap-4">
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-                            <Button variant="outline" onClick={triggerFileLoad} className="text-blue-400 border-current hover:bg-blue-400/10 hover:text-blue-400">
-                                <Upload className="mr-2 h-4 w-4" />
-                                Upload File
-                            </Button>
-                        </div>
+            <main className="flex-1 flex flex-col p-4 overflow-hidden">
+                <div className="flex-shrink-0 flex items-center justify-between gap-4 border-b pb-4 mb-4">
+                    <h1 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
+                        <FileTerminal className="h-6 w-6" />
+                        <span>Code Pilot</span>
+                    </h1>
+                    <div className="flex items-center gap-4">
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                        <Button variant="outline" onClick={triggerFileLoad} className="text-blue-400 border-current hover:bg-blue-400/10 hover:text-blue-400">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload File
+                        </Button>
                     </div>
-                    <div className="flex-1 flex gap-4 min-h-0">
-                        <div className="flex-1 flex flex-col min-w-0">
-                            <EditorPanel
-                                file={activeFile}
-                                onCodeChange={handleCodeChange}
-                                onAiAction={handleAiAction}
-                                isLoading={isLoading}
-                                onCommitChange={() => {}} // Not used in this context
-                                handleShowCopilotChat={handleShowCopilotChat}
-                                viewMode={'edit'}
-                                setViewMode={() => {}} // Not used in this context
-                            />
-                        </div>
-                        <div className="flex-1 flex flex-col min-w-0">
-                            {rightPanelContent()}
-                        </div>
+                </div>
+                <div className="flex-1 flex gap-4 min-h-0">
+                    <div className="w-1/2 flex flex-col">
+                        <EditorPanel
+                            file={activeFile}
+                            onCodeChange={handleCodeChange}
+                            onAiAction={handleAiAction}
+                            isLoading={isLoading}
+                            onCommitChange={() => {}} // Not used in this context
+                            handleShowCopilotChat={handleShowCopilotChat}
+                            viewMode={'edit'}
+                            setViewMode={() => {}} // Not used in this context
+                        />
+                    </div>
+                    <div className="w-1/2 flex flex-col">
+                        {rightPanelContent()}
                     </div>
                 </div>
             </main>

@@ -22,6 +22,7 @@ import { TimeAgo } from '@/components/ui/time-ago';
 import { placeholder as codeMirrorPlaceholder } from '@codemirror/view';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -178,7 +179,7 @@ export function EditorPanel({
             }
         });
         
-        return { changeChunks: chunks, lineClasses };
+        return { changeChunks: chunks, lineClasses: lineClasses };
     }, [file.previousContent, code]);
 
     const changeLines = useMemo(() => {
@@ -424,7 +425,7 @@ export function EditorPanel({
           </TooltipProvider>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 p-0 flex flex-col min-h-0">
+      <CardContent className="flex-1 min-h-0">
           <CodeMirror
               ref={editorRef}
               value={code}
