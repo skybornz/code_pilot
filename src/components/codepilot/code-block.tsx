@@ -15,6 +15,7 @@ import { EditorView } from '@codemirror/view';
 interface CodeBlockProps {
   code: string;
   language?: string;
+  onCopy?: () => void;
 }
 
 const getLanguageExtension = (language?: string) => {
@@ -37,7 +38,7 @@ const getLanguageExtension = (language?: string) => {
   }
 };
 
-export function CodeBlock({ code, language }: CodeBlockProps) {
+export function CodeBlock({ code, language, onCopy }: CodeBlockProps) {
   const langExtension = useMemo(() => getLanguageExtension(language), [language]);
   const { toast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
@@ -49,6 +50,9 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
       toast({
         title: 'Copied to clipboard',
       });
+      if (onCopy) {
+        onCopy();
+      }
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy text: ', err);

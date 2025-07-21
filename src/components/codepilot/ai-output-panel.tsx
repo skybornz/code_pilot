@@ -191,6 +191,12 @@ export function AIOutputPanel({
     }
   };
   
+  const handleCopy = () => {
+    if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 border-b p-4">
@@ -204,62 +210,64 @@ export function AIOutputPanel({
           </p>
         )}
       </CardHeader>
-      <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <ScrollArea className="flex-1" ref={scrollAreaRef}>
-          <div className="p-4">
-            {isLoading && <AIActionLoader />}
-            {!isLoading && !output && (
-              <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-16">
-                <p>Select an AI action to see the results here.</p>
-                <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
-              </div>
-            )}
-            {!isLoading && output && (
-              <div>
-                {renderOutput(output)}
-              </div>
-            )}
-          </div>
-          
-          {messages.length > 0 && <Separator className="my-0" />}
+      <CardContent className="flex-1 flex flex-col min-h-0 p-0">
+        <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full" ref={scrollAreaRef}>
+            <div className="p-4">
+                {isLoading && <AIActionLoader />}
+                {!isLoading && !output && (
+                <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-16">
+                    <p>Select an AI action to see the results here.</p>
+                    <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
+                </div>
+                )}
+                {!isLoading && output && (
+                <div>
+                    <MessageContent content={output.data} onCopy={handleCopy} />
+                </div>
+                )}
+            </div>
+            
+            {messages.length > 0 && <Separator className="my-0" />}
 
-          <div className="space-y-6 p-4">
-            {messages.map((message, index) => (
-              <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
-                {message.role === 'model' && (
-                  <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
-                    <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
-                  </Avatar>
-                )}
-                <div className={cn(
-                    'p-3 rounded-lg max-w-[85%]', 
-                    'text-sm break-words', 
-                    message.role === 'user' ? `${buttonClass} text-primary-foreground` : 'bg-muted'
-                )}>
-                  {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
+            <div className="space-y-6 p-4">
+                {messages.map((message, index) => (
+                <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
+                    {message.role === 'model' && (
+                    <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
+                        <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
+                    </Avatar>
+                    )}
+                    <div className={cn(
+                        'p-3 rounded-lg max-w-[85%]', 
+                        'text-sm break-words', 
+                        message.role === 'user' ? `${buttonClass} text-primary-foreground` : 'bg-muted'
+                    )}>
+                    {message.role === 'model' ? <MessageContent content={message.content} /> : <p className="whitespace-pre-wrap">{message.content}</p>}
+                    </div>
+                    {message.role === 'user' && (
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                        <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                    </Avatar>
+                    )}
                 </div>
-                {message.role === 'user' && (
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))}
-            {isChatLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
-              <div className="flex items-start gap-3">
-                 <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
-                    <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
-                  </Avatar>
-                <div className="p-3 rounded-lg bg-muted flex items-center">
-                    <Loader2 className="h-5 w-5 animate-spin"/>
+                ))}
+                {isChatLoading && (messages.length === 0 || messages[messages.length-1].role === 'user') && (
+                <div className="flex items-start gap-3">
+                    <Avatar className="h-8 w-8 border bg-background flex-shrink-0">
+                        <AvatarFallback className="bg-transparent"><LogoMark className={themeColorClass} /></AvatarFallback>
+                    </Avatar>
+                    <div className="p-3 rounded-lg bg-muted flex items-center">
+                        <Loader2 className="h-5 w-5 animate-spin"/>
+                    </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+                )}
+            </div>
+            </ScrollArea>
+        </div>
       </CardContent>
        {output && !isLoading && (
-        <CardFooter className="p-4 border-t">
+        <CardFooter className="p-4 border-t flex-shrink-0">
           <form onSubmit={handleSubmit} className="flex gap-2 w-full">
             <Input
               value={input}

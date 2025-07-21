@@ -6,7 +6,7 @@ import { CodeBlock } from './code-block';
  * A component that intelligently renders chat message content using react-markdown.
  * It handles various markdown elements and renders code blocks with syntax highlighting.
  */
-export const MessageContent = ({ content }: { content: string }) => {
+export const MessageContent = ({ content, onCopy }: { content: string, onCopy?: () => void }) => {
   return (
     <div className="space-y-4">
         <ReactMarkdown
@@ -24,6 +24,7 @@ export const MessageContent = ({ content }: { content: string }) => {
                             <CodeBlock
                                 language={match ? match[1] : 'text'}
                                 code={codeText}
+                                onCopy={onCopy}
                             />
                         );
                     }
