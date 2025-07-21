@@ -28,7 +28,8 @@ const ACTIVE_PROJECT_KEY_PREFIX = 'adlabs_active_project_';
 
 export function ADLabsWorkspace() {
   const { user } = useAuth();
-  const [files, setFiles] = useState<CodeFile[]>([]);
+  const [allFiles, setAllFiles] = useState<CodeFile[]>([]);
+  const [openFiles, setOpenFiles] = useState<CodeFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +44,7 @@ export function ADLabsWorkspace() {
   const isMobile = useIsMobile();
   const [editorViewMode, setEditorViewMode] = useState<'edit' | 'diff'>('edit');
   
-  const activeFile = files.find((f) => f.id === activeFileId);
+  const activeFile = openFiles.find((f) => f.id === activeFileId);
   const activeProjectKey = user ? `${ACTIVE_PROJECT_KEY_PREFIX}${user.id}` : null;
 
   const resetCopilotChat = useCallback(() => {
@@ -60,7 +61,7 @@ export function ADLabsWorkspace() {
         return;
     }
 
-    setFiles(loadedFiles as CodeFile[]);
+    setAllFiles(loadedFiles as CodeFile[]);
     setLoadedProjectInfo({ project, branch, mainBranch });
 
     if (activeProjectKey) {
@@ -71,6 +72,7 @@ export function ADLabsWorkspace() {
         }
     }
     
+    setOpenFiles([]);
     setActiveFileId(null);
     setAiOutput(null);
     resetCopilotChat();
@@ -93,59 +95,59 @@ export function ADLabsWorkspace() {
   const handleFileSelect = useCallback(async (fileId: string) => {
     if (!user || !loadedProjectInfo) return;
 
+    // If file is already open, just make it active
+    const alreadyOpen = openFiles.find(f => f.id === fileId);
+    if (alreadyOpen) {
+      setActiveFileId(fileId);
+      return;
+    }
+
+    const fileInfoFromAll = allFiles.find(f => f.id === fileId);
+    if (!fileInfoFromAll || fileInfoFromAll.type === 'folder') return;
+    
+    let fileToOpen: CodeFile = { ...fileInfoFromAll, content: '' }; // Create a new object for the open file
+
     setActiveFileId(fileId);
-    setEditorViewMode('edit');
+    setIsFileLoading(true);
+    setOpenFiles(prev => [...prev, fileToOpen]); // Add to open files immediately to show tab
 
-    const file = files.find(f => f.id === fileId);
-
-    if (file && file.type === 'file' && typeof file.content === 'undefined') {
-        setIsFileLoading(true);
-
-        const [contentResult, commitsResult] = await Promise.all([
-             fetchFileWithContent(loadedProjectInfo.project.url, loadedProjectInfo.branch, loadedProjectInfo.mainBranch, file.id, user.id),
-             fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, file.id, user.id)
-        ]);
-        
-        setIsFileLoading(false);
-        
-        let commits: Commit[] | undefined = undefined;
-        let activeCommitHash: string | undefined = undefined;
-        let previousContent: string | undefined = undefined;
-
-        if (commitsResult.success && commitsResult.commits && commitsResult.commits.length > 0) {
-            commits = commitsResult.commits;
-            activeCommitHash = commits[0].hash;
-            const previousCommitHash = commits.length > 1 ? commits[1].hash : null;
-            if (previousCommitHash) {
-                const prevContentResult = await getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, file.id, user.id);
-                if (prevContentResult.success) {
-                    previousContent = prevContentResult.content;
-                }
-            }
+    const [contentResult, commitsResult] = await Promise.all([
+        fetchFileWithContent(loadedProjectInfo.project.url, loadedProjectInfo.branch, loadedProjectInfo.mainBranch, fileId, user.id),
+        fetchBitbucketFileCommits(loadedProjectInfo.project.url, loadedProjectInfo.branch, fileId, user.id)
+    ]);
+    
+    setIsFileLoading(false);
+    
+    if (contentResult.success) {
+      fileToOpen.content = contentResult.content;
+      fileToOpen.originalContent = contentResult.originalContent;
+      
+      if (commitsResult.success && commitsResult.commits && commitsResult.commits.length > 0) {
+        fileToOpen.commits = commitsResult.commits;
+        fileToOpen.activeCommitHash = commitsResult.commits[0].hash;
+        const previousCommitHash = commitsResult.commits.length > 1 ? commitsResult.commits[1].hash : null;
+        if (previousCommitHash) {
+          const prevContentResult = await getBitbucketFileContentForCommit(loadedProjectInfo.project.url, previousCommitHash, fileId, user.id);
+          if (prevContentResult.success) {
+            fileToOpen.previousContent = prevContentResult.content;
+          }
         }
+      }
 
-        if (contentResult.success) {
-            setFiles(prevFiles => prevFiles.map(f => 
-                f.id === fileId 
-                    ? { 
-                        ...f, 
-                        content: contentResult.content,
-                        originalContent: contentResult.originalContent,
-                        previousContent: previousContent,
-                        commits: commits, 
-                        activeCommitHash: activeCommitHash,
-                      } 
-                    : f
-            ));
-        } else {
-             toast({
-                variant: 'destructive',
-                title: 'Error loading file content',
-                description: contentResult.error || 'Could not load file content.',
-            });
+      setOpenFiles(prevOpenFiles => prevOpenFiles.map(f => f.id === fileId ? fileToOpen : f));
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Error loading file content',
+            description: contentResult.error || 'Could not load file content.',
+        });
+        // Remove the tab if loading failed
+        setOpenFiles(prev => prev.filter(f => f.id !== fileId));
+        if (activeFileId === fileId) {
+            setActiveFileId(openFiles.length > 1 ? (openFiles[openFiles.length - 2]?.id ?? null) : null);
         }
     }
-  }, [files, loadedProjectInfo, toast, user]);
+  }, [openFiles, allFiles, loadedProjectInfo, toast, user, activeFileId]);
 
   const handleFolderExpand = useCallback(async (folderId: string) => {
     if (!user || !loadedProjectInfo) return;
@@ -153,7 +155,7 @@ export function ADLabsWorkspace() {
     const result = await fetchDirectory(loadedProjectInfo.project.url, loadedProjectInfo.branch, folderId, user.id);
 
     if (result.success && result.files) {
-        setFiles(prevFiles => {
+        setAllFiles(prevFiles => {
             const newFiles = [...prevFiles];
             const folderIndex = newFiles.findIndex(f => f.id === folderId);
             if (folderIndex > -1) {
@@ -177,7 +179,7 @@ export function ADLabsWorkspace() {
 
   const handleCommitChange = useCallback(async (fileId: string, commitHash: string) => {
     if (!user) return;
-    const file = files.find(f => f.id === fileId);
+    const file = openFiles.find(f => f.id === fileId);
     if (!file || !file.commits || !loadedProjectInfo) return;
 
     const commitIndex = file.commits.findIndex(c => c.hash === commitHash);
@@ -193,7 +195,7 @@ export function ADLabsWorkspace() {
     setIsFileLoading(false);
 
     if (currentContentResult.success) {
-        setFiles(prevFiles => prevFiles.map(f => 
+        setOpenFiles(prevFiles => prevFiles.map(f => 
             f.id === fileId 
                 ? { 
                     ...f, 
@@ -211,10 +213,10 @@ export function ADLabsWorkspace() {
             description: currentContentResult.error || 'Could not load file content for this commit.',
         });
     }
-  }, [files, loadedProjectInfo, toast, user]);
+  }, [openFiles, loadedProjectInfo, toast, user]);
 
   const handleCodeChange = (fileId: string, newContent: string) => {
-    setFiles((prevFiles) =>
+    setOpenFiles((prevFiles) =>
       prevFiles.map((file) =>
         file.id === fileId ? { ...file, content: newContent } : file
       )
@@ -251,7 +253,8 @@ export function ADLabsWorkspace() {
   }, [toast, activeFile, user]);
 
   const handleSwitchProject = () => {
-    setFiles([]);
+    setAllFiles([]);
+    setOpenFiles([]);
     setActiveFileId(null);
     setLoadedProjectInfo(null);
     setAiOutput(null);
@@ -271,6 +274,24 @@ export function ADLabsWorkspace() {
     setRightPanelView('copilot-chat');
   };
   
+  const handleTabClose = (fileIdToClose: string) => {
+    const fileIndex = openFiles.findIndex(f => f.id === fileIdToClose);
+    if (fileIndex === -1) return;
+
+    const newOpenFiles = openFiles.filter(f => f.id !== fileIdToClose);
+    setOpenFiles(newOpenFiles);
+
+    if (activeFileId === fileIdToClose) {
+        if (newOpenFiles.length === 0) {
+            setActiveFileId(null);
+        } else {
+            // Activate the previous tab, or the first one if closing the first tab
+            const newActiveIndex = Math.max(0, fileIndex - 1);
+            setActiveFileId(newOpenFiles[newActiveIndex].id);
+        }
+    }
+  };
+
   if (isInitializing || isMobile === undefined) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -307,6 +328,9 @@ export function ADLabsWorkspace() {
       handleShowCopilotChat={handleShowCopilotChat}
       viewMode={editorViewMode}
       setViewMode={setEditorViewMode}
+      openFiles={openFiles}
+      onTabSelect={setActiveFileId}
+      onTabClose={handleTabClose}
     />
   ) : (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
@@ -357,7 +381,7 @@ export function ADLabsWorkspace() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-0">
                <FileExplorer
-                 files={files}
+                 files={allFiles}
                  activeFileId={activeFileId}
                  onFileSelect={handleFileSelect}
                  onSwitchProject={handleSwitchProject}
@@ -385,7 +409,7 @@ export function ADLabsWorkspace() {
   return (
     <div className="h-screen bg-background text-foreground flex">
       <FileExplorer
-        files={files}
+        files={allFiles}
         activeFileId={activeFileId}
         onFileSelect={handleFileSelect}
         onSwitchProject={handleSwitchProject}

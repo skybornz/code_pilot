@@ -23,7 +23,7 @@ import { TimeAgo } from '@/components/ui/time-ago';
 import { placeholder as codeMirrorPlaceholder } from '@codemirror/view';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { EditorTabs } from './editor-tabs';
 
 interface EditorPanelProps {
   file: CodeFile;
@@ -34,6 +34,9 @@ interface EditorPanelProps {
   handleShowCopilotChat: () => void;
   viewMode: 'edit' | 'diff';
   setViewMode: (mode: 'edit' | 'diff') => void;
+  openFiles: CodeFile[];
+  onTabSelect: (fileId: string) => void;
+  onTabClose: (fileId: string) => void;
 }
 
 const getLanguageExtension = (language: string) => {
@@ -101,6 +104,9 @@ export function EditorPanel({
   handleShowCopilotChat,
   viewMode,
   setViewMode,
+  openFiles,
+  onTabSelect,
+  onTabClose,
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content || '');
   const [scrollToLine, setScrollToLine] = useState<number | null>(null);
@@ -264,7 +270,7 @@ export function EditorPanel({
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-4 space-y-2 md:space-y-0 md:space-x-4">
         <div className="flex-1 min-w-0 w-full flex items-center gap-2">
-          <CardTitle className={cn("text-xl font-semibold truncate", themeColorClass)} title={file.name}>{file.name}</CardTitle>
+          <CardTitle className={cn("text-base font-semibold truncate", themeColorClass)} title={file.name}>{file.name}</CardTitle>
            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -437,6 +443,12 @@ export function EditorPanel({
           </TooltipProvider>
         </div>
       </CardHeader>
+      <EditorTabs
+        openFiles={openFiles}
+        activeFileId={file.id}
+        onTabSelect={onTabSelect}
+        onTabClose={onTabClose}
+      />
       <CardContent className="p-0 flex-1 min-h-0">
           <CodeMirror
               ref={editorRef}
