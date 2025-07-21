@@ -4,7 +4,8 @@
 import { configureAi } from '@/ai/genkit';
 import { getDefaultModel } from './models';
 import { withRetry } from '@/lib/utils';
-import type { ActionType, AIOutput, GenerateUnitTestOutput } from '@/components/codepilot/types';
+import type { ActionType, AIOutput } from '@/components/codepilot/types';
+import type { GenerateUnitTestOutput } from '@/ai/flows/generate-unit-test';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { logUserActivity } from './activity';
 import { updateUserLastActive } from './users';
