@@ -198,7 +198,7 @@ export default function CodePilotPage() {
     };
 
     return (
-        <div className="theme-codepilot min-h-screen flex flex-col bg-background">
+        <div className="theme-codepilot h-screen flex flex-col bg-background">
             <DashboardHeader />
             <main className="flex-1 flex flex-col p-4 overflow-hidden">
                 <div className="flex-shrink-0 flex items-center justify-between gap-4 border-b pb-4 mb-4">
