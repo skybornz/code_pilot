@@ -3,7 +3,7 @@
 
 import type { CodeFile } from '@/components/codepilot/types';
 import { BookText, Bug, TestTube2, Wand2, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot, ChevronUp, ChevronDown, Info } from 'lucide-react';
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';

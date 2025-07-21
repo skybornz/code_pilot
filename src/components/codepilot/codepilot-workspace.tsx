@@ -61,7 +61,15 @@ export function ADLabsWorkspace() {
     setAnalysisChatMessages([]);
     setRightPanelView('ai-output');
     
-    const result = await performAiAction(user.id, action, code, language, originalCode, activeFile?.name, framework, dependencies);
+    // Use a functional update to get the latest file name without adding activeFile as a dependency
+    let currentFileName = '';
+    setOpenFiles(currentFiles => {
+        const currentFile = currentFiles.find(f => f.id === activeFileId);
+        currentFileName = currentFile?.name || '';
+        return currentFiles;
+    });
+
+    const result = await performAiAction(user.id, action, code, language, originalCode, currentFileName, framework, dependencies);
 
     if ('error' in result) {
       toast({
@@ -70,19 +78,12 @@ export function ADLabsWorkspace() {
         description: result.error,
       });
     } else {
-      if (activeFile) {
-        const outputWithContext: AIOutput = {
-          ...result,
-          fileContext: { id: activeFile.id, name: activeFile.name },
-        };
+        const outputWithContext: AIOutput = { ...result, fileContext: { id: activeFileId!, name: currentFileName } };
         setAiOutput(outputWithContext);
-      } else {
-        setAiOutput(result);
-      }
     }
     
     setIsLoading(false);
-  }, [toast, activeFile, user]);
+  }, [toast, user, activeFileId]);
   
   const handleGenerateTest = useCallback(
     (framework: string, dependencies: { name: string; content: string }[]) => {
@@ -332,7 +333,6 @@ export function ADLabsWorkspace() {
     </Card>
   ) : activeFile && activeFile.type === 'file' ? (
     <EditorPanel
-        key={activeFile.id}
         file={activeFile}
         onCodeChange={handleCodeChange}
         onAiAction={handleAiAction}
