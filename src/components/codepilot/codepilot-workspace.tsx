@@ -322,8 +322,7 @@ export function ADLabsWorkspace() {
         <LoadingSpinner text="Loading file content..." />
     </Card>
   ) : activeFile && activeFile.type === 'file' ? (
-    <>
-      <EditorPanel
+    <EditorPanel
         key={activeFile.id}
         file={activeFile}
         onCodeChange={handleCodeChange}
@@ -337,15 +336,7 @@ export function ADLabsWorkspace() {
         onTabSelect={setActiveFileId}
         onTabClose={handleTabClose}
         onGenTestClick={() => setIsTestDialogOpen(true)}
-      />
-      <GenerateTestDialog
-          open={isTestDialogOpen}
-          onOpenChange={setIsTestDialogOpen}
-          activeFile={activeFile}
-          otherOpenFiles={otherOpenFiles}
-          onGenerate={(framework, dependencies) => handleAiAction('test', activeFile.content || '', activeFile.language, undefined, framework, dependencies)}
-        />
-    </>
+    />
   ) : (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">
         <p className="text-muted-foreground">Select a file from the explorer to view its content.</p>
@@ -432,15 +423,24 @@ export function ADLabsWorkspace() {
         branch={loadedProjectInfo?.branch}
       />
       <main className="flex-1 flex gap-4 p-4 overflow-hidden">
-        <>
-          <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0">
             {editor}
-          </div>
-          <div className="flex-1 flex flex-col min-w-0">
+        </div>
+        <div className="flex-1 flex flex-col min-w-0">
             {rightPanelContent()}
-          </div>
-        </>
+        </div>
       </main>
+
+      {/* This ensures the dialog is part of the main component tree and not re-rendered */}
+      {activeFile && (
+        <GenerateTestDialog
+          open={isTestDialogOpen}
+          onOpenChange={setIsTestDialogOpen}
+          activeFile={activeFile}
+          otherOpenFiles={otherOpenFiles}
+          onGenerate={(framework, dependencies) => handleAiAction('test', activeFile.content || '', activeFile.language, undefined, framework, dependencies)}
+        />
+      )}
     </div>
   );
 }
