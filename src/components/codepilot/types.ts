@@ -7,7 +7,7 @@ export type AnalyzeDiffOutput = string;
 export type ExplainCodeOutput = string;
 export type FindBugsOutput = string;
 export type RefactorCodeOutput = string;
-export type GenerateUnitTestOutput = string;
+export type GenerateUnitTestOutput = { test: string };
 export type GenerateSddOutput = string;
 
 export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'sdd' | 'analyze-diff' | 'copilot';
@@ -26,7 +26,7 @@ export type AIOutput = AIOutputBase & (
   | { type: 'explain'; data: ExplainCodeOutput }
   | { type: 'bugs'; data: FindBugsOutput }
   | { type: 'refactor'; data: RefactorCodeOutput }
-  | { type: 'test'; data: GenerateUnitTestOutput }
+  | { type: 'test'; data: string } // The `data` for test is the string from GenerateUnitTestOutput.test
   | { type: 'sdd'; data: GenerateSddOutput }
   | { type: 'analyze-diff'; data: AnalyzeDiffOutput }
 );
