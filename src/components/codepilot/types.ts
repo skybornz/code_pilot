@@ -1,13 +1,15 @@
 
 'use client';
 
+import type { GenerateUnitTestOutput as GenTestOutput } from '@/ai/flows/generate-unit-test';
+
 // All flow outputs are now just strings, so we don't need to import their specific types.
 // We'll define the output types here directly for simplicity.
 export type AnalyzeDiffOutput = string;
 export type ExplainCodeOutput = string;
 export type FindBugsOutput = string;
 export type RefactorCodeOutput = string;
-export type GenerateUnitTestOutput = { test: string };
+export type GenerateUnitTestOutput = GenTestOutput;
 export type GenerateSddOutput = string;
 
 export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'sdd' | 'analyze-diff' | 'copilot';
