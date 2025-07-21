@@ -111,7 +111,7 @@ const GenerateTestDialogMemo = ({
 
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleGenerateClick} disabled={isLoading}>
+          <Button onClick={handleGenerateClick} disabled={isLoading || (availableFrameworks.length > 0 && !framework)}>
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             Generate
           </Button>
