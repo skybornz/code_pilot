@@ -1,3 +1,4 @@
+
 'use client';
 
 import CodeMirror from '@uiw/react-codemirror';
@@ -65,7 +66,7 @@ export function CodeBlock({ code, language, onCopy }: CodeBlockProps) {
   };
 
   return (
-    <div className="relative group rounded-md overflow-hidden bg-muted/20">
+    <div className="relative group rounded-md overflow-hidden bg-muted/20 h-full">
         <Button 
             size="icon" 
             variant="ghost"
@@ -77,7 +78,7 @@ export function CodeBlock({ code, language, onCopy }: CodeBlockProps) {
         </Button>
         <CodeMirror
             value={code}
-            height="auto"
+            height="100%"
             theme={vscodeDark}
             extensions={[...langExtension, EditorView.lineWrapping]}
             readOnly={true}
@@ -89,6 +90,7 @@ export function CodeBlock({ code, language, onCopy }: CodeBlockProps) {
               highlightActiveLine: false,
               highlightActiveLineGutter: false,
             }}
+            className="h-full"
             style={{
                 fontSize: '0.875rem', // equiv to text-sm
                 fontFamily: 'var(--font-code)',

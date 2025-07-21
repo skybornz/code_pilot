@@ -164,10 +164,10 @@ export default function CodeGptPage() {
   );
 
   const renderWorkspaceView = () => (
-     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+     <div className="flex-1 flex gap-8 min-h-0">
         {/* Left Panel */}
-        <div className="flex flex-col gap-8 min-h-0">
-            <Card className="bg-card/50">
+        <div className="w-1/2 flex flex-col gap-8 min-h-0">
+            <Card className="bg-card/50 flex-shrink-0">
                 <CardHeader className="flex flex-row justify-between items-start">
                     <div>
                         <CardTitle className="text-lg text-pink-400">Original Request</CardTitle>
@@ -182,6 +182,17 @@ export default function CodeGptPage() {
                     <Badge>{language}</Badge>
                 </CardContent>
             </Card>
+            
+            {result && (
+              <Card className="bg-card/50 flex-shrink-0">
+                 <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-pink-400 flex items-center gap-2"><Lightbulb className="h-4 w-4" /> Explanation</CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.explanation}</p>
+                 </CardContent>
+              </Card>
+            )}
 
             <Card className="bg-card/50 flex-1 flex flex-col min-h-0">
                 <CardHeader>
@@ -217,28 +228,20 @@ export default function CodeGptPage() {
         </div>
 
         {/* Right Panel */}
-        <Card className="bg-card/50 flex flex-col min-h-0">
+        <Card className="w-1/2 bg-card/50 flex flex-col min-h-0">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-pink-400 flex items-center gap-2">
-              <Lightbulb />
+              <Sparkles />
               Generated Snippet
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 min-h-0 flex flex-col gap-6">
-              <ScrollArea className="flex-1 pr-4">
-                {result && (
-                  <div className="space-y-6">
-                      <CodeBlock
-                          code={result.codeSnippet}
-                          language={language}
-                      />
-                      <Alert>
-                          <AlertTitle className="font-semibold flex items-center gap-2"><Lightbulb className="h-4 w-4" /> Explanation</AlertTitle>
-                          <AlertDescription className="mt-2 whitespace-pre-wrap">{result.explanation}</AlertDescription>
-                      </Alert>
-                  </div>
-                )}
-              </ScrollArea>
+          <CardContent className="flex-1 min-h-0 p-0">
+              {result && (
+                  <CodeBlock
+                      code={result.codeSnippet}
+                      language={language}
+                  />
+              )}
           </CardContent>
         </Card>
      </div>
@@ -247,7 +250,7 @@ export default function CodeGptPage() {
   return (
     <div className="theme-code-gpt min-h-screen flex flex-col bg-background">
       <DashboardHeader />
-      <main className="flex-1 container mx-auto p-8 flex flex-col">
+      <main className="flex-1 container mx-auto p-8 flex flex-col min-h-0">
         {isLoading && (
             <div className="flex-1 flex items-center justify-center">
                 <LoadingSpinner text="The AI is writing your code..." />
