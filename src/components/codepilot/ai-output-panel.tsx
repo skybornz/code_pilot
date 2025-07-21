@@ -32,10 +32,6 @@ const formatAiOutputForChat = (output: AIOutput): string => {
   return `Regarding your previous analysis on "${output.title}":\n\n${output.data}`;
 };
 
-const renderOutput = (output: AIOutput) => {
-  return <MessageContent content={output.data} />;
-};
-
 const AIActionLoader = () => {
   const steps = [
     'Connecting to AI model...',
@@ -119,7 +115,7 @@ export function AIOutputPanel({
         behavior: 'smooth',
       });
     }
-  }, [messages]);
+  }, [messages, output]); // Scroll on new messages or new initial output
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,7 +187,7 @@ export function AIOutputPanel({
     }
   };
   
-  const handleCopy = () => {
+  const handleCopyAndScroll = () => {
     if (scrollAreaRef.current) {
         scrollAreaRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -212,24 +208,26 @@ export function AIOutputPanel({
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
           <ScrollArea className="flex-1" ref={scrollAreaRef}>
-            <div className="p-4">
+            <div className="p-4 space-y-4">
                 {isLoading && <AIActionLoader />}
-                {!isLoading && !output && (
-                <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-16">
-                    <p>Select an AI action to see the results here.</p>
-                    <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
-                </div>
-                )}
-                {!isLoading && output && (
-                <div>
-                    <MessageContent content={output.data} onCopy={handleCopy} />
-                </div>
-                )}
-            </div>
-            
-            {messages.length > 0 && <Separator className="my-0" />}
 
-            <div className="space-y-6 p-4">
+                {!isLoading && !output && (
+                  <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-16">
+                      <p>Select an AI action to see the results here.</p>
+                      <p className="text-xs mt-2">e.g., Explain, Find Bugs, Refactor Code</p>
+                  </div>
+                )}
+                
+                {/* Main AI output */}
+                {!isLoading && output && (
+                  <div>
+                      <MessageContent content={output.data} onCopy={handleCopyAndScroll} />
+                  </div>
+                )}
+            
+                {/* Follow-up chat messages */}
+                {messages.length > 0 && output && <Separator />}
+
                 {messages.map((message, index) => (
                 <div key={index} className={cn('flex items-start gap-3 w-full', message.role === 'user' && 'justify-end')}>
                     {message.role === 'model' && (
