@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Menu } from 'lucide-react';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { ProjectLoader } from '@/components/codepilot/project-loader';
 import { Card } from '@/components/ui/card';
 import type { Project } from '@/lib/project-database';
@@ -46,7 +46,7 @@ export function ADLabsWorkspace() {
   const [editorViewMode, setEditorViewMode] = useState<'edit' | 'diff'>('edit');
   const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
   
-  const activeFile = openFiles.find((f) => f.id === activeFileId);
+  const activeFile = useMemo(() => openFiles.find((f) => f.id === activeFileId), [openFiles, activeFileId]);
   const activeProjectKey = user ? `${ACTIVE_PROJECT_KEY_PREFIX}${user.id}` : null;
 
   const resetCopilotChat = useCallback(() => {
@@ -55,7 +55,7 @@ export function ADLabsWorkspace() {
     ]);
   }, []);
 
-  const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string, framework?: string, dependencies?: { name: string; content: string }[]) => {
+  const handleAiAction = useCallback((action: ActionType, code: string, language: string, originalCode?: string, framework?: string, dependencies?: { name: string; content: string }[]) => {
     if (!user) return;
     setIsLoading(true);
     setAnalysisChatMessages([]);
@@ -69,20 +69,20 @@ export function ADLabsWorkspace() {
         return currentFiles;
     });
 
-    const result = await performAiAction(user.id, action, code, language, originalCode, currentFileName, framework, dependencies);
+    performAiAction(user.id, action, code, language, originalCode, currentFileName, framework, dependencies).then(result => {
+      if ('error' in result) {
+        toast({
+          variant: 'destructive',
+          title: 'AI Action Failed',
+          description: result.error,
+        });
+      } else {
+          const outputWithContext: AIOutput = { ...result, fileContext: { id: activeFileId!, name: currentFileName } };
+          setAiOutput(outputWithContext);
+      }
+      setIsLoading(false);
+    });
 
-    if ('error' in result) {
-      toast({
-        variant: 'destructive',
-        title: 'AI Action Failed',
-        description: result.error,
-      });
-    } else {
-        const outputWithContext: AIOutput = { ...result, fileContext: { id: activeFileId!, name: currentFileName } };
-        setAiOutput(outputWithContext);
-    }
-    
-    setIsLoading(false);
   }, [toast, user, activeFileId]);
   
   const handleGenerateTest = useCallback(
@@ -304,6 +304,8 @@ export function ADLabsWorkspace() {
     }
   };
 
+  const otherOpenFiles = useMemo(() => openFiles.filter(f => f.id !== activeFileId), [openFiles, activeFileId]);
+
   if (isInitializing || isMobile === undefined) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -324,8 +326,6 @@ export function ADLabsWorkspace() {
     );
   }
   
-  const otherOpenFiles = openFiles.filter(f => f.id !== activeFileId);
-
   // If a project is loaded, render the full IDE experience.
   const editor = (isFileLoading && activeFile?.type === 'file') ? (
      <Card className="h-full flex flex-col bg-card/50 shadow-lg justify-center items-center">

@@ -48,13 +48,13 @@ const frameworkMap: Record<string, { value: string; label: string }[]> = {
   // Add other languages here
 };
 
-export function GenerateTestDialog({
+const GenerateTestDialogMemo = ({
   open,
   onOpenChange,
   activeFile,
   otherOpenFiles,
   onGenerate,
-}: GenerateTestDialogProps) {
+}: GenerateTestDialogProps) => {
   const [selectedFramework, setSelectedFramework] = useState('');
   const [selectedDeps, setSelectedDeps] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -163,3 +163,6 @@ export function GenerateTestDialog({
     </Dialog>
   );
 }
+
+
+export const GenerateTestDialog = React.memo(GenerateTestDialogMemo);
