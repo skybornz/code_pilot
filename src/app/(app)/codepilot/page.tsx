@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { EditorPanel } from '@/components/codepilot/editor-panel';
 import { AIOutputPanel } from '@/components/codepilot/ai-output-panel';
@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, FileTerminal } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { GenerateTestDialog } from '@/components/codepilot/generate-test-dialog';
 
 const initialFile: CodeFile = {
   id: 'local-file',
@@ -91,7 +92,8 @@ export default function CodePilotPage() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [activeFile, setActiveFile] = useState<CodeFile>(initialFile);
+    const [openFiles, setOpenFiles] = useState<CodeFile[]>([initialFile]);
+    const [activeFileId, setActiveFileId] = useState<string>(initialFile.id);
     const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [rightPanelView, setRightPanelView] = useState<'ai-output' | 'copilot-chat'>('copilot-chat');
@@ -100,11 +102,15 @@ export default function CodePilotPage() {
     ]);
     const [analysisChatMessages, setAnalysisChatMessages] = useState<Message[]>([]);
     const [isChatLoading, setIsChatLoading] = useState(false);
+    const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
     
     const detectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    
+    const activeFile = useMemo(() => openFiles.find(f => f.id === activeFileId) || null, [openFiles, activeFileId]);
+    const otherOpenFiles = useMemo(() => openFiles.filter(f => f.id !== activeFileId), [openFiles, activeFileId]);
 
     const handleCodeChange = (fileId: string, newContent: string) => {
-        setActiveFile(prev => ({ ...prev, content: newContent }));
+        setOpenFiles(prev => prev.map(f => f.id === fileId ? { ...f, content: newContent } : f));
 
         if (detectionTimeoutRef.current) {
             clearTimeout(detectionTimeoutRef.current);
@@ -112,20 +118,18 @@ export default function CodePilotPage() {
 
         detectionTimeoutRef.current = setTimeout(() => {
             const detectedLang = detectLanguage(newContent);
-            if (detectedLang !== activeFile.language && supportedLanguages.some(l => l.value === detectedLang)) {
+            if (activeFile && detectedLang !== activeFile.language && supportedLanguages.some(l => l.value === detectedLang)) {
                 handleLanguageChange(detectedLang);
             }
         }, 500); // Debounce detection to avoid rapid changes while typing
     };
 
     const handleLanguageChange = (language: string) => {
-        const fileExtension = language.split('.').pop();
-        const newName = activeFile.name.includes('.') ? activeFile.name.replace(/\.[^/.]+$/, `.${fileExtension}`) : `${activeFile.name}.${fileExtension}`;
-        setActiveFile(prev => ({
-            ...prev,
-            language: language,
-            name: newName,
-        }));
+        if (activeFile) {
+            const fileExtension = language.split('.').pop();
+            const newName = activeFile.name.includes('.') ? activeFile.name.replace(/\.[^/.]+$/, `.${fileExtension}`) : `${activeFile.name}.${fileExtension}`;
+            setOpenFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, language, name: newName } : f));
+        }
     };
     
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,13 +140,15 @@ export default function CodePilotPage() {
                 const content = e.target?.result as string;
                 const fileExtension = file.name.split('.').pop() || 'plaintext';
                 const language = supportedLanguages.find(l => l.value === fileExtension)?.value || 'plaintext';
-                setActiveFile({
-                    id: 'local-file',
+                const newFile: CodeFile = {
+                    id: `local-file-${Date.now()}`,
                     name: file.name,
                     language: language,
                     type: 'file',
                     content: content,
-                });
+                };
+                setOpenFiles([newFile]);
+                setActiveFileId(newFile.id);
             };
             reader.readAsText(file);
         }
@@ -152,13 +158,13 @@ export default function CodePilotPage() {
         fileInputRef.current?.click();
     };
 
-    const handleAiAction = useCallback(async (action: ActionType, code: string, language: string) => {
-        if (!user) return;
+    const handleAiAction = useCallback(async (action: ActionType, code: string, language: string, originalCode?: string, dependencies?: { name: string; content: string }[], remarks?: string) => {
+        if (!user || !activeFile) return;
         setIsLoading(true);
         setAnalysisChatMessages([]);
         setRightPanelView('ai-output');
         
-        const result = await performAiAction(user.id, action, code, language, undefined, activeFile.name);
+        const result = await performAiAction(user.id, action, code, language, originalCode, activeFile.name, dependencies, remarks);
 
         if ('error' in result) {
             toast({ variant: 'destructive', title: 'AI Action Failed', description: result.error });
@@ -167,17 +173,32 @@ export default function CodePilotPage() {
             setAiOutput(outputWithContext);
         }
         setIsLoading(false);
-    }, [toast, activeFile, user]);
+    }, [toast, user, activeFile]);
+
+    const handleGenerateTest = useCallback((dependencies: { name: string; content: string }[], remarks: string) => {
+        if (activeFile?.content) {
+            handleAiAction('test', activeFile.content, activeFile.language, undefined, dependencies, remarks);
+        }
+    }, [activeFile, handleAiAction]);
 
     const handleShowCopilotChat = () => {
         setRightPanelView('copilot-chat');
+    };
+    
+    const handleTabClose = (fileIdToClose: string) => {
+        // In local mode, we don't allow closing the last tab.
+        if (openFiles.length <= 1) {
+            const newFile = { ...initialFile, id: `local-file-${Date.now()}` };
+            setOpenFiles([newFile]);
+            setActiveFileId(newFile.id);
+        }
     };
 
     const rightPanelContent = () => {
         switch (rightPanelView) {
             case 'copilot-chat':
                 return <CopilotChatPanel 
-                    activeFile={activeFile || null} 
+                    activeFile={activeFile} 
                     messages={copilotChatMessages}
                     onMessagesChange={setCopilotChatMessages}
                     isChatLoading={isChatLoading}
@@ -217,16 +238,22 @@ export default function CodePilotPage() {
                     </div>
                     <div className="flex-1 flex gap-4 min-h-0">
                         <div className="w-1/2 flex flex-col">
-                            <EditorPanel
-                                file={activeFile}
-                                onCodeChange={handleCodeChange}
-                                onAiAction={handleAiAction}
-                                isLoading={isLoading}
-                                onCommitChange={() => {}} // Not used in this context
-                                handleShowCopilotChat={handleShowCopilotChat}
-                                viewMode={'edit'}
-                                setViewMode={() => {}} // Not used in this context
-                            />
+                            {activeFile ? (
+                                <EditorPanel
+                                    file={activeFile}
+                                    onCodeChange={handleCodeChange}
+                                    onAiAction={handleAiAction}
+                                    isLoading={isLoading}
+                                    onCommitChange={() => {}} // Not used in this context
+                                    handleShowCopilotChat={handleShowCopilotChat}
+                                    viewMode={'edit'}
+                                    setViewMode={() => {}} // Not used in this context
+                                    openFiles={openFiles}
+                                    onTabSelect={setActiveFileId}
+                                    onTabClose={handleTabClose}
+                                    onGenTestClick={() => setIsTestDialogOpen(true)}
+                                />
+                            ) : null}
                         </div>
                         <div className="w-1/2 flex flex-col">
                             {rightPanelContent()}
@@ -234,6 +261,15 @@ export default function CodePilotPage() {
                     </div>
                 </div>
             </main>
+            {activeFile && (
+                <GenerateTestDialog
+                    open={isTestDialogOpen}
+                    onOpenChange={setIsTestDialogOpen}
+                    activeFile={activeFile}
+                    otherOpenFiles={otherOpenFiles}
+                    onGenerate={handleGenerateTest}
+                />
+            )}
         </div>
     );
 }
