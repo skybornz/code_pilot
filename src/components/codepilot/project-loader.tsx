@@ -78,7 +78,7 @@ export function ProjectLoader({ onFilesLoaded }: ProjectLoaderProps) {
                     <h1 className="text-xl font-semibold text-purple-400">
                         Repo Analyzer
                     </h1>
-                    <p className="mt-1 text-lg text-muted-foreground">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         Select a project to load or add a new one.
                     </p>
                 </div>
