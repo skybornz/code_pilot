@@ -86,12 +86,16 @@ export function ADLabsWorkspace() {
   }, [toast, user, activeFileId]);
   
   const handleGenerateTest = useCallback(
-    (dependencies: { name: string; content: string }[], remarks: string) => {
+    (dependencyIds: string[], remarks: string) => {
       if (activeFile?.content) {
+        const dependencies = openFiles
+          .filter(file => dependencyIds.includes(file.id))
+          .map(file => ({ name: file.name, content: file.content || '' }));
+          
         handleAiAction('test', activeFile.content, activeFile.language, undefined, dependencies, remarks);
       }
     },
-    [activeFile, handleAiAction]
+    [activeFile, handleAiAction, openFiles]
   );
   
   const handleFilesLoaded = useCallback(async (loadedFiles: Partial<CodeFile>[], project: Project, branch: string) => {

@@ -17,7 +17,7 @@ interface GenerateTestDialogProps {
   onOpenChange: (open: boolean) => void;
   activeFile: CodeFile;
   otherOpenFiles: CodeFile[];
-  onGenerate: (dependencies: { name: string; content: string }[], remarks: string) => void;
+  onGenerate: (dependencyIds: string[], remarks: string) => void;
 }
 
 const GenerateTestDialogMemo = ({
@@ -49,11 +49,7 @@ const GenerateTestDialogMemo = ({
 
   const handleGenerateClick = () => {
     setIsLoading(true);
-    const dependenciesToSend = otherOpenFiles
-        .filter(file => selectedDependencies.includes(file.id))
-        .map(file => ({ name: file.name, content: file.content || '' }));
-
-    onGenerate(dependenciesToSend, remarks);
+    onGenerate(selectedDependencies, remarks);
 
     // Close dialog after a short delay to show loading state
     setTimeout(() => {
