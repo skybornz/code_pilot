@@ -9,8 +9,11 @@ export type AnalyzeDiffOutput = string;
 export type ExplainCodeOutput = string;
 export type FindBugsOutput = string;
 export type RefactorCodeOutput = string;
-export type GenerateUnitTestOutput = GenTestOutput;
 export type GenerateSddOutput = string;
+
+// We keep this type alias for the flow's return signature, but the UI will use a plain string.
+export type GenerateUnitTestOutput = GenTestOutput; 
+
 
 export type ActionType = 'explain' | 'bugs' | 'refactor' | 'test' | 'sdd' | 'analyze-diff' | 'copilot';
 
