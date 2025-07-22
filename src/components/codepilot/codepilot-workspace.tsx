@@ -427,7 +427,7 @@ export function ADLabsWorkspace() {
         activeFileId={activeFileId}
         onFileSelect={handleFileSelect}
         onSwitchProject={handleSwitchProject}
-        onFolderExpand={handleFolderExpand}
+        onFolderExpand={onFolderExpand}
         project={loadedProjectInfo?.project}
         branch={loadedProjectInfo?.branch}
       />
