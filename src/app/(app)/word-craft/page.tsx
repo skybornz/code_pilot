@@ -126,7 +126,7 @@ export default function WordCraftPage() {
                     </CardHeader>
                     <CardContent>
                         <Textarea
-                            placeholder="e.g., Meeting Title: {Title}&#10;Attendees: {List of names}&#10;Summary: {A brief summary}"
+                            placeholder="e.g., Meeting Title: {{Title}}&#10;Attendees: {{List of names}}&#10;Summary: {{A brief summary}}"
                             className="min-h-[150px] font-sans"
                             value={template}
                             onChange={(e) => setTemplate(e.target.value)}
