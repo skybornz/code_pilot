@@ -6,6 +6,7 @@ const config: sql.config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER || 'localhost',
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 1433,
   database: process.env.DB_DATABASE,
   options: {
     encrypt: process.env.NODE_ENV === 'production', // Use encryption for production
@@ -22,7 +23,7 @@ export async function getPool(): Promise<sql.ConnectionPool> {
     } catch (err) {
       console.error('Database connection failed:', err);
       throw new Error(
-        `Failed to connect to the database. Please check your DB_USER, DB_PASSWORD, DB_SERVER, and DB_DATABASE environment variables. Original error: ${err instanceof Error ? err.message : String(err)}`
+        `Failed to connect to the database. Please check your DB_USER, DB_PASSWORD, DB_SERVER, DB_PORT and DB_DATABASE environment variables. Original error: ${err instanceof Error ? err.message : String(err)}`
       );
     }
   }
