@@ -24,8 +24,8 @@ const GenerateUnitTestFlowInputSchema = z.object({
   model: z.string().describe('The AI model to use for generating the test.'),
   code: z.string().describe('The code block to generate a unit test for.'),
   language: z.string().describe('The programming language of the code.'),
-  framework: z.string().optional().describe('The testing framework to use, e.g., "jest", "pytest".'),
   dependencies: z.array(DependencySchema).optional().describe('An array of dependent files with their content.'),
+  remarks: z.string().optional().describe('Optional user-provided remarks, like which testing framework to use or other specific instructions.'),
 });
 export type GenerateUnitTestInput = z.infer<typeof GenerateUnitTestFlowInputSchema>;
 
@@ -69,8 +69,8 @@ const generateUnitTestFlow = ai.defineFlow(
     const finalPrompt = promptTemplate({
         language: input.language,
         code: input.code,
-        framework: input.framework,
         dependencies: input.dependencies,
+        remarks: input.remarks,
     });
       
     const result = await ai.generate({

@@ -8,9 +8,11 @@ The response should include:
 2.  **Unit Test Code**: The complete, runnable unit test code inside a language-specific Markdown code block (e.g., ```typescript).
 
 **Language:** {{{language}}}
-{{#if framework}}
-**Testing Framework:** {{{framework}}}
-Use the syntax and conventions of the `{{{framework}}}` framework for the generated unit test.
+
+{{#if remarks}}
+**User Remarks:**
+Please take the following user remarks into consideration when generating the test. This might include a preferred testing framework (like jest, pytest, vitest), specific scenarios to cover, or other instructions.
+`{{remarks}}`
 {{/if}}
 
 **Code to Test:**

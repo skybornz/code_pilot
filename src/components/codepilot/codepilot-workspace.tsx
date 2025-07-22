@@ -55,7 +55,7 @@ export function ADLabsWorkspace() {
     ]);
   }, []);
 
-  const handleAiAction = useCallback((action: ActionType, code: string, language: string, originalCode?: string, framework?: string, dependencies?: { name: string; content: string }[]) => {
+  const handleAiAction = useCallback((action: ActionType, code: string, language: string, originalCode?: string, dependencies?: { name: string; content: string }[], remarks?: string) => {
     if (!user) return;
     setIsLoading(true);
     setAnalysisChatMessages([]);
@@ -69,7 +69,7 @@ export function ADLabsWorkspace() {
         return currentFiles;
     });
 
-    performAiAction(user.id, action, code, language, originalCode, currentFileName, framework, dependencies).then(result => {
+    performAiAction(user.id, action, code, language, originalCode, currentFileName, dependencies, remarks).then(result => {
       if ('error' in result) {
         toast({
           variant: 'destructive',
@@ -86,9 +86,9 @@ export function ADLabsWorkspace() {
   }, [toast, user, activeFileId]);
   
   const handleGenerateTest = useCallback(
-    (framework: string, dependencies: { name: string; content: string }[]) => {
+    (dependencies: { name: string; content: string }[], remarks: string) => {
       if (activeFile?.content) {
-        handleAiAction('test', activeFile.content, activeFile.language, undefined, framework, dependencies);
+        handleAiAction('test', activeFile.content, activeFile.language, undefined, dependencies, remarks);
       }
     },
     [activeFile, handleAiAction]

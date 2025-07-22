@@ -1,46 +1,24 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles } from 'lucide-react';
 import type { CodeFile } from './types';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { ScrollArea } from '../ui/scroll-area';
+import { Textarea } from '../ui/textarea';
 
 interface GenerateTestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeFile: CodeFile;
   otherOpenFiles: CodeFile[];
-  onGenerate: (framework: string, dependencies: { name: string; content: string }[]) => void;
+  onGenerate: (dependencies: { name: string; content: string }[], remarks: string) => void;
 }
-
-const frameworkOptions: { [key: string]: { value: string; label: string }[] } = {
-  typescript: [
-    { value: 'jest', label: 'Jest' },
-    { value: 'vitest', label: 'Vitest' },
-  ],
-  javascript: [
-    { value: 'jest', label: 'Jest' },
-    { value: 'vitest', label: 'Vitest' },
-  ],
-  python: [
-    { value: 'pytest', label: 'Pytest' },
-    { value: 'unittest', label: 'Unittest' },
-  ],
-  java: [
-    { value: 'junit', label: 'JUnit' },
-  ],
-  csharp: [
-    { value: 'nunit', label: 'NUnit' },
-    { value: 'xunit', label: 'xUnit' },
-  ]
-};
 
 const GenerateTestDialogMemo = ({
   open,
@@ -50,21 +28,16 @@ const GenerateTestDialogMemo = ({
   onGenerate,
 }: GenerateTestDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [framework, setFramework] = useState('');
   const [selectedDependencies, setSelectedDependencies] = useState<string[]>([]);
-
-  const availableFrameworks = useMemo(() => {
-    return frameworkOptions[activeFile.language] || [];
-  }, [activeFile.language]);
+  const [remarks, setRemarks] = useState('');
 
   useEffect(() => {
     if (open) {
-      // Reset state when dialog opens and set default framework
-      const currentFrameworks = frameworkOptions[activeFile.language] || [];
-      setFramework(currentFrameworks.length > 0 ? currentFrameworks[0].value : '');
+      // Reset state when dialog opens
       setSelectedDependencies([]);
+      setRemarks('');
     }
-  }, [open, activeFile.language]);
+  }, [open]);
 
   const handleDependencyToggle = (fileId: string) => {
     setSelectedDependencies(prev => 
@@ -80,7 +53,7 @@ const GenerateTestDialogMemo = ({
         .filter(file => selectedDependencies.includes(file.id))
         .map(file => ({ name: file.name, content: file.content || '' }));
 
-    onGenerate(framework, dependenciesToSend);
+    onGenerate(dependenciesToSend, remarks);
 
     // Close dialog after a short delay to show loading state
     setTimeout(() => {
@@ -107,22 +80,6 @@ const GenerateTestDialogMemo = ({
                     <Badge variant="secondary">{activeFile.language}</Badge>
                 </div>
             </div>
-
-            {availableFrameworks.length > 0 && (
-                 <div className="space-y-2">
-                    <Label htmlFor="framework-select">Testing Framework</Label>
-                    <Select value={framework} onValueChange={setFramework}>
-                        <SelectTrigger id="framework-select">
-                            <SelectValue placeholder="Select a framework" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {availableFrameworks.map(fw => (
-                                <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                 </div>
-            )}
             
             {otherOpenFiles.length > 0 && (
               <div className="space-y-2">
@@ -149,11 +106,22 @@ const GenerateTestDialogMemo = ({
                 </ScrollArea>
               </div>
             )}
+            
+            <div className="space-y-2">
+                <Label htmlFor="remarks">Additional Remarks (Optional)</Label>
+                <Textarea
+                    id="remarks"
+                    placeholder="e.g., Use the Jest framework and mock the API calls."
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    className="min-h-[80px]"
+                />
+            </div>
         </div>
 
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleGenerateClick} disabled={isLoading || (availableFrameworks.length > 0 && !framework)}>
+          <Button onClick={handleGenerateClick} disabled={isLoading}>
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             Generate
           </Button>
