@@ -3,7 +3,7 @@
 
 import type { CodeFile } from '@/components/codepilot/types';
 import { BookText, Bug, TestTube2, Wand2, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot, ChevronUp, ChevronDown, Info } from 'lucide-react';
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -28,16 +28,17 @@ import { EditorTabs } from './editor-tabs';
 interface EditorPanelProps {
   file: CodeFile;
   onCodeChange: (fileId: string, newContent: string) => void;
-  onAiAction: (action: ActionType, code: string, language: string, originalCode?: string, framework?: string, dependencies?: { name: string; content: string }[]) => void;
+  onAiAction: (action: ActionType, code: string, language: string, originalCode?: string, dependencies?: { name: string; content: string }[], remarks?: string) => void;
   isLoading: boolean;
   onCommitChange: (fileId: string, commitHash: string) => void;
   handleShowCopilotChat: () => void;
   viewMode: 'edit' | 'diff';
   setViewMode: (mode: 'edit' | 'diff') => void;
-  openFiles: CodeFile[];
-  onTabSelect: (fileId: string) => void;
-  onTabClose: (fileId: string) => void;
   onGenTestClick: () => void;
+  // Tab-related props are now optional
+  openFiles?: CodeFile[];
+  onTabSelect?: (fileId: string) => void;
+  onTabClose?: (fileId: string) => void;
 }
 
 const getLanguageExtension = (language: string) => {
@@ -105,10 +106,10 @@ export function EditorPanel({
   handleShowCopilotChat,
   viewMode,
   setViewMode,
+  onGenTestClick,
   openFiles,
   onTabSelect,
   onTabClose,
-  onGenTestClick,
 }: EditorPanelProps) {
   const [code, setCode] = useState(file.content || '');
   const [scrollToLine, setScrollToLine] = useState<number | null>(null);
@@ -445,12 +446,16 @@ export function EditorPanel({
           </TooltipProvider>
         </div>
       </CardHeader>
-      <EditorTabs
-        openFiles={openFiles}
-        activeFileId={file.id}
-        onTabSelect={onTabSelect}
-        onTabClose={onTabClose}
-      />
+      
+      {openFiles && onTabSelect && onTabClose && (
+        <EditorTabs
+          openFiles={openFiles}
+          activeFileId={file.id}
+          onTabSelect={onTabSelect}
+          onTabClose={onTabClose}
+        />
+      )}
+
       <CardContent className="p-0 flex-1 min-h-0">
           <CodeMirror
               ref={editorRef}

@@ -12,10 +12,7 @@ import { useAuth } from '@/context/auth-context';
 import { performAiAction } from '@/actions/ai';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, FileTerminal } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { GenerateTestDialog } from '@/components/codepilot/generate-test-dialog';
 
 const initialFile: CodeFile = {
@@ -92,8 +89,7 @@ export default function CodePilotPage() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [openFiles, setOpenFiles] = useState<CodeFile[]>([initialFile]);
-    const [activeFileId, setActiveFileId] = useState<string>(initialFile.id);
+    const [activeFile, setActiveFile] = useState<CodeFile>(initialFile);
     const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [rightPanelView, setRightPanelView] = useState<'ai-output' | 'copilot-chat'>('copilot-chat');
@@ -105,12 +101,10 @@ export default function CodePilotPage() {
     const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
     
     const detectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    
-    const activeFile = useMemo(() => openFiles.find(f => f.id === activeFileId) || null, [openFiles, activeFileId]);
-    const otherOpenFiles = useMemo(() => openFiles.filter(f => f.id !== activeFileId), [openFiles, activeFileId]);
 
     const handleCodeChange = (fileId: string, newContent: string) => {
-        setOpenFiles(prev => prev.map(f => f.id === fileId ? { ...f, content: newContent } : f));
+        // Since we only have one file, we can directly update it.
+        setActiveFile(prev => ({ ...prev, content: newContent }));
 
         if (detectionTimeoutRef.current) {
             clearTimeout(detectionTimeoutRef.current);
@@ -128,7 +122,7 @@ export default function CodePilotPage() {
         if (activeFile) {
             const fileExtension = language.split('.').pop();
             const newName = activeFile.name.includes('.') ? activeFile.name.replace(/\.[^/.]+$/, `.${fileExtension}`) : `${activeFile.name}.${fileExtension}`;
-            setOpenFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, language, name: newName } : f));
+            setActiveFile(prev => ({ ...prev, language, name: newName }));
         }
     };
     
@@ -147,8 +141,7 @@ export default function CodePilotPage() {
                     type: 'file',
                     content: content,
                 };
-                setOpenFiles([newFile]);
-                setActiveFileId(newFile.id);
+                setActiveFile(newFile);
             };
             reader.readAsText(file);
         }
@@ -185,15 +178,6 @@ export default function CodePilotPage() {
         setRightPanelView('copilot-chat');
     };
     
-    const handleTabClose = (fileIdToClose: string) => {
-        // In local mode, we don't allow closing the last tab.
-        if (openFiles.length <= 1) {
-            const newFile = { ...initialFile, id: `local-file-${Date.now()}` };
-            setOpenFiles([newFile]);
-            setActiveFileId(newFile.id);
-        }
-    };
-
     const rightPanelContent = () => {
         switch (rightPanelView) {
             case 'copilot-chat':
@@ -248,9 +232,6 @@ export default function CodePilotPage() {
                                     handleShowCopilotChat={handleShowCopilotChat}
                                     viewMode={'edit'}
                                     setViewMode={() => {}} // Not used in this context
-                                    openFiles={openFiles}
-                                    onTabSelect={setActiveFileId}
-                                    onTabClose={handleTabClose}
                                     onGenTestClick={() => setIsTestDialogOpen(true)}
                                 />
                             ) : null}
@@ -266,7 +247,7 @@ export default function CodePilotPage() {
                     open={isTestDialogOpen}
                     onOpenChange={setIsTestDialogOpen}
                     activeFile={activeFile}
-                    otherOpenFiles={otherOpenFiles}
+                    otherOpenFiles={[]} // No other files to depend on in this mode
                     onGenerate={handleGenerateTest}
                 />
             )}
