@@ -54,3 +54,4 @@ export type CodeFile = {
   commits?: Commit[];
   activeCommitHash?: string;
 };
+
