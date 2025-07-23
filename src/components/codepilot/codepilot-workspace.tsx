@@ -140,6 +140,8 @@ export function ADLabsWorkspace() {
   const handleFileSelect = useCallback(async (fileId: string) => {
     if (!user || !loadedProjectInfo) return;
 
+    setEditorViewMode('edit');
+
     // If file is already open, just make it active
     const alreadyOpen = openFiles.find(f => f.id === fileId);
     if (alreadyOpen) {
@@ -346,7 +348,7 @@ export function ADLabsWorkspace() {
         viewMode={editorViewMode}
         setViewMode={setEditorViewMode}
         openFiles={openFiles}
-        onTabSelect={setActiveFileId}
+        onTabSelect={handleFileSelect}
         onTabClose={handleTabClose}
         onGenTestClick={() => setIsTestDialogOpen(true)}
     />
