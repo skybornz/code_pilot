@@ -13,8 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { performAiAction } from '@/actions/ai';
 import type { AnalyzeDiffOutput } from '@/components/codepilot/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { MessageContent } from '@/components/codepilot/message-content';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function SmartMatchPage() {
   const [textA, setTextA] = useState('');
@@ -98,10 +98,18 @@ export default function SmartMatchPage() {
                     <div className="flex justify-between items-center">
                         <Label htmlFor="original-content">Original Content</Label>
                         <input type="file" ref={fileInputARef} onChange={(e) => handleFileChange(e, setTextA)} className="hidden" accept=".txt,.js,.ts,.jsx,.tsx,.html,.css,.json,.md" />
-                        <Button variant="outline" size="sm" onClick={() => fileInputARef.current?.click()} className="text-orange-400 border-current hover:bg-orange-500/10 hover:text-orange-400">
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload File
-                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" size="icon" onClick={() => fileInputARef.current?.click()} className="text-orange-400 border-current hover:bg-orange-500/10 hover:text-orange-400">
+                                        <Upload className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Upload File</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                     <Textarea
                       id="original-content"
@@ -116,10 +124,18 @@ export default function SmartMatchPage() {
                     <div className="flex justify-between items-center">
                         <Label htmlFor="modified-content">Modified Content</Label>
                         <input type="file" ref={fileInputBRef} onChange={(e) => handleFileChange(e, setTextB)} className="hidden" accept=".txt,.js,.ts,.jsx,.tsx,.html,.css,.json,.md" />
-                        <Button variant="outline" size="sm" onClick={() => fileInputBRef.current?.click()} className="text-orange-400 border-current hover:bg-orange-500/10 hover:text-orange-400">
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload File
-                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" size="icon" onClick={() => fileInputBRef.current?.click()} className="text-orange-400 border-current hover:bg-orange-500/10 hover:text-orange-400">
+                                        <Upload className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Upload File</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                     <Textarea
                       id="modified-content"
