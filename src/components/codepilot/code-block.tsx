@@ -45,6 +45,15 @@ export function CodeBlock({ code, language, onCopy }: CodeBlockProps) {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = async () => {
+    if (!navigator.clipboard) {
+      toast({
+        variant: 'destructive',
+        title: 'Copy Failed',
+        description: 'Clipboard API is not available in this browser or context (e.g., non-HTTPS).',
+      });
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(code);
       setIsCopied(true);
