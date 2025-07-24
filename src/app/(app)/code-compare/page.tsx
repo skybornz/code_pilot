@@ -15,6 +15,7 @@ import type { AnalyzeDiffOutput } from '@/components/codepilot/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { MessageContent } from '@/components/codepilot/message-content';
 
 export default function SmartMatchPage() {
   const [textA, setTextA] = useState('');
