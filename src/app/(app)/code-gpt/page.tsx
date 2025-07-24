@@ -40,7 +40,7 @@ export default function CodeGptPage() {
   const [language, setLanguage] = useState('typescript');
   const [isLoading, setIsLoading] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
-  const [result, setResult] = useState<{ codeSnippet: string; explanation: string; } | null>(result);
+  const [result, setResult] = useState<{ codeSnippet: string; explanation: string; } | null>(null);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [chatInput, setChatInput] = useState('');
   
