@@ -273,7 +273,11 @@ export function EditorPanel({
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
       <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-4 space-y-2 md:space-y-0 md:space-x-4">
         <div className="flex-1 min-w-0 w-full flex items-center gap-2">
-          <CardTitle className={cn("text-base font-semibold truncate", themeColorClass)} title={file.name}>{file.name}</CardTitle>
+           {isRepoInsight ? (
+               <CardTitle className={cn("text-base font-semibold truncate", themeColorClass)} title={file.name}>{file.name}</CardTitle>
+           ) : (
+                <CardTitle className={cn("text-base font-semibold", themeColorClass)}>Editor</CardTitle>
+           )}
            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
