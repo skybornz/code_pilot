@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TerminalSquare, Sparkles, Loader2, Lightbulb, Send, User, Bot, RefreshCcw } from 'lucide-react';
+import { TerminalSquare, Sparkles, Loader2, Lightbulb, Send, User, Bot, RefreshCcw, FileText } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { generateSnippetFromPrompt } from '@/actions/code-snippet';
@@ -169,7 +169,10 @@ export default function CodeGptPage() {
             <Card className="bg-card/50 flex-shrink-0">
                 <CardHeader className="flex flex-row justify-between items-start">
                     <div>
-                        <CardTitle className="text-lg text-pink-400">Original Request</CardTitle>
+                        <CardTitle className="text-lg text-pink-400 flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            Original Request
+                        </CardTitle>
                         <p className="text-sm text-muted-foreground italic mt-2">"{prompt}"</p>
                         <div className="mt-2">
                             <Badge>{language}</Badge>
@@ -195,7 +198,10 @@ export default function CodeGptPage() {
 
             <Card className="bg-card/50 flex-1 flex flex-col min-h-0">
                 <CardHeader>
-                    <CardTitle className="text-lg text-pink-400">Refine Code</CardTitle>
+                    <CardTitle className="text-lg text-pink-400 flex items-center gap-2">
+                        <Bot className="h-4 w-4" />
+                        Refine Code
+                    </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0 p-0">
                     <ScrollArea className="h-full pr-4" ref={chatScrollAreaRef}>
