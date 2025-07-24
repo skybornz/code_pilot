@@ -2,7 +2,7 @@
 'use client';
 
 import type { CodeFile } from '@/components/codepilot/types';
-import { BookText, Bug, TestTube2, Wand2, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot, ChevronUp, ChevronDown, Info } from 'lucide-react';
+import { BookText, Bug, TestTube2, Wand2, FileText, GitCompare, Sparkles, GitCommit, MoreVertical, Bot, ChevronUp, ChevronDown, Info, FilePenLine } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -271,12 +271,15 @@ export function EditorPanel({
 
   return (
     <Card className="h-full flex flex-col bg-card/50 shadow-lg">
-      <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-4 space-y-2 md:space-y-0 md:space-x-4">
+      <CardHeader className="flex-shrink-0 flex flex-col md:flex-row items-center justify-between border-b p-2 space-y-2 md:space-y-0 md:space-x-4">
         <div className="flex-1 min-w-0 w-full flex items-center gap-2">
            {isRepoInsight ? (
                <CardTitle className={cn("text-base font-semibold truncate", themeColorClass)} title={file.name}>{file.name}</CardTitle>
            ) : (
-                <CardTitle className={cn("text-base font-semibold", themeColorClass)}>Editor</CardTitle>
+                <CardTitle className={cn("text-base font-semibold flex items-center gap-2", themeColorClass)}>
+                    <FilePenLine className="h-5 w-5" />
+                    <span>Editor</span>
+                </CardTitle>
            )}
            <TooltipProvider>
               <Tooltip>
