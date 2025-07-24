@@ -151,13 +151,14 @@ export default function CodeGptPage() {
         </div>
           <div className="flex justify-center pt-4">
             <Button onClick={handleGenerate} disabled={!prompt || isLoading} className="bg-pink-600 hover:bg-pink-700 text-white">
-              {isLoading ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</>
-              ) : (
-                <><Sparkles className="mr-2 h-4 w-4" /> Generate Code</>
-              )}
+              <Sparkles className="mr-2 h-4 w-4" /> Generate Code
             </Button>
           </div>
+          {isLoading && (
+            <div className="flex justify-center pt-8">
+              <LoadingSpinner text="The AI is writing your code..." />
+            </div>
+          )}
       </CardContent>
     </Card>
   );
@@ -268,15 +269,9 @@ export default function CodeGptPage() {
     <div className="theme-code-gpt min-h-screen flex flex-col bg-background">
       <DashboardHeader />
       <main className="flex-1 container mx-auto p-8 flex flex-col min-h-0">
-        {isLoading && (
-            <div className="flex-1 flex items-center justify-center">
-                <LoadingSpinner text="The AI is writing your code..." />
-            </div>
-        )}
-
-        {!isLoading && !result && renderInitialView()}
+        {!result && renderInitialView()}
         
-        {!isLoading && result && (
+        {result && (
             <div className="flex-1 flex flex-col min-h-0">
                 {renderWorkspaceView()}
             </div>
