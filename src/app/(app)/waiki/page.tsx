@@ -78,7 +78,10 @@ export default function DebugAssistPage() {
                 {/* Input Card */}
                 <Card className="bg-card/50">
                     <CardHeader>
-                        <CardTitle className="text-lg">Error Details</CardTitle>
+                        <CardTitle className="text-lg text-red-400 flex items-center gap-2">
+                            <Info className="h-5 w-5" />
+                            Error Details
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
