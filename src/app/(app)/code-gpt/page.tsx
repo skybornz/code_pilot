@@ -225,7 +225,19 @@ export default function CodeGptPage() {
                 </CardContent>
                 <div className="p-6 pt-4 border-t">
                     <form onSubmit={handleRefine} className="flex items-start gap-2">
-                        <Textarea value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="e.g., Add comments to the code" disabled={isRefining} className="min-h-[40px] max-h-[120px]" />
+                        <Textarea
+                          value={chatInput}
+                          onChange={e => setChatInput(e.target.value)}
+                          placeholder="e.g., Add comments to the code"
+                          disabled={isRefining}
+                          className="min-h-[40px] max-h-[120px]"
+                           onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleRefine(e);
+                            }
+                          }}
+                        />
                         <Button type="submit" size="icon" className="bg-pink-600 hover:bg-pink-700 text-white flex-shrink-0" disabled={isRefining || !chatInput.trim()}><Send className="h-4 w-4" /></Button>
                     </form>
                 </div>

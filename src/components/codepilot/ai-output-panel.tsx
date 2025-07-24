@@ -5,7 +5,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Wand2, Send, User, Loader2, CheckCircle, Circle } from 'lucide-react';
 import type { AIOutput } from './types';
-import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import type { Message } from '@/ai/flows/copilot-chat';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +17,7 @@ import { Separator } from '../ui/separator';
 import { useAuth } from '@/context/auth-context';
 import { streamCopilotChat } from '@/actions/ai';
 import { usePathname } from 'next/navigation';
+import { Textarea } from '../ui/textarea';
 
 interface AIOutputPanelProps {
   output: AIOutput | null;
@@ -266,12 +266,19 @@ export function AIOutputPanel({
       </CardContent>
        {output && !isLoading && (
         <CardFooter className="p-4 border-t flex-shrink-0">
-          <form onSubmit={handleSubmit} className="flex gap-2 w-full">
-            <Input
+          <form onSubmit={handleSubmit} className="flex items-start gap-2 w-full">
+            <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a follow-up about the result..."
               disabled={isChatLoading}
+              className="min-h-[40px] max-h-[120px]"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                }
+              }}
             />
             <Button type="submit" disabled={!input.trim() || isChatLoading} size="icon" className={buttonClass}>
               <Send className="h-4 w-4" />

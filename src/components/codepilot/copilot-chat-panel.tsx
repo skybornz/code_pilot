@@ -3,7 +3,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -17,6 +16,7 @@ import { MessageContent } from './message-content';
 import { useAuth } from '@/context/auth-context';
 import { streamCopilotChat } from '@/actions/ai';
 import { usePathname } from 'next/navigation';
+import { Textarea } from '../ui/textarea';
 
 
 interface CopilotChatPanelProps {
@@ -163,12 +163,19 @@ export function CopilotChatPanel({ activeFile, messages, onMessagesChange, isCha
           </div>
         </ScrollArea>
         <div className="border-t p-4 flex-shrink-0">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <Input
+          <form onSubmit={handleSubmit} className="flex items-start gap-2">
+            <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask me anything about your code..."
               disabled={isChatLoading}
+              className="min-h-[40px] max-h-[120px]"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                }
+              }}
             />
             <Button type="submit" disabled={isChatLoading || !input.trim()} size="icon" className={buttonClass}>
               <Send className="h-4 w-4" />
