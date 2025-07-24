@@ -62,21 +62,27 @@ export default function SmartMatchPage() {
     const result = diffLines(textA, textB);
     setDiffResult(result);
 
-    // Perform AI analysis
-    const aiResult = await performAiAction(user.id, 'analyze-diff', textB, 'typescript', textA);
-
-    if ('error' in aiResult) {
-        toast({
-            variant: 'destructive',
-            title: 'AI Analysis Failed',
-            description: aiResult.error,
-        });
-    } else if (aiResult.type === 'analyze-diff') {
-        setAnalysisResult(aiResult.data);
+    // Perform AI analysis only if there are changes
+    const hasChanges = result.some(part => part.added || part.removed);
+    if (hasChanges) {
+        const aiResult = await performAiAction(user.id, 'analyze-diff', textB, 'typescript', textA);
+        if ('error' in aiResult) {
+            toast({
+                variant: 'destructive',
+                title: 'AI Analysis Failed',
+                description: aiResult.error,
+            });
+        } else if (aiResult.type === 'analyze-diff') {
+            setAnalysisResult(aiResult.data);
+        }
+    } else {
+        setAnalysisResult(null);
     }
     
     setIsAnalyzing(false);
   };
+  
+  const hasChanges = diffResult ? diffResult.some(part => part.added || part.removed) : false;
 
   return (
     <div className="theme-code-compare min-h-screen flex flex-col bg-background">
@@ -172,34 +178,40 @@ export default function SmartMatchPage() {
             <Card className="bg-card/50">
               <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><GitCompare className="h-5 w-5" />Comparison Result</CardTitle>
-                <CardDescription>Lines in red were removed, and lines in green were added. Unchanged lines are also shown for context.</CardDescription>
+                {hasChanges && <CardDescription>Lines in red were removed, and lines in green were added. Unchanged lines are also shown for context.</CardDescription>}
               </CardHeader>
               <CardContent>
-                <pre className="p-4 rounded-md bg-muted/80 overflow-x-auto text-xs font-mono">
-                  <code>
-                    {diffResult.map((part, index) => {
-                      const lines = part.value.split('\n');
-                      if (lines[lines.length - 1] === '') {
-                        lines.pop();
-                      }
-                      
-                      const colorClass = part.added
-                        ? 'bg-green-500/20'
-                        : part.removed
-                        ? 'bg-red-500/20'
-                        : '';
-                      
-                      const prefix = part.added ? '+' : part.removed ? '-' : ' ';
+                {hasChanges ? (
+                    <pre className="p-4 rounded-md bg-muted/80 overflow-x-auto text-xs font-mono">
+                      <code>
+                        {diffResult.map((part, index) => {
+                          const lines = part.value.split('\n');
+                          if (lines[lines.length - 1] === '') {
+                            lines.pop();
+                          }
+                          
+                          const colorClass = part.added
+                            ? 'bg-green-500/20'
+                            : part.removed
+                            ? 'bg-red-500/20'
+                            : '';
+                          
+                          const prefix = part.added ? '+' : part.removed ? '-' : ' ';
 
-                      return lines.map((line, i) => (
-                        <div key={`${index}-${i}`} className={colorClass}>
-                            <span className="w-5 inline-block text-center select-none text-muted-foreground">{prefix}</span>
-                            <span>{line}</span>
-                        </div>
-                      ));
-                    })}
-                  </code>
-                </pre>
+                          return lines.map((line, i) => (
+                            <div key={`${index}-${i}`} className={colorClass}>
+                                <span className="w-5 inline-block text-center select-none text-muted-foreground">{prefix}</span>
+                                <span>{line}</span>
+                            </div>
+                          ));
+                        })}
+                      </code>
+                    </pre>
+                ) : (
+                    <div className="text-center text-muted-foreground p-8">
+                        No differences found. The contents are identical.
+                    </div>
+                )}
               </CardContent>
             </Card>
           )}
