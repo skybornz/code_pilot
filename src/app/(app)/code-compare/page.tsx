@@ -1,20 +1,20 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { GitCompare, Sparkles, Loader2 } from 'lucide-react';
+import { GitCompare, Sparkles, Loader2, Upload } from 'lucide-react';
 import { diffLines, type Change } from 'diff';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { performAiAction } from '@/actions/ai';
 import type { AnalyzeDiffOutput } from '@/components/codepilot/types';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MessageContent } from '@/components/codepilot/message-content';
+import { Label } from '@/components/ui/label';
 
 export default function SmartMatchPage() {
   const [textA, setTextA] = useState('');
@@ -24,6 +24,23 @@ export default function SmartMatchPage() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeDiffOutput | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  const fileInputARef = useRef<HTMLInputElement>(null);
+  const fileInputBRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, setText: React.Dispatch<React.SetStateAction<string>>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        setText(content);
+      };
+      reader.readAsText(file);
+      // Clear the input value so the same file can be uploaded again
+      event.target.value = '';
+    }
+  };
 
   const handleCompareAndAnalyze = async () => {
     if (!user) {
@@ -43,7 +60,6 @@ export default function SmartMatchPage() {
     setDiffResult(result);
 
     // Perform AI analysis
-    // Assuming 'typescript' as a default language for analysis. This can be made selectable in the future.
     const aiResult = await performAiAction(user.id, 'analyze-diff', textB, 'typescript', textA);
 
     if ('error' in aiResult) {
@@ -53,7 +69,6 @@ export default function SmartMatchPage() {
             description: aiResult.error,
         });
     } else if (aiResult.type === 'analyze-diff') {
-        // The output is now a direct string, not a nested object.
         setAnalysisResult(aiResult.data);
     }
     
@@ -73,26 +88,48 @@ export default function SmartMatchPage() {
                   </div>
                   <div>
                       <CardTitle className="text-xl font-semibold text-orange-400">Smart Match</CardTitle>
-                      <CardDescription>Paste content into the two panes below to see a line-by-line analysis and an AI-powered summary of the differences.</CardDescription>
+                      <CardDescription>Paste content or upload files into the two panes below to see a line-by-line analysis and an AI-powered summary of the differences.</CardDescription>
                   </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Textarea
-                  placeholder="Paste original content here..."
-                  className="min-h-[300px] font-mono text-xs"
-                  value={textA}
-                  onChange={(e) => setTextA(e.target.value)}
-                  disabled={isAnalyzing}
-                />
-                <Textarea
-                  placeholder="Paste modified content here..."
-                  className="min-h-[300px] font-mono text-xs"
-                  value={textB}
-                  onChange={(e) => setTextB(e.target.value)}
-                  disabled={isAnalyzing}
-                />
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="original-content">Original Content</Label>
+                        <input type="file" ref={fileInputARef} onChange={(e) => handleFileChange(e, setTextA)} className="hidden" accept=".txt,.js,.ts,.jsx,.tsx,.html,.css,.json,.md" />
+                        <Button variant="outline" size="sm" onClick={() => fileInputARef.current?.click()} className="text-orange-400 border-current hover:bg-orange-500/10 hover:text-orange-400">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload File
+                        </Button>
+                    </div>
+                    <Textarea
+                      id="original-content"
+                      placeholder="Paste original content here..."
+                      className="min-h-[300px] font-mono text-xs"
+                      value={textA}
+                      onChange={(e) => setTextA(e.target.value)}
+                      disabled={isAnalyzing}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="modified-content">Modified Content</Label>
+                        <input type="file" ref={fileInputBRef} onChange={(e) => handleFileChange(e, setTextB)} className="hidden" accept=".txt,.js,.ts,.jsx,.tsx,.html,.css,.json,.md" />
+                        <Button variant="outline" size="sm" onClick={() => fileInputBRef.current?.click()} className="text-orange-400 border-current hover:bg-orange-500/10 hover:text-orange-400">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload File
+                        </Button>
+                    </div>
+                    <Textarea
+                      id="modified-content"
+                      placeholder="Paste modified content here..."
+                      className="min-h-[300px] font-mono text-xs"
+                      value={textB}
+                      onChange={(e) => setTextB(e.target.value)}
+                      disabled={isAnalyzing}
+                    />
+                </div>
               </div>
               <div className="mt-4 flex justify-center">
                 <Button onClick={handleCompareAndAnalyze} disabled={(!textA && !textB) || isAnalyzing} className="bg-orange-600 hover:bg-orange-700 text-white">
