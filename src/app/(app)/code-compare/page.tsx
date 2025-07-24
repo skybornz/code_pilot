@@ -84,6 +84,36 @@ export default function SmartMatchPage() {
   
   const hasChanges = diffResult ? diffResult.some(part => part.added || part.removed) : false;
 
+  const renderAnalysisPanel = () => {
+    if (isAnalyzing && !analysisResult) {
+        return (
+            <Card className="bg-card/50 h-full flex flex-col">
+                <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 flex items-center justify-center p-12">
+                    <LoadingSpinner text="AI is analyzing the changes..." />
+                </CardContent>
+            </Card>
+        );
+    }
+    
+    if (analysisResult) {
+         return (
+            <Card className="bg-card/50 h-full flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
+                <CardDescription>An AI-powered summary and analysis of the changes.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <MessageContent content={analysisResult} />
+              </CardContent>
+            </Card>
+        );
+    }
+    return null;
+  }
+
   return (
     <div className="theme-code-compare min-h-screen flex flex-col bg-background">
       <DashboardHeader />
@@ -175,68 +205,49 @@ export default function SmartMatchPage() {
           </Card>
 
           {diffResult && (
-            <Card className="bg-card/50">
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><GitCompare className="h-5 w-5" />Comparison Result</CardTitle>
-                {hasChanges && <CardDescription>Lines in red were removed, and lines in green were added. Unchanged lines are also shown for context.</CardDescription>}
-              </CardHeader>
-              <CardContent>
-                {hasChanges ? (
-                    <pre className="p-4 rounded-md bg-muted/80 overflow-x-auto text-xs font-mono">
-                      <code>
-                        {diffResult.map((part, index) => {
-                          const lines = part.value.split('\n');
-                          if (lines[lines.length - 1] === '') {
-                            lines.pop();
-                          }
-                          
-                          const colorClass = part.added
-                            ? 'bg-green-500/20'
-                            : part.removed
-                            ? 'bg-red-500/20'
-                            : '';
-                          
-                          const prefix = part.added ? '+' : part.removed ? '-' : ' ';
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="bg-card/50">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><GitCompare className="h-5 w-5" />Comparison Result</CardTitle>
+                  {hasChanges && <CardDescription>Lines in red were removed, and lines in green were added. Unchanged lines are also shown for context.</CardDescription>}
+                </CardHeader>
+                <CardContent>
+                  {hasChanges ? (
+                      <pre className="p-4 rounded-md bg-muted/80 overflow-x-auto text-xs font-mono">
+                        <code>
+                          {diffResult.map((part, index) => {
+                            const lines = part.value.split('\n');
+                            if (lines[lines.length - 1] === '') {
+                              lines.pop();
+                            }
+                            
+                            const colorClass = part.added
+                              ? 'bg-green-500/20'
+                              : part.removed
+                              ? 'bg-red-500/20'
+                              : '';
+                            
+                            const prefix = part.added ? '+' : part.removed ? '-' : ' ';
 
-                          return lines.map((line, i) => (
-                            <div key={`${index}-${i}`} className={colorClass}>
-                                <span className="w-5 inline-block text-center select-none text-muted-foreground">{prefix}</span>
-                                <span>{line}</span>
-                            </div>
-                          ));
-                        })}
-                      </code>
-                    </pre>
-                ) : (
-                    <div className="text-center text-muted-foreground p-8">
-                        No differences found. The contents are identical.
-                    </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                            return lines.map((line, i) => (
+                              <div key={`${index}-${i}`} className={colorClass}>
+                                  <span className="w-5 inline-block text-center select-none text-muted-foreground">{prefix}</span>
+                                  <span>{line}</span>
+                              </div>
+                            ));
+                          })}
+                        </code>
+                      </pre>
+                  ) : (
+                      <div className="text-center text-muted-foreground p-8">
+                          No differences found. The contents are identical.
+                      </div>
+                  )}
+                </CardContent>
+              </Card>
 
-          {isAnalyzing && !analysisResult && (
-            <Card className="bg-card/50">
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-center justify-center p-12">
-                <LoadingSpinner text="AI is analyzing the changes..." />
-              </CardContent>
-            </Card>
-          )}
-
-          {analysisResult && (
-            <Card className="bg-card/50">
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2 text-orange-400"><Sparkles className="h-5 w-5" /> AI Analysis</CardTitle>
-                <CardDescription>An AI-powered summary and analysis of the changes.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                  <MessageContent content={analysisResult} />
-              </CardContent>
-            </Card>
+              {renderAnalysisPanel()}
+            </div>
           )}
         </div>
       </main>
