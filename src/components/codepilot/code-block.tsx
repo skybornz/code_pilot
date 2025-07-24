@@ -45,17 +45,23 @@ export function CodeBlock({ code, language, onCopy }: CodeBlockProps) {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = async () => {
-    if (!navigator.clipboard) {
-      toast({
-        variant: 'destructive',
-        title: 'Copy Failed',
-        description: 'Clipboard API is not available in this browser or context (e.g., non-HTTPS).',
-      });
-      return;
-    }
-
     try {
-      await navigator.clipboard.writeText(code);
+      if (navigator.clipboard && window.isSecureContext) {
+        // Use modern clipboard API in secure contexts
+        await navigator.clipboard.writeText(code);
+      } else {
+        // Fallback for insecure contexts or older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        textArea.style.position = 'absolute';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+
       setIsCopied(true);
       toast({
         title: 'Copied to clipboard',
@@ -64,6 +70,7 @@ export function CodeBlock({ code, language, onCopy }: CodeBlockProps) {
         onCopy();
       }
       setTimeout(() => setIsCopied(false), 2000);
+
     } catch (err) {
       console.error('Failed to copy text: ', err);
       toast({
