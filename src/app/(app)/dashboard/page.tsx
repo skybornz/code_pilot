@@ -80,7 +80,7 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 container mx-auto p-4 md:p-6 flex flex-col items-start">
         <div className="my-8 text-center w-full">
-            <h1 className="text-3xl font-normal tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Welcome to AD Labs</h1>
+            <h1 className="text-3xl font-normal tracking-tight bg-gradient-to-r from-primary to-accent text-primary">Welcome to AD Labs</h1>
             <p className="mt-2 text-base md:text-lg text-muted-foreground">Your integrated suite for AI-powered development. Select a tool to begin.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 w-full">
