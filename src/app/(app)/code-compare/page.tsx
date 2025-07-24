@@ -35,7 +35,9 @@ export default function SmartMatchPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
-        setText(content);
+        // Normalize line endings to prevent diffing issues
+        const normalizedContent = content.replace(/\r\n/g, '\n');
+        setText(normalizedContent);
       };
       reader.readAsText(file);
       // Clear the input value so the same file can be uploaded again
